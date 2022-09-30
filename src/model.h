@@ -69,8 +69,8 @@ typedef struct structModel
     int timeLen;
     int spaceLen;
 
-    float **matrixBV;
-    float **matrixPV;
+    float **thetaBV;
+    float **thetaPV;
 
     float activatedDCTissueVessels;
     float antibodyTissueVessels;
@@ -96,14 +96,18 @@ typedef struct structModel
 
 int VerifyCFL(structParameters parametersModel);
 
-float CalculaQuimiotaxia(float ponto_posterior_j, float ponto_anterior_j, float ponto_posterior_i, float ponto_anterior_i, float ponto_atual,\
+float AdvectionTerm(float populationPoint, float avgValue);
+
+float UpDownWind(float frontIPoint, float ijPoint, float avgValue);
+
+float CalculateChemottaxis(float ponto_posterior_j, float ponto_anterior_j, float ponto_posterior_i, float ponto_anterior_i, float ponto_atual,\
  float valor_medio, float gradiente_odc_i, float gradiente_odc_j, float hx);
 
-float CalculaDifusao(float ponto_posterior_j, float ponto_anterior_j, float ponto_posterior_i, float ponto_anterior_i, float ponto_atual, float hx);
+float CalculateDiffusion(float ponto_posterior_j, float ponto_anterior_j, float ponto_posterior_i, float ponto_anterior_i, float ponto_atual, float hx);
 
 structModel ModelInitialize(structParameters params, int dt, int dx, int tFinal, int xFinal);
 
-void DefineBVPV(structModel *model, int randomvessels);
+void DefineBVPV(structModel *model);
 
 void InitialConditionTissueMicroglia(structModel* model);
 

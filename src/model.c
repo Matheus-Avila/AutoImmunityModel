@@ -27,32 +27,52 @@ int VerifyCFL(structParameters parametersModel){
     return 0;
 }
 
-float CalculaQuimiotaxia(float ponto_posterior_j, float ponto_anterior_j, float ponto_posterior_i, float ponto_anterior_i, float ponto_atual,\
- float valor_medio, float gradiente_odc_i, float gradiente_odc_j, float hx){
-    return 0;
+float AdvectionTerm(float populationPoint, float avgValue){
+    return populationPoint/(populationPoint + avgValue);
 }
 
-float CalculaDifusao(float ponto_posterior_j, float ponto_anterior_j, float ponto_posterior_i, float ponto_anterior_i, float ponto_atual, float hx){
-    return 0;
+float UpDownWind(float frontPoint, float rearPoint, float avgValue){
+    return AdvectionTerm(frontPoint, avgValue) - AdvectionTerm(rearPoint, avgValue);
 }
 
-void DefineBVPV(structModel *model, int randomvessels){
+float CalculateChemottaxis(float frontJPoint, float rearJPoint, float frontIPoint, float rearIPoint, float ijPoint,\
+ float avgValue, float gradientOdcI, float gradientOdcJ, float hx){
+    float gradientPopulationI = 0, gradientPopulationJ = 0;
+    if(gradientOdcI<0)
+        gradientPopulationI = UpDownWind(frontIPoint, ijPoint, avgValue)/hx;
+    else
+        gradientPopulationI = UpDownWind(ijPoint, rearIPoint, avgValue)/hx;
+    if(gradientOdcJ<0)
+        gradientPopulationJ = UpDownWind(frontJPoint, ijPoint, avgValue)/hx;
+    else
+        gradientPopulationJ = UpDownWind(ijPoint, rearJPoint, avgValue)/hx;
+
+    return gradientOdcI*gradientPopulationI + gradientOdcJ*gradientPopulationJ;
+}
+
+float CalculateDiffusion(float frontJPoint, float rearJPoint, float frontIPoint, float rearIPoint, float ijPoint, float hx){
+    return (frontIPoint + frontJPoint - 4*ijPoint + rearIPoint + rearJPoint)/(hx*hx);
+}
+
+void DefineBVPV(structModel *model){
     int randomVal;
     for(int i = 0; i < model->xFinal; i++){
         for(int j = 0; j < model->xFinal; j++){
             randomVal = rand() % 100;
             if(randomVal <10){
-                model->matrixBV[i][j] = 1;
-                model->matrixBV[i][j+1] = (j != model->xFinal-1) ?  1: 0;
+                model->thetaBV[i][j] = 1;
+                if(j != model->xFinal-1)
+                    model->thetaPV[i][j+1] = 1;
+                else
+                    model->thetaPV[i][0] = 1;
             }
         }
     }
 }
 
-structModel ModelInitialize(structParameters params, int dt, int dx, int tFinal, int xFinal, int randomvessels){
+structModel ModelInitialize(structParameters params, int dt, int dx, int tFinal, int xFinal){
     structModel model;
-    if (randomvessels)
-        srand(time(NULL));
+    srand(time(NULL));
     model.parametersModel = params;
 
     model.ht = dt;
@@ -68,12 +88,12 @@ structModel ModelInitialize(structParameters params, int dt, int dx, int tFinal,
     model.activatedDC = mesh;
     model.antibody = mesh;
     model.tCytotoxic = mesh;
-    model.matrixBV = mesh[0];
-    model.matrixPV = mesh[0];
+    model.thetaBV = mesh[0];
+    model.thetaPV = mesh[0];
     InitialConditionTissueMicroglia(&model);
 
     //definir BV e PV
-    DefineBVPV(&model, randomvessels);
+    DefineBVPV(&model);
     
     //definir lymph node
     float dendriticLN = 0, thelperLN = 0, tcytotoxicLN = 0, bcellLN = 0, plasmacellLN = 0, antibodyLN = 0;
