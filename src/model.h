@@ -23,7 +23,7 @@ typedef struct structParameters
 
     float t_cito_media;
     float dc_media;
-    float mic_media;
+    float avgMic;
     float odc_media;
     
     float c_dc;
@@ -62,6 +62,8 @@ typedef struct structModel
 
     int tFinal;
     int xFinal;
+
+    int numFiguras;
 
     // int *timeVec;
     // int *spaceVec;
@@ -105,10 +107,16 @@ float CalculateChemottaxis(float ponto_posterior_j, float ponto_anterior_j, floa
 
 float CalculateDiffusion(float ponto_posterior_j, float ponto_anterior_j, float ponto_posterior_i, float ponto_anterior_i, float ponto_atual, float hx);
 
-structModel ModelInitialize(structParameters params, int dt, int dx, int tFinal, int xFinal);
+float* EquationsLymphNode(float* populationLN, float step);
+
+void SolverLymphNode(structModel *model, float step);
+
+structModel ModelInitialize(structParameters params, int dt, int dx, int tFinal, int xFinal, int numFiguras);
 
 void DefineBVPV(structModel *model);
 
 void InitialConditionTissueMicroglia(structModel* model);
 
 void InitialConditionLymphNode(structModel* model, float dendriticLN, float thelperLN, float tcytotoxicLN, float bcellLN, float plasmacellLN, float antibodyLN);
+
+void RunModel(structModel *model);
