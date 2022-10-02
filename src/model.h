@@ -14,17 +14,17 @@ typedef struct structParameters
     float b_d;
     float r_dc;
     float r_t;
-    float c_mic;
+    float microgliaClearance;
     float mu_dc;
 
     float gamma_D;
     float gamma_F;
     float gamma_T;
 
-    float t_cito_media;
-    float dc_media;
+    float avgT;
+    float avgDc;
     float avgMic;
-    float odc_media;
+    float avgOdc;
     
     float c_dc;
     float c_da;
@@ -80,8 +80,8 @@ typedef struct structModel
     
     float ***microglia;
     float ***oligodendrocyte;
-    float ***convecionalDC;
-    float ***activatedDC;
+    float ***conventionalDc;
+    float ***activatedDc;
     float ***antibody;
     float ***tCytotoxic;
 
