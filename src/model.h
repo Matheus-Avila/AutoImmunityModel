@@ -107,7 +107,9 @@ float CalculateChemottaxis(float ponto_posterior_j, float ponto_anterior_j, floa
 
 float CalculateDiffusion(float ponto_posterior_j, float ponto_anterior_j, float ponto_posterior_i, float ponto_anterior_i, float ponto_atual, float hx);
 
-float* EquationsLymphNode(float* populationLN, float step);
+float fFunc(float valuePopulation, float avgPopulation);
+
+float* EquationsLymphNode(structModel model, float* populationLN, float step);
 
 void SolverLymphNode(structModel *model, float step);
 
