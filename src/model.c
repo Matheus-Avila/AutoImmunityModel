@@ -109,58 +109,66 @@ structModel ModelInitialize(structParameters params, int dt, int dx, int tFinal,
 
 }
 
-float* EquationsLymphNode(structModel model, float* populationLN, float step){
+float* EquationsLymphNode(structModel model, float* populationLN, int stepPos){
     float result[6];
     
-    float dcLN = populationLN[0];
-    float tCytoLN = populationLN[1];
-    float tHelperLN = populationLN[2];
-    float bCellLN = populationLN[3];
-    float plasmaCellLN = populationLN[4];
-    float iggGLN = populationLN[5];
+    float dcLN = model.dendriticLymphNode[stepPos];
+    float tCytoLN = model.tCytotoxicLymphNode[stepPos];
+    float tHelperLN = model.tHelperLymphNode[stepPos];
+    float bCellLN = model.bCellLymphNode[stepPos];
+    float plasmaCellLN = model.plasmaCellLymphNode[stepPos];
+    float antibodyLN = model.antibodyLymphNode[stepPos];
 
     //Describe equations
 
     //Dendritic cell
-    float activatedDcMigration = model.parametersModel.gamma_D * (model.activatedDCTissueVessels - dcLN) * (model.parametersModel.V_LV/model.parametersModel.V_LN);
-    float activatedDcClearance = model.parametersModel.c_dl * dcLN;
+    float activatedDcMigration = model.parametersModel.gammaD * (model.activatedDCTissueVessels - dcLN) * (model.parametersModel.V_LV/model.parametersModel.V_LN);
+    float activatedDcClearance = model.parametersModel.cDl * dcLN;
     result[0] = activatedDcMigration - activatedDcClearance;
 
     //T Cytotoxic
-    float tCytoActivation = model.parametersModel.b_Tc * (model.parametersModel.rho_Tc*tCytoLN*dcLN - tCytoLN*tCytoLN*dcLN/model.parametersModel.estable_T_c);
-    float tCytoHomeostasis = model.parametersModel.alpha_T_c * (model.parametersModel.estable_T_c - tCytoLN);
-    float tCytoMigration = model.parametersModel.gamma_T * (tCytoLN - model.tCytotoxicTissueVessels) * model.parametersModel.V_BV/model.parametersModel.V_LN;
+    float tCytoActivation = model.parametersModel.bTCytotoxic * (model.parametersModel.rhoTCytotoxic*tCytoLN*dcLN - tCytoLN*tCytoLN*dcLN/model.parametersModel.estableTCytotoxic);
+    float tCytoHomeostasis = model.parametersModel.alphaTCytotoxic * (model.parametersModel.estableTCytotoxic - tCytoLN);
+    float tCytoMigration = model.parametersModel.gammaT * (tCytoLN - model.tCytotoxicTissueVessels) * model.parametersModel.V_BV/model.parametersModel.V_LN;
     result[1] = tCytoActivation + tCytoHomeostasis - tCytoMigration;
 
     //T Helper
-    float tHelperActivation = model.parametersModel.b_T * (model.parametersModel.rho_T * tHelperLN * dcLN - tHelperLN * dcLN);
-    float tHelperHomeostasis = model.parametersModel.alpha_T_h * (model.parametersModel.estable_T_h - tHelperLN);
-    float tHelperDispendure = model.parametersModel.b_rho * dcLN * tHelperLN * bCellLN;
+    float tHelperActivation = model.parametersModel.bTHelper * (model.parametersModel.rhoTHelper * tHelperLN * dcLN - tHelperLN * dcLN);
+    float tHelperHomeostasis = model.parametersModel.alphaTHelper * (model.parametersModel.estableTHelper - tHelperLN);
+    float tHelperDispendure = model.parametersModel.bRho * dcLN * tHelperLN * bCellLN;
     result[2] = tHelperActivation + tHelperHomeostasis - tHelperDispendure;
 
     //B Cell
-    float bCellActivation = model.parametersModel.b_rho_b * (model.parametersModel.rho_B * tHelperLN * dcLN - tHelperLN * dcLN * bCellLN);
-    float bcellHomeostasis = model.parametersModel.alpha_B * (model.parametersModel.estable_B - bCellLN);
+    float bCellActivation = model.parametersModel.bRhoB * (model.parametersModel.rhoB * tHelperLN * dcLN - tHelperLN * dcLN * bCellLN);
+    float bcellHomeostasis = model.parametersModel.alphaB * (model.parametersModel.estableB - bCellLN);
     result[3] = bcellHomeostasis + bCellActivation;
 
     //Plasma Cells
-    float plasmaActivation = model.parametersModel.b_rho_p * (model.parametersModel.rho_P * tHelperLN * dcLN * bCellLN);
-    float plasmaHomeostasis = model.parametersModel.alpha_P * (model.parametersModel.estable_P - plasmaCellLN);
+    float plasmaActivation = model.parametersModel.bRhoP * (model.parametersModel.rhoP * tHelperLN * dcLN * bCellLN);
+    float plasmaHomeostasis = model.parametersModel.alphaP * (model.parametersModel.estableP - plasmaCellLN);
     result[4] = plasmaHomeostasis + plasmaActivation;
 
     //Antibody
-    float antibodyProduction = model.parametersModel.rho_F * plasmaCellLN;
-    float antibodyMigration = model.parametersModel.gamma_F * (iggGLN - model.antibodyTissueVessels) * (model.parametersModel.V_BV/model.parametersModel.V_LN);
+    float antibodyProduction = model.parametersModel.rhoAntibody * plasmaCellLN;
+    float antibodyMigration = model.parametersModel.gammaAntibody * (antibodyLN - model.antibodyTissueVessels) * (model.parametersModel.V_BV/model.parametersModel.V_LN);
     result[5] = antibodyProduction - antibodyMigration;
 
     return result;
 }
 
-void SolverLymphNode(structModel *model, float step){
-    float solutionLN[6];
+void SolverLymphNode(structModel *model, int stepPos){
+    float populationLN[6];
 
-
+    populationLN[0] = model->dendriticLymphNode[stepPos];
+    populationLN[1] = model->tCytotoxicLymphNode[stepPos];
+    populationLN[2] = model->tHelperLymphNode[stepPos];
+    populationLN[3] = model->bCellLymphNode[stepPos];
+    populationLN[4] = model->plasmaCellLymphNode[stepPos];
+    populationLN[5] = model->antibodyLymphNode[stepPos];
+    
+    float *solutionLN = EquationsLymphNode(*model, populationLN, stepPos);
     //Execute Euler (or RungeKutta4ThOrder)
+    model->dendriticLymphNode[stepPos] = model->dendriticLymphNode[stepPos-1]  + model->ht*solutionLN[0];
 
 }
 
@@ -184,7 +192,7 @@ void RunModel(structModel *model){
 
     for(int kTime = 1; kTime <= model->timeLen; kTime++){
         // solve lymphnode
-        SolverLymphNode(model, (float)kTime*model->ht);
+        SolverLymphNode(model, kTime);
         
         stepKPlus = kTime%2;
         
@@ -262,41 +270,41 @@ void RunModel(structModel *model){
             //Solve Tissue equations
 
             //Microglia update
-            microgliaReaction = model->parametersModel.mu_m*microgliaKMinus*(model->parametersModel.avgMic - microgliaKMinus);
-            microgliaClearance = model->parametersModel.microgliaClearance*microgliaKMinus;
+            microgliaReaction = model->parametersModel.muMic*microgliaKMinus*(model->parametersModel.avgMic - microgliaKMinus);
+            microgliaClearance = model->parametersModel.cMic*microgliaKMinus;
 
             model->microglia[stepKPlus][line][column] = microgliaKMinus + \
             model->ht*(microgliaDiffusion - microgliaChemotaxis + microgliaReaction - microgliaClearance);
 
             //Conventional DC update
-            conventionalDcReaction = model->parametersModel.mu_dc*oligodendrocyteKMinus*(model->parametersModel.avgDc - conventionalDcKMinus);
-            conventionalDcActivation = model->parametersModel.b_d*conventionalDcKMinus;
-            conventionalDcClearance = model->parametersModel.c_dc*conventionalDcKMinus;
+            conventionalDcReaction = model->parametersModel.muCDc*oligodendrocyteKMinus*(model->parametersModel.avgDc - conventionalDcKMinus);
+            conventionalDcActivation = model->parametersModel.bD*conventionalDcKMinus;
+            conventionalDcClearance = model->parametersModel.cCDc*conventionalDcKMinus;
 
             model->conventionalDc[stepKPlus][line][column] = conventionalDcKMinus + \
             model->ht*(conventionalDcDiffusion - conventionalDcChemotaxis - conventionalDcClearance + conventionalDcReaction - conventionalDcActivation);
             
             //Activated DC update
-            activatedDcClearance = model->parametersModel.c_da*activatedDcKMinus;
-            activatedDcMigration = model->thetaPV[line][column]*model->parametersModel.gamma_D*(model->dendriticLymphNode[kTime] - activatedDcKMinus);
+            activatedDcClearance = model->parametersModel.cADc*activatedDcKMinus;
+            activatedDcMigration = model->thetaPV[line][column]*model->parametersModel.gammaD*(model->dendriticLymphNode[kTime] - activatedDcKMinus);
             
             model->activatedDc[stepKPlus][line][column] = activatedDcKMinus + model->ht*(activatedDCDiffusion + conventionalDcActivation + activatedDcMigration - activatedDcClearance);
             
             //CD8 T update
-            tCytotoxicMigration = model->thetaBV[line][column]*model->parametersModel.gamma_T*(model->tCytotoxicLymphNode[kTime] - tCytotoxicKMinus);
+            tCytotoxicMigration = model->thetaBV[line][column]*model->parametersModel.gammaT*(model->tCytotoxicLymphNode[kTime] - tCytotoxicKMinus);
             
             model->tCytotoxic[stepKPlus][line][column] = tCytotoxicKMinus + model->ht*(tCytotoxicDiffusion - tCytotoxicChemotaxis + tCytotoxicMigration);
             
 
             //Antibody update
-            odcAntibodyMicrogliaFagocitosis = model->parametersModel.lamb_f_m*antibodyKMinus*(model->parametersModel.avgOdc - oligodendrocyteKMinus)*fFunc(microgliaKMinus, model->parametersModel.avgMic);
-            antibodyMigration = model->thetaBV[line][column]*model->parametersModel.gamma_F*(model->antibodyLymphNode[kTime] - antibodyKMinus);
+            odcAntibodyMicrogliaFagocitosis = model->parametersModel.lambAntMic*antibodyKMinus*(model->parametersModel.avgOdc - oligodendrocyteKMinus)*fFunc(microgliaKMinus, model->parametersModel.avgMic);
+            antibodyMigration = model->thetaBV[line][column]*model->parametersModel.gammaAntibody*(model->antibodyLymphNode[kTime] - antibodyKMinus);
             
             model->antibody[stepKPlus][line][column] = antibodyKMinus + model->ht*(antibodyDiffusion + antibodyMigration - odcAntibodyMicrogliaFagocitosis);
 
             //Oligodendrocytes update
-            odcMicrogliaFagocitosis = model->parametersModel.r_m*fFunc(microgliaKMinus, model->parametersModel.avgMic)*(model->parametersModel.avgOdc - oligodendrocyteKMinus);
-            odcTCytotoxicApoptosis = model->parametersModel.r_t*fFunc(tCytotoxicKMinus, model->parametersModel.avgT)*(model->parametersModel.avgOdc - oligodendrocyteKMinus);
+            odcMicrogliaFagocitosis = model->parametersModel.rM*fFunc(microgliaKMinus, model->parametersModel.avgMic)*(model->parametersModel.avgOdc - oligodendrocyteKMinus);
+            odcTCytotoxicApoptosis = model->parametersModel.rT*fFunc(tCytotoxicKMinus, model->parametersModel.avgT)*(model->parametersModel.avgOdc - oligodendrocyteKMinus);
 
             model->oligodendrocyte[stepKPlus][line][column] = oligodendrocyteKMinus + model->ht*(odcAntibodyMicrogliaFagocitosis + odcMicrogliaFagocitosis + odcTCytotoxicApoptosis);
             //Save Results

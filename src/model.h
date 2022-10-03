@@ -1,55 +1,54 @@
 typedef struct structParameters
 {
-    float mu_m;
-    float r_m;
+    float muMic;
+    float rM;
 
     float chi;
-    float d_mic;
-    float d_dc;
-    float d_da;
-    float d_t_cit;
-    float d_anti;
+    float micDiffusion;
+    float cDcDiffusion;
+    float aDcDiffusion;
+    float tCytoDiffusion;
+    float antibodyDiffusion;
     
-    float lamb_f_m;
-    float b_d;
-    float r_dc;
-    float r_t;
-    float microgliaClearance;
-    float mu_dc;
+    float lambAntMic;
+    float bD;
+    float rT;
+    float cMic;
+    float muCDc;
 
-    float gamma_D;
-    float gamma_F;
-    float gamma_T;
+    float gammaD;
+    float gammaAntibody;
+    float gammaT;
 
     float avgT;
     float avgDc;
     float avgMic;
     float avgOdc;
     
-    float c_dc;
-    float c_da;
-    float c_dl;
+    float cCDc;
+    float cADc;
+    float cDl;
 
-    float alpha_T_h;
-    float alpha_T_c;
-    float alpha_B;
-    float alpha_P;
+    float alphaTHelper;
+    float alphaTCytotoxic;
+    float alphaB;
+    float alphaP;
     
-    float b_T;
-    float b_Tc;
-    float b_rho;
-    float b_rho_b;
+    float bTHelper;
+    float bTCytotoxic;
+    float bRho;
+    float bRhoB;
     
-    float rho_T;
-    float rho_Tc;
-    float rho_B;
-    float rho_P;
-    float b_rho_p;
-    float rho_F;
-    float estable_T_h;
-    float estable_B;
-    float estable_P;
-    float estable_T_c;
+    float rhoTHelper;
+    float rhoTCytotoxic;
+    float rhoB;
+    float rhoP;
+    float bRhoP;
+    float rhoAntibody;
+    float estableTHelper;
+    float estableB;
+    float estableP;
+    float estableTCytotoxic;
     int V_LV;
     int V_BV;
     int V_LN;
@@ -109,9 +108,9 @@ float CalculateDiffusion(float ponto_posterior_j, float ponto_anterior_j, float 
 
 float fFunc(float valuePopulation, float avgPopulation);
 
-float* EquationsLymphNode(structModel model, float* populationLN, float step);
+float* EquationsLymphNode(structModel model, float* populationLN, int stepPos);
 
-void SolverLymphNode(structModel *model, float step);
+void SolverLymphNode(structModel *model, int stepPos);
 
 structModel ModelInitialize(structParameters params, int dt, int dx, int tFinal, int xFinal, int numFiguras);
 
