@@ -1,6 +1,8 @@
 #include "model.h"
 #include <time.h>
 #include <math.h>
+#include <stdio.h>
+#include <string.h>
 // definir estrutura com os parametros do modelo
 
 
@@ -25,6 +27,22 @@ void InitialConditionLymphNode(structModel* model, float dendriticLN, float thel
 int VerifyCFL(structParameters parametersModel){
 
     return 0;
+}
+
+void WriteFIles(structModel model, float** oligodendrocyte, float** microglia, float** tCytotoxic, float** antibody, float** conventionalDC, float ** activatedDC, float time){
+    char buffer[6];
+    gctv(time, 6,buffer);
+    char oligo[] = "oligo";
+    strcat(oligo,buffer);
+    strcat(oligo,".txt");
+    FILE *file = fopen(oligo, "w");
+
+    for(int i=0;i<model.spaceLen;i++) {
+        for(int j=0;j<model.spaceLen;j++) {
+            fprintf(file,"%f ",oligodendrocyte[i][j]);
+        }
+        fprintf(file,"\n");
+    }
 }
 
 float AdvectionTerm(float populationPoint, float avgValue){
@@ -169,7 +187,11 @@ void SolverLymphNode(structModel *model, int stepPos){
     float *solutionLN = EquationsLymphNode(*model, populationLN, stepPos);
     //Execute Euler (or RungeKutta4ThOrder)
     model->dendriticLymphNode[stepPos] = model->dendriticLymphNode[stepPos-1]  + model->ht*solutionLN[0];
-
+    model->tCytotoxicLymphNode[stepPos] = model->tCytotoxicLymphNode[stepPos-1]  + model->ht*solutionLN[1];
+    model->tHelperLymphNode[stepPos] = model->tHelperLymphNode[stepPos-1]  + model->ht*solutionLN[2];
+    model->bCellLymphNode[stepPos] = model->bCellLymphNode[stepPos-1]  + model->ht*solutionLN[3];
+    model->plasmaCellLymphNode[stepPos] = model->plasmaCellLymphNode[stepPos-1]  + model->ht*solutionLN[4];
+    model->antibodyLymphNode[stepPos] = model->antibodyLymphNode[stepPos-1]  + model->ht*solutionLN[5];
 }
 
 void RunModel(structModel *model){
@@ -190,12 +212,14 @@ void RunModel(structModel *model){
 
     float microgliaKMinus, conventionalDcKMinus, activatedDcKMinus, tCytotoxicKMinus, antibodyKMinus, oligodendrocyteKMinus;
 
+    float auxAdcPV, auxAntibodyBV, auxTCytotoxicBV;
+
     for(int kTime = 1; kTime <= model->timeLen; kTime++){
+        auxAdcPV = 0, auxAntibodyBV = 0, auxTCytotoxicBV = 0;
         // solve lymphnode
         SolverLymphNode(model, kTime);
         
-        stepKPlus = kTime%2;
-        
+        stepKPlus = kTime%2;        
         
         for(int line = 0; line < model->spaceLen; line++){//Iterando todas as colunas de uma linha antes de ir pra proxima linha
         for(int column = 0; column < model->spaceLen; column++){
@@ -278,7 +302,7 @@ void RunModel(structModel *model){
 
             //Conventional DC update
             conventionalDcReaction = model->parametersModel.muCDc*oligodendrocyteKMinus*(model->parametersModel.avgDc - conventionalDcKMinus);
-            conventionalDcActivation = model->parametersModel.bD*conventionalDcKMinus;
+            conventionalDcActivation = model->parametersModel.bD*conventionalDcKMinus*oligodendrocyteKMinus;
             conventionalDcClearance = model->parametersModel.cCDc*conventionalDcKMinus;
 
             model->conventionalDc[stepKPlus][line][column] = conventionalDcKMinus + \
@@ -307,12 +331,24 @@ void RunModel(structModel *model){
             odcTCytotoxicApoptosis = model->parametersModel.rT*fFunc(tCytotoxicKMinus, model->parametersModel.avgT)*(model->parametersModel.avgOdc - oligodendrocyteKMinus);
 
             model->oligodendrocyte[stepKPlus][line][column] = oligodendrocyteKMinus + model->ht*(odcAntibodyMicrogliaFagocitosis + odcMicrogliaFagocitosis + odcTCytotoxicApoptosis);
+            
+            if(model->thetaBV[line][column] == 1){
+                auxTCytotoxicBV += model->tCytotoxic[stepKPlus][line][column];
+                auxAntibodyBV += model->antibody[stepKPlus][line][column];
+            }
+            if(model->thetaPV[line][column] == 1){
+                auxAdcPV += model->activatedDc[stepKPlus][line][column];
+            }
+            
             //Save Results
 
 
 
         }   
         }
+        model->tCytotoxicTissueVessels = auxTCytotoxicBV;
+        model->antibodyTissueVessels = auxAntibodyBV;
+        model->activatedDCTissueVessels = auxAdcPV;
         stepKMinus += 1;
         stepKMinus = stepKMinus%2;
     }

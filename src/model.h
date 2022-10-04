@@ -121,3 +121,5 @@ void InitialConditionTissueMicroglia(structModel* model);
 void InitialConditionLymphNode(structModel* model, float dendriticLN, float thelperLN, float tcytotoxicLN, float bcellLN, float plasmacellLN, float antibodyLN);
 
 void RunModel(structModel *model);
+
+void WriteFIles(structModel model, float** oligodendrocyte, float** microglia, float** tCytotoxic, float** antibody, float** conventionalDC, float ** activatedDC, float time);
