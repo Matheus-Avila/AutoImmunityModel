@@ -29,20 +29,30 @@ int VerifyCFL(structParameters parametersModel){
     return 0;
 }
 
-void WriteFIles(structModel model, float** oligodendrocyte, float** microglia, float** tCytotoxic, float** antibody, float** conventionalDC, float ** activatedDC, float time){
-    char buffer[6];
-    gctv(time, 6,buffer);
-    char oligo[] = "oligo";
-    strcat(oligo,buffer);
-    strcat(oligo,".txt");
-    FILE *file = fopen(oligo, "w");
+void WritePopulation(float** population, char* fileName, char* bufferTime, int spaceLen){
+    strcat(fileName,bufferTime);
+    strcat(fileName,".txt");
+    FILE *file = fopen(fileName, "w");
 
-    for(int i=0;i<model.spaceLen;i++) {
-        for(int j=0;j<model.spaceLen;j++) {
-            fprintf(file,"%f ",oligodendrocyte[i][j]);
+    for(int i=0;i<spaceLen;i++) {
+        for(int j=0;j<spaceLen;j++) {
+            fprintf(file,"%f ",population[i][j]);
         }
         fprintf(file,"\n");
     }
+    fclose(file);
+}
+
+void WriteFiles(structModel model, float** oligodendrocyte, float** microglia, float** tCytotoxic, float** antibody, float** conventionalDC, float ** activatedDC, float time){
+    char buffer[6];
+    gctv(time, 6,buffer);
+    WritePopulation(oligodendrocyte, "/result/matrix/oligo", buffer, model.spaceLen);
+    WritePopulation(microglia, "/result/matrix/microglia", buffer, model.spaceLen);
+    WritePopulation(tCytotoxic, "/result/matrix/tCyto", buffer, model.spaceLen);
+    WritePopulation(antibody, "/result/matrix/antoby", buffer, model.spaceLen);
+    WritePopulation(conventionalDC, "/result/matrix/conventionalDC", buffer, model.spaceLen);
+    WritePopulation(activatedDC, "/result/matrix/activatedDC", buffer, model.spaceLen);    
+
 }
 
 float AdvectionTerm(float populationPoint, float avgValue){
@@ -208,7 +218,7 @@ void RunModel(structModel *model){
 
     float microgliaReaction, microgliaClearance, tCytotoxicMigration, odcAntibodyMicrogliaFagocitosis, \
     odcMicrogliaFagocitosis, odcTCytotoxicApoptosis, conventionalDcReaction, conventionalDcClearance, conventionalDcActivation, \
-    conventionalDcClearance, activatedDcClearance, activatedDcMigration, antibodyMigration;
+    activatedDcClearance, activatedDcMigration, antibodyMigration;
 
     float microgliaKMinus, conventionalDcKMinus, activatedDcKMinus, tCytotoxicKMinus, antibodyKMinus, oligodendrocyteKMinus;
 
@@ -340,8 +350,7 @@ void RunModel(structModel *model){
                 auxAdcPV += model->activatedDc[stepKPlus][line][column];
             }
             
-            //Save Results
-
+            WriteFiles(*model, model->oligodendrocyte[stepKPlus], model->microglia[stepKPlus], model->tCytotoxic[stepKPlus], model->antibody[stepKPlus], model->conventionalDc[stepKPlus], model->activatedDc[stepKPlus], kTime);
 
 
         }   

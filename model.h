@@ -122,4 +122,6 @@ void InitialConditionLymphNode(structModel* model, float dendriticLN, float thel
 
 void RunModel(structModel *model);
 
-void WriteFIles(structModel model, float** oligodendrocyte, float** microglia, float** tCytotoxic, float** antibody, float** conventionalDC, float ** activatedDC, float time);
+void WritePopulation(float** population, char* fileName, char* bufferTime, int spaceLen);
+
+void WriteFiles(structModel model, float** oligodendrocyte, float** microglia, float** tCytotoxic, float** antibody, float** conventionalDC, float ** activatedDC, float time);
