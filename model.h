@@ -84,18 +84,18 @@ typedef struct structModel
     float ***antibody;
     float ***tCytotoxic;
 
-    float dendriticLymphNode[2];
-    float tHelperLymphNode[2];
-    float tCytotoxicLymphNode[2];
-    float bCellLymphNode[2];
-    float plasmaCellLymphNode[2];
-    float antibodyLymphNode[2];
+    float *dendriticLymphNode;
+    float *tHelperLymphNode;
+    float *tCytotoxicLymphNode;
+    float *bCellLymphNode;
+    float *plasmaCellLymphNode;
+    float *antibodyLymphNode;
 
     structParameters parametersModel;
 
 }structModel;
 
-int VerifyCFL(structParameters parametersModel);
+int VerifyCFL(structParameters parametersModel, float ht, float hx);
 
 float AdvectionTerm(float populationPoint, float avgValue);
 
@@ -112,7 +112,7 @@ float* EquationsLymphNode(structModel model, float* populationLN, int stepPos);
 
 void SolverLymphNode(structModel *model, int stepPos);
 
-structModel ModelInitialize(structParameters params, int dt, int dx, int tFinal, int xFinal, int numFiguras);
+structModel ModelInitialize(structParameters params, float dt, float dx, float tFinal, float xFinal, int numFiguras);
 
 void DefineBVPV(structModel *model);
 

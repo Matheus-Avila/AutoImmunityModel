@@ -64,9 +64,11 @@ structParameters ParametersInitialize(){
 
 
 int main(int argc, char* argv){
+    printf("Comecei o main\n");
     structParameters parameters = ParametersInitialize();
 
     structModel model = ModelInitialize(parameters, DT, DX, TFINAL, XFINAL, NUMFIGURAS);
+    printf("Inicializacao feita!!");
     RunModel(&model);
 
     return 0;

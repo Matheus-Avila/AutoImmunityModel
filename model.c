@@ -2,9 +2,8 @@
 #include <time.h>
 #include <math.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
-// definir estrutura com os parametros do modelo
-
 
 void InitialConditionTissueMicroglia(structModel* model){
     for(int i = 0; i < model->xFinal; i++){
@@ -24,19 +23,19 @@ void InitialConditionLymphNode(structModel* model, float dendriticLN, float thel
     model->antibodyLymphNode[0] = antibodyLN;
 }
 
-int VerifyCFL(structParameters parametersModel){
+int VerifyCFL(structParameters parametersModel, float ht, float hx){
 
     return 0;
 }
 
 void WritePopulation(float** population, char* fileName, char* bufferTime, int spaceLen){
-    strcat(fileName,bufferTime);
-    strcat(fileName,".txt");
-    FILE *file = fopen(fileName, "w");
-
+    printf("Populaçao: %f\n", population[0][5]);
+    FILE *file;
+    file = fopen(fileName, "w");
     for(int i=0;i<spaceLen;i++) {
         for(int j=0;j<spaceLen;j++) {
-            fprintf(file,"%f ",population[i][j]);
+            fprintf(file,"%f ",population[0][5]);
+            printf("comecando\n");
         }
         fprintf(file,"\n");
     }
@@ -45,13 +44,17 @@ void WritePopulation(float** population, char* fileName, char* bufferTime, int s
 
 void WriteFiles(structModel model, float** oligodendrocyte, float** microglia, float** tCytotoxic, float** antibody, float** conventionalDC, float ** activatedDC, float time){
     char buffer[6];
-    gctv(time, 6,buffer);
-    WritePopulation(oligodendrocyte, "/result/matrix/oligo", buffer, model.spaceLen);
-    WritePopulation(microglia, "/result/matrix/microglia", buffer, model.spaceLen);
-    WritePopulation(tCytotoxic, "/result/matrix/tCyto", buffer, model.spaceLen);
-    WritePopulation(antibody, "/result/matrix/antoby", buffer, model.spaceLen);
-    WritePopulation(conventionalDC, "/result/matrix/conventionalDC", buffer, model.spaceLen);
-    WritePopulation(activatedDC, "/result/matrix/activatedDC", buffer, model.spaceLen);    
+    sprintf(buffer, "%f", time);
+    // gctv(time, 6,buffer);
+    printf("Salvando...\n");
+    WritePopulation(oligodendrocyte, "/result/matrix/oligo.txt", buffer, model.spaceLen);
+    WritePopulation(microglia, "/result/matrix/microglia.txt", buffer, model.spaceLen);
+    WritePopulation(tCytotoxic, "/result/matrix/tCyto.txt", buffer, model.spaceLen);
+    WritePopulation(antibody, "/result/matrix/antibody.txt", buffer, model.spaceLen);
+    WritePopulation(conventionalDC, "/result/matrix/conventionalDC.txt", buffer, model.spaceLen);
+    WritePopulation(activatedDC, "/result/matrix/activatedDC.txt", buffer, model.spaceLen);    
+
+    //Fazer chamada de sistema passando o tempo como argumento para o python e no python salvar a matriz das populações
 
 }
 
@@ -102,12 +105,13 @@ void DefineBVPV(structModel *model){
     }
 }
 
-structModel ModelInitialize(structParameters params, int dt, int dx, int tFinal, int xFinal, int numFiguras){
+structModel ModelInitialize(structParameters params, float dt, float dx, float tFinal, float xFinal, int numFiguras){
     structModel model;
     srand(time(NULL));
+    
     model.parametersModel = params;
     model.numFiguras = numFiguras;
-
+    
     model.ht = dt;
     model.hx = dx;
     model.tFinal = tFinal;
@@ -116,19 +120,69 @@ structModel ModelInitialize(structParameters params, int dt, int dx, int tFinal,
     model.spaceLen = (int)(xFinal/dx);
     
     float mesh[2][model.spaceLen][model.spaceLen]; // verificar se começa com zero!
-    model.microglia = mesh;
-    model.oligodendrocyte = mesh;
-    model.conventionalDc = mesh;
-    model.activatedDc = mesh;
-    model.antibody = mesh;
-    model.tCytotoxic = mesh;
-    model.thetaBV = mesh[0];
-    model.thetaPV = mesh[0];
+    model.microglia = (float***)malloc(2*sizeof(float**));
+    model.microglia[0] = (float**)malloc(model.spaceLen*sizeof(float*));
+    model.microglia[1] = (float**)malloc(model.spaceLen*sizeof(float*));
+    
+    model.oligodendrocyte = (float***)malloc(2*sizeof(float**));
+    model.oligodendrocyte[0] = (float**)malloc(model.spaceLen*sizeof(float*));
+    model.oligodendrocyte[1] = (float**)malloc(model.spaceLen*sizeof(float*));
+    
+    model.conventionalDc = (float***)malloc(2*sizeof(float**));
+    model.conventionalDc[0] = (float**)malloc(model.spaceLen*sizeof(float*));
+    model.conventionalDc[1] = (float**)malloc(model.spaceLen*sizeof(float*));
+
+    model.activatedDc = (float***)malloc(2*sizeof(float**));
+    model.activatedDc[0] = (float**)malloc(model.spaceLen*sizeof(float*));
+    model.activatedDc[1] = (float**)malloc(model.spaceLen*sizeof(float*));
+
+    model.tCytotoxic = (float***)malloc(2*sizeof(float**));
+    model.tCytotoxic[0] = (float**)malloc(model.spaceLen*sizeof(float*));
+    model.tCytotoxic[1] = (float**)malloc(model.spaceLen*sizeof(float*));
+
+    model.antibody = (float***)malloc(2*sizeof(float**));
+    model.antibody[0] = (float**)malloc(model.spaceLen*sizeof(float*));
+    model.antibody[1] = (float**)malloc(model.spaceLen*sizeof(float*));
+    
+    for (int i = 0; i < model.spaceLen; i++){
+        model.microglia[0][i] = (float*)malloc(model.spaceLen * sizeof(float));
+        model.microglia[1][i] = (float*)malloc(model.spaceLen * sizeof(float));
+
+        model.oligodendrocyte[0][i] = (float*)malloc(model.spaceLen * sizeof(float));
+        model.oligodendrocyte[1][i] = (float*)malloc(model.spaceLen * sizeof(float));
+
+        model.conventionalDc[0][i] = (float*)malloc(model.spaceLen * sizeof(float));
+        model.conventionalDc[1][i] = (float*)malloc(model.spaceLen * sizeof(float));
+
+        model.activatedDc[0][i] = (float*)malloc(model.spaceLen * sizeof(float));
+        model.activatedDc[1][i] = (float*)malloc(model.spaceLen * sizeof(float));
+
+        model.tCytotoxic[0][i] = (float*)malloc(model.spaceLen * sizeof(float));
+        model.tCytotoxic[1][i] = (float*)malloc(model.spaceLen * sizeof(float));
+
+        model.antibody[0][i] = (float*)malloc(model.spaceLen * sizeof(float));
+        model.antibody[1][i] = (float*)malloc(model.spaceLen * sizeof(float));
+    }
+    
+    model.thetaBV = (float**)malloc(model.spaceLen*sizeof(float*));
+    for (int i = 0; i < model.spaceLen; i++)
+        model.thetaBV[i] = (float*)malloc(model.spaceLen * sizeof(float));
+    
+    model.thetaPV = (float**)malloc(model.spaceLen*sizeof(float*));
+    for (int i = 0; i < model.spaceLen; i++)
+        model.thetaPV[i] = (float*)malloc(model.spaceLen * sizeof(float));
     InitialConditionTissueMicroglia(&model);
+
+    model.dendriticLymphNode  = (float*)malloc(model.spaceLen * sizeof(float));
+    model.tHelperLymphNode    = (float*)malloc(model.spaceLen * sizeof(float));
+    model.tCytotoxicLymphNode = (float*)malloc(model.spaceLen * sizeof(float));
+    model.bCellLymphNode      = (float*)malloc(model.spaceLen * sizeof(float));
+    model.plasmaCellLymphNode = (float*)malloc(model.spaceLen * sizeof(float));
+    model.antibodyLymphNode   = (float*)malloc(model.spaceLen * sizeof(float));
 
     //definir BV e PV
     DefineBVPV(&model);
-    
+    printf("BV e PV feitos!!\n");
     //definir lymph node
     float dendriticLN = 0, thelperLN = 0, tcytotoxicLN = 0, bcellLN = 0, plasmacellLN = 0, antibodyLN = 0;
     InitialConditionLymphNode(&model, dendriticLN, thelperLN, tcytotoxicLN, bcellLN, plasmacellLN, antibodyLN);
@@ -138,14 +192,14 @@ structModel ModelInitialize(structParameters params, int dt, int dx, int tFinal,
 }
 
 float* EquationsLymphNode(structModel model, float* populationLN, int stepPos){
-    float result[6];
+    static float result[6];
     
-    float dcLN = model.dendriticLymphNode[stepPos];
-    float tCytoLN = model.tCytotoxicLymphNode[stepPos];
-    float tHelperLN = model.tHelperLymphNode[stepPos];
-    float bCellLN = model.bCellLymphNode[stepPos];
-    float plasmaCellLN = model.plasmaCellLymphNode[stepPos];
-    float antibodyLN = model.antibodyLymphNode[stepPos];
+    float dcLN = populationLN[0];
+    float tCytoLN = populationLN[1];
+    float tHelperLN = populationLN[2];
+    float bCellLN = populationLN[3];
+    float plasmaCellLN = populationLN[4];
+    float antibodyLN = populationLN[5];
 
     //Describe equations
 
@@ -187,26 +241,29 @@ float* EquationsLymphNode(structModel model, float* populationLN, int stepPos){
 void SolverLymphNode(structModel *model, int stepPos){
     float populationLN[6];
 
-    populationLN[0] = model->dendriticLymphNode[stepPos];
-    populationLN[1] = model->tCytotoxicLymphNode[stepPos];
-    populationLN[2] = model->tHelperLymphNode[stepPos];
-    populationLN[3] = model->bCellLymphNode[stepPos];
-    populationLN[4] = model->plasmaCellLymphNode[stepPos];
-    populationLN[5] = model->antibodyLymphNode[stepPos];
+    populationLN[0] = model->dendriticLymphNode[stepPos-1];
+    populationLN[1] = model->tCytotoxicLymphNode[stepPos-1];
+    populationLN[2] = model->tHelperLymphNode[stepPos-1];
+    populationLN[3] = model->bCellLymphNode[stepPos-1];
+    populationLN[4] = model->plasmaCellLymphNode[stepPos-1];
+    populationLN[5] = model->antibodyLymphNode[stepPos-1];
     
-    float *solutionLN = EquationsLymphNode(*model, populationLN, stepPos);
+    float *solutionLN = (float*)malloc(6*sizeof(float));
+    solutionLN = EquationsLymphNode(*model, populationLN, stepPos);
+    
     //Execute Euler (or RungeKutta4ThOrder)
-    model->dendriticLymphNode[stepPos] = model->dendriticLymphNode[stepPos-1]  + model->ht*solutionLN[0];
-    model->tCytotoxicLymphNode[stepPos] = model->tCytotoxicLymphNode[stepPos-1]  + model->ht*solutionLN[1];
-    model->tHelperLymphNode[stepPos] = model->tHelperLymphNode[stepPos-1]  + model->ht*solutionLN[2];
-    model->bCellLymphNode[stepPos] = model->bCellLymphNode[stepPos-1]  + model->ht*solutionLN[3];
-    model->plasmaCellLymphNode[stepPos] = model->plasmaCellLymphNode[stepPos-1]  + model->ht*solutionLN[4];
-    model->antibodyLymphNode[stepPos] = model->antibodyLymphNode[stepPos-1]  + model->ht*solutionLN[5];
+    model->dendriticLymphNode[stepPos] = model->dendriticLymphNode[stepPos-1] + model->ht*solutionLN[0];
+    model->tCytotoxicLymphNode[stepPos] = model->tCytotoxicLymphNode[stepPos-1] + model->ht*solutionLN[1];
+    model->tHelperLymphNode[stepPos] = model->tHelperLymphNode[stepPos-1] + model->ht*solutionLN[2];
+    model->bCellLymphNode[stepPos] = model->bCellLymphNode[stepPos-1] + model->ht*solutionLN[3];
+    model->plasmaCellLymphNode[stepPos] = model->plasmaCellLymphNode[stepPos-1] + model->ht*solutionLN[4];
+    model->antibodyLymphNode[stepPos] = model->antibodyLymphNode[stepPos-1] + model->ht*solutionLN[5];
+    // free(solutionLN);
 }
 
 void RunModel(structModel *model){
     //Save IC
-
+    
     int stepKMinus = 0, stepKPlus;
 
     float upperNeumannBC = 0, lowerNeumannBC = 0, leftNeumannBC = 0, rightNeumannBC = 0;
