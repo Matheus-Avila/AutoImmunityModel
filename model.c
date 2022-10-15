@@ -5,6 +5,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+const int xSize = (int)(LENGTH/HX);
+const int tSize = (int)(TIME/HT);
+
 void InitialConditionTissueMicroglia(structModel* model){
     for(int i = 0; i < model->xFinal; i++){
         for(int j = 0; j < model->xFinal; j++){
@@ -28,12 +31,11 @@ int VerifyCFL(structParameters parametersModel, float ht, float hx){
     return 0;
 }
 
-void WritePopulation(float** population, char* fileName, char* bufferTime, int spaceLen){
-    printf("Populaçao: %f\n", population[0][5]);
+void WritePopulation(float population[xSize][xSize], char* fileName, char* bufferTime){
     FILE *file;
     file = fopen(fileName, "w");
-    for(int i=0;i<spaceLen;i++) {
-        for(int j=0;j<spaceLen;j++){
+    for(int i=0;i<xSize;i++) {
+        for(int j=0;j<xSize;j++){
             fprintf(file, "%f ", population[i][j]);
         }
         fprintf(file,"\n");
@@ -41,20 +43,18 @@ void WritePopulation(float** population, char* fileName, char* bufferTime, int s
     fclose(file);
 }
 
-void WriteFiles(structModel model, float** oligodendrocyte, float** microglia, float** tCytotoxic, float** antibody, float** conventionalDC, float ** activatedDC, float time){
-    char buffer[6];
-    sprintf(buffer, "%f", time);
+void WriteFiles(structModel model, float oligodendrocyte[xSize][xSize], float microglia[xSize][xSize], float tCytotoxic[xSize][xSize], float antibody[xSize][xSize], float conventionalDC[xSize][xSize], float  activatedDC[xSize][xSize], float time){
+    char buffer[7];
+    snprintf(buffer, sizeof(buffer), "%f", time);
     // gctv(time, 6,buffer);
-    printf("Salvando...\n");
-    WritePopulation(oligodendrocyte, "./result/matrix/oligo.txt", buffer, model.spaceLen);
-    WritePopulation(microglia, "./result/matrix/microglia.txt", buffer, model.spaceLen);
-    WritePopulation(tCytotoxic, "./result/matrix/tCyto.txt", buffer, model.spaceLen);
-    WritePopulation(antibody, "./result/matrix/antibody.txt", buffer, model.spaceLen);
-    WritePopulation(conventionalDC, "./result/matrix/conventionalDC.txt", buffer, model.spaceLen);
-    WritePopulation(activatedDC, "./result/matrix/activatedDC.txt", buffer, model.spaceLen);    
-    printf("Terminou de escrever!\n");
+    WritePopulation(oligodendrocyte, "./result/matrix/oligo.txt", buffer);
+    WritePopulation(microglia, "./result/matrix/microglia.txt", buffer);
+    WritePopulation(tCytotoxic, "./result/matrix/tCyto.txt", buffer);
+    WritePopulation(antibody, "./result/matrix/antibody.txt", buffer);
+    WritePopulation(conventionalDC, "./result/matrix/conventionalDC.txt", buffer);
+    WritePopulation(activatedDC, "./result/matrix/activatedDC.txt", buffer);    
+    // printf("Terminou de escrever!\nValor de uma posicao qualquer: %f\n", oligodendrocyte[10][6]);
     //Fazer chamada de sistema passando o tempo como argumento para o python e no python salvar a matriz das populações
-
 }
 
 float AdvectionTerm(float populationPoint, float avgValue){
@@ -104,84 +104,22 @@ void DefineBVPV(structModel *model){
     }
 }
 
-structModel ModelInitialize(structParameters params, float dt, float dx, float tFinal, float xFinal, int numFiguras){
+structModel ModelInitialize(structParameters params){
     structModel model;
     srand(time(NULL));
     
     model.parametersModel = params;
-    model.numFiguras = numFiguras;
+    model.intervaloFiguras = tSize/NUMFIGURAS;
     
-    model.ht = dt;
-    model.hx = dx;
-    model.tFinal = tFinal;
-    model.xFinal = xFinal;
-    model.timeLen = (int)(tFinal/dt);
-    model.spaceLen = (int)(xFinal/dx);
+    model.ht = HT;
+    model.hx = HX;
+    model.tFinal = TIME;
+    model.xFinal = LENGTH;
+    model.timeLen = (int)(TIME/HT);
+    model.spaceLen = (int)(LENGTH/HX);
     
-    float mesh[2][model.spaceLen][model.spaceLen]; // verificar se começa com zero!
-    model.microglia = (float***)malloc(2*sizeof(float**));
-    model.microglia[0] = (float**)malloc(model.spaceLen*sizeof(float*));
-    model.microglia[1] = (float**)malloc(model.spaceLen*sizeof(float*));
-    
-    model.oligodendrocyte = (float***)malloc(2*sizeof(float**));
-    model.oligodendrocyte[0] = (float**)malloc(model.spaceLen*sizeof(float*));
-    model.oligodendrocyte[1] = (float**)malloc(model.spaceLen*sizeof(float*));
-    
-    model.conventionalDc = (float***)malloc(2*sizeof(float**));
-    model.conventionalDc[0] = (float**)malloc(model.spaceLen*sizeof(float*));
-    model.conventionalDc[1] = (float**)malloc(model.spaceLen*sizeof(float*));
-
-    model.activatedDc = (float***)malloc(2*sizeof(float**));
-    model.activatedDc[0] = (float**)malloc(model.spaceLen*sizeof(float*));
-    model.activatedDc[1] = (float**)malloc(model.spaceLen*sizeof(float*));
-
-    model.tCytotoxic = (float***)malloc(2*sizeof(float**));
-    model.tCytotoxic[0] = (float**)malloc(model.spaceLen*sizeof(float*));
-    model.tCytotoxic[1] = (float**)malloc(model.spaceLen*sizeof(float*));
-
-    model.antibody = (float***)malloc(2*sizeof(float**));
-    model.antibody[0] = (float**)malloc(model.spaceLen*sizeof(float*));
-    model.antibody[1] = (float**)malloc(model.spaceLen*sizeof(float*));
-    
-    for (int i = 0; i < model.spaceLen; i++){
-        model.microglia[0][i] = (float*)malloc(model.spaceLen * sizeof(float));
-        model.microglia[1][i] = (float*)malloc(model.spaceLen * sizeof(float));
-
-        model.oligodendrocyte[0][i] = (float*)malloc(model.spaceLen * sizeof(float));
-        model.oligodendrocyte[1][i] = (float*)malloc(model.spaceLen * sizeof(float));
-
-        model.conventionalDc[0][i] = (float*)malloc(model.spaceLen * sizeof(float));
-        model.conventionalDc[1][i] = (float*)malloc(model.spaceLen * sizeof(float));
-
-        model.activatedDc[0][i] = (float*)malloc(model.spaceLen * sizeof(float));
-        model.activatedDc[1][i] = (float*)malloc(model.spaceLen * sizeof(float));
-
-        model.tCytotoxic[0][i] = (float*)malloc(model.spaceLen * sizeof(float));
-        model.tCytotoxic[1][i] = (float*)malloc(model.spaceLen * sizeof(float));
-
-        model.antibody[0][i] = (float*)malloc(model.spaceLen * sizeof(float));
-        model.antibody[1][i] = (float*)malloc(model.spaceLen * sizeof(float));
-    }
-    
-    model.thetaBV = (float**)malloc(model.spaceLen*sizeof(float*));
-    for (int i = 0; i < model.spaceLen; i++)
-        model.thetaBV[i] = (float*)malloc(model.spaceLen * sizeof(float));
-    
-    model.thetaPV = (float**)malloc(model.spaceLen*sizeof(float*));
-    for (int i = 0; i < model.spaceLen; i++)
-        model.thetaPV[i] = (float*)malloc(model.spaceLen * sizeof(float));
-    InitialConditionTissueMicroglia(&model);
-
-    model.dendriticLymphNode  = (float*)malloc(model.spaceLen * sizeof(float));
-    model.tHelperLymphNode    = (float*)malloc(model.spaceLen * sizeof(float));
-    model.tCytotoxicLymphNode = (float*)malloc(model.spaceLen * sizeof(float));
-    model.bCellLymphNode      = (float*)malloc(model.spaceLen * sizeof(float));
-    model.plasmaCellLymphNode = (float*)malloc(model.spaceLen * sizeof(float));
-    model.antibodyLymphNode   = (float*)malloc(model.spaceLen * sizeof(float));
-
     //definir BV e PV
     DefineBVPV(&model);
-    printf("BV e PV feitos!!\n");
     //definir lymph node
     float dendriticLN = 0, thelperLN = 0, tcytotoxicLN = 0, bcellLN = 0, plasmacellLN = 0, antibodyLN = 0;
     InitialConditionLymphNode(&model, dendriticLN, thelperLN, tcytotoxicLN, bcellLN, plasmacellLN, antibodyLN);
@@ -263,7 +201,6 @@ void RunModel(structModel *model){
     //Save IC
     
     WriteFiles(*model, model->oligodendrocyte[0], model->microglia[0], model->tCytotoxic[0], model->antibody[0], model->conventionalDc[0], model->activatedDc[0], 0);
-    printf("Acabou a escrita!\n");
 
     int stepKMinus = 0, stepKPlus;
 
@@ -285,14 +222,12 @@ void RunModel(structModel *model){
     for(int kTime = 1; kTime <= model->timeLen; kTime++){
         auxAdcPV = 0, auxAntibodyBV = 0, auxTCytotoxicBV = 0;
         // solve lymphnode
-        printf("Começou o LN\n");
         SolverLymphNode(model, kTime);
-        printf("Terminou o LN\n");
         stepKPlus = kTime%2;        
         
         for(int line = 0; line < model->spaceLen; line++){//Iterando todas as colunas de uma linha antes de ir pra proxima linha
         for(int column = 0; column < model->spaceLen; column++){
-            printf("Começou a linha %d e a coluna %d\n", line, column);
+            
             
             microgliaKMinus = model->microglia[stepKMinus][line][column];
             conventionalDcKMinus = model->conventionalDc[stepKMinus][line][column];
@@ -411,7 +346,12 @@ void RunModel(structModel *model){
             }
         }   
         }
-        if(kTime%model->numFiguras == 0 || kTime == model->timeLen)
+        printf("k resto numFigs: %d -- k/tot: %d/%d\n", kTime%model->intervaloFiguras, kTime, model->timeLen);
+        printf("Valor %f\n", model->oligodendrocyte[stepKPlus][5][11]);
+        int qqr;
+        scanf("%d",&qqr);
+
+        if(kTime%model->intervaloFiguras == 0 || kTime == model->timeLen)
             WriteFiles(*model, model->oligodendrocyte[stepKPlus], model->microglia[stepKPlus], model->tCytotoxic[stepKPlus], model->antibody[stepKPlus], model->conventionalDc[stepKPlus], model->activatedDc[stepKPlus], kTime);
         model->tCytotoxicTissueVessels = auxTCytotoxicBV;
         model->antibodyTissueVessels = auxAntibodyBV;

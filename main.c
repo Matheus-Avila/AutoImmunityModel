@@ -1,14 +1,8 @@
+#include "model.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 #include <omp.h>
-#include "model.h"
-
-#define DT 0.0002
-#define DX 0.5
-#define TFINAL 28
-#define XFINAL 20
-#define NUMFIGURAS 28
 
 structParameters ParametersInitialize(){
     structParameters params;
@@ -67,10 +61,9 @@ int main(int argc, char* argv){
     printf("Comecei o main\n");
     structParameters parameters = ParametersInitialize();
 
-    structModel model = ModelInitialize(parameters, DT, DX, TFINAL, XFINAL, NUMFIGURAS);
+    structModel model = ModelInitialize(parameters);
     printf("Inicializacao feita!!\n\n");
-
     RunModel(&model);
-
+    printf("Acabou de rodar!!!\n");
     return 0;
 }
