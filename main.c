@@ -68,7 +68,8 @@ int main(int argc, char* argv){
     structParameters parameters = ParametersInitialize();
 
     structModel model = ModelInitialize(parameters, DT, DX, TFINAL, XFINAL, NUMFIGURAS);
-    printf("Inicializacao feita!!");
+    printf("Inicializacao feita!!\n\n");
+
     RunModel(&model);
 
     return 0;

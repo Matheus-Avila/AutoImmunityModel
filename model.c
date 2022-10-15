@@ -33,9 +33,8 @@ void WritePopulation(float** population, char* fileName, char* bufferTime, int s
     FILE *file;
     file = fopen(fileName, "w");
     for(int i=0;i<spaceLen;i++) {
-        for(int j=0;j<spaceLen;j++) {
-            fprintf(file,"%f ",population[0][5]);
-            printf("comecando\n");
+        for(int j=0;j<spaceLen;j++){
+            fprintf(file, "%f ", population[i][j]);
         }
         fprintf(file,"\n");
     }
@@ -47,13 +46,13 @@ void WriteFiles(structModel model, float** oligodendrocyte, float** microglia, f
     sprintf(buffer, "%f", time);
     // gctv(time, 6,buffer);
     printf("Salvando...\n");
-    WritePopulation(oligodendrocyte, "/result/matrix/oligo.txt", buffer, model.spaceLen);
-    WritePopulation(microglia, "/result/matrix/microglia.txt", buffer, model.spaceLen);
-    WritePopulation(tCytotoxic, "/result/matrix/tCyto.txt", buffer, model.spaceLen);
-    WritePopulation(antibody, "/result/matrix/antibody.txt", buffer, model.spaceLen);
-    WritePopulation(conventionalDC, "/result/matrix/conventionalDC.txt", buffer, model.spaceLen);
-    WritePopulation(activatedDC, "/result/matrix/activatedDC.txt", buffer, model.spaceLen);    
-
+    WritePopulation(oligodendrocyte, "./result/matrix/oligo.txt", buffer, model.spaceLen);
+    WritePopulation(microglia, "./result/matrix/microglia.txt", buffer, model.spaceLen);
+    WritePopulation(tCytotoxic, "./result/matrix/tCyto.txt", buffer, model.spaceLen);
+    WritePopulation(antibody, "./result/matrix/antibody.txt", buffer, model.spaceLen);
+    WritePopulation(conventionalDC, "./result/matrix/conventionalDC.txt", buffer, model.spaceLen);
+    WritePopulation(activatedDC, "./result/matrix/activatedDC.txt", buffer, model.spaceLen);    
+    printf("Terminou de escrever!\n");
     //Fazer chamada de sistema passando o tempo como argumento para o python e no python salvar a matriz das populações
 
 }
@@ -188,7 +187,6 @@ structModel ModelInitialize(structParameters params, float dt, float dx, float t
     InitialConditionLymphNode(&model, dendriticLN, thelperLN, tcytotoxicLN, bcellLN, plasmacellLN, antibodyLN);
     
     return model;
-
 }
 
 float* EquationsLymphNode(structModel model, float* populationLN, int stepPos){
@@ -264,6 +262,9 @@ void SolverLymphNode(structModel *model, int stepPos){
 void RunModel(structModel *model){
     //Save IC
     
+    WriteFiles(*model, model->oligodendrocyte[0], model->microglia[0], model->tCytotoxic[0], model->antibody[0], model->conventionalDc[0], model->activatedDc[0], 0);
+    printf("Acabou a escrita!\n");
+
     int stepKMinus = 0, stepKPlus;
 
     float upperNeumannBC = 0, lowerNeumannBC = 0, leftNeumannBC = 0, rightNeumannBC = 0;
@@ -284,12 +285,14 @@ void RunModel(structModel *model){
     for(int kTime = 1; kTime <= model->timeLen; kTime++){
         auxAdcPV = 0, auxAntibodyBV = 0, auxTCytotoxicBV = 0;
         // solve lymphnode
+        printf("Começou o LN\n");
         SolverLymphNode(model, kTime);
-        
+        printf("Terminou o LN\n");
         stepKPlus = kTime%2;        
         
         for(int line = 0; line < model->spaceLen; line++){//Iterando todas as colunas de uma linha antes de ir pra proxima linha
         for(int column = 0; column < model->spaceLen; column++){
+            printf("Começou a linha %d e a coluna %d\n", line, column);
             
             microgliaKMinus = model->microglia[stepKMinus][line][column];
             conventionalDcKMinus = model->conventionalDc[stepKMinus][line][column];
@@ -406,12 +409,10 @@ void RunModel(structModel *model){
             if(model->thetaPV[line][column] == 1){
                 auxAdcPV += model->activatedDc[stepKPlus][line][column];
             }
-            
-            WriteFiles(*model, model->oligodendrocyte[stepKPlus], model->microglia[stepKPlus], model->tCytotoxic[stepKPlus], model->antibody[stepKPlus], model->conventionalDc[stepKPlus], model->activatedDc[stepKPlus], kTime);
-
-
         }   
         }
+        if(kTime%model->numFiguras == 0 || kTime == model->timeLen)
+            WriteFiles(*model, model->oligodendrocyte[stepKPlus], model->microglia[stepKPlus], model->tCytotoxic[stepKPlus], model->antibody[stepKPlus], model->conventionalDc[stepKPlus], model->activatedDc[stepKPlus], kTime);
         model->tCytotoxicTissueVessels = auxTCytotoxicBV;
         model->antibodyTissueVessels = auxAntibodyBV;
         model->activatedDCTissueVessels = auxAdcPV;
