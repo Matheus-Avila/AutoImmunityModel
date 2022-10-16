@@ -44,7 +44,7 @@ void WritePopulation(float population[xSize][xSize], char* fileName, char* buffe
 }
 
 void WriteFiles(structModel model, float oligodendrocyte[xSize][xSize], float microglia[xSize][xSize], float tCytotoxic[xSize][xSize], float antibody[xSize][xSize], float conventionalDC[xSize][xSize], float  activatedDC[xSize][xSize], float time){
-    char buffer[7];
+    char buffer[10];
     snprintf(buffer, sizeof(buffer), "%f", time);
     // gctv(time, 6,buffer);
     WritePopulation(oligodendrocyte, "./result/matrix/oligo.txt", buffer);
@@ -52,9 +52,24 @@ void WriteFiles(structModel model, float oligodendrocyte[xSize][xSize], float mi
     WritePopulation(tCytotoxic, "./result/matrix/tCyto.txt", buffer);
     WritePopulation(antibody, "./result/matrix/antibody.txt", buffer);
     WritePopulation(conventionalDC, "./result/matrix/conventionalDC.txt", buffer);
-    WritePopulation(activatedDC, "./result/matrix/activatedDC.txt", buffer);    
-    // printf("Terminou de escrever!\nValor de uma posicao qualquer: %f\n", oligodendrocyte[10][6]);
+    WritePopulation(activatedDC, "./result/matrix/activatedDC.txt", buffer);
     //Fazer chamada de sistema passando o tempo como argumento para o python e no python salvar a matriz das populações
+    char command[70] = {};
+    strcat(command, "python3 plotMatrices.py ");
+    snprintf(buffer, sizeof(buffer), "%d", xSize);
+    strcat(command, buffer);
+    strcat(command, " ");
+    snprintf(buffer, sizeof(buffer), "%f", HX);
+    strcat(command, buffer);
+    strcat(command, " ");
+    snprintf(buffer, sizeof(buffer), "%f", time);
+    strcat(command, buffer);
+    // snprintf(command, sizeof(command), "%s", "echo plotMatrices.py ");
+    // snprintf(command, sizeof(command), "%s", " ");
+    // snprintf(command, sizeof(command), "%f", HX);
+    // snprintf(command, sizeof(command), "%s", " ");
+    // snprintf(command, sizeof(command), "%f", time);
+    system(command);
 }
 
 float AdvectionTerm(float populationPoint, float avgValue){
@@ -346,11 +361,8 @@ void RunModel(structModel *model){
             }
         }   
         }
-        printf("k resto numFigs: %d -- k/tot: %d/%d\n", kTime%model->intervaloFiguras, kTime, model->timeLen);
-        printf("Valor %f\n", model->oligodendrocyte[stepKPlus][5][11]);
-        int qqr;
-        scanf("%d",&qqr);
-
+        // printf("k resto numFigs: %d -- k/tot: %d/%d\n", kTime%model->intervaloFiguras, kTime, model->timeLen);
+        // printf("Valor %f\n", model->oligodendrocyte[stepKPlus][5][11]);
         if(kTime%model->intervaloFiguras == 0 || kTime == model->timeLen)
             WriteFiles(*model, model->oligodendrocyte[stepKPlus], model->microglia[stepKPlus], model->tCytotoxic[stepKPlus], model->antibody[stepKPlus], model->conventionalDc[stepKPlus], model->activatedDc[stepKPlus], kTime);
         model->tCytotoxicTissueVessels = auxTCytotoxicBV;
