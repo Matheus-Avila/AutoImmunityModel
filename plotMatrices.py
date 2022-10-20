@@ -21,7 +21,8 @@ def createDirectories():
     os.system("mkdir result/da")
     os.system("mkdir result/ant")
 
-createDirectories()
+if timePrint < 1:
+    createDirectories()
 
 populationTitle = {
     "odc": "Destroyed oligodendrocytes",

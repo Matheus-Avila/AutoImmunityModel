@@ -112,9 +112,9 @@ float AdvectionTerm(float populationPoint, float avgValue);
 float UpDownWind(float frontIPoint, float ijPoint, float avgValue);
 
 float CalculateChemottaxis(float ponto_posterior_j, float ponto_anterior_j, float ponto_posterior_i, float ponto_anterior_i, float ponto_atual,\
- float valor_medio, float gradiente_odc_i, float gradiente_odc_j, float hx);
+ float valor_medio, float gradiente_odc_i, float gradiente_odc_j);
 
-float CalculateDiffusion(float ponto_posterior_j, float ponto_anterior_j, float ponto_posterior_i, float ponto_anterior_i, float ponto_atual, float hx);
+float CalculateDiffusion(float ponto_posterior_j, float ponto_anterior_j, float ponto_posterior_i, float ponto_anterior_i, float ponto_atual);
 
 float fFunc(float valuePopulation, float avgPopulation);
 
