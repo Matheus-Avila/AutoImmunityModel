@@ -238,8 +238,7 @@ void RunModel(structModel *model){
         stepKPlus = kTime%2;
         
         for(int line = 0; line < model->spaceLen; line++){//Iterando todas as colunas de uma linha antes de ir pra proxima linha
-        for(int column = 0; column < model->spaceLen; column++){
-            
+        for(int column = 0; column < model->spaceLen; column++){            
             
             microgliaKMinus = model->microglia[stepKMinus][line][column];
             conventionalDcKMinus = model->conventionalDc[stepKMinus][line][column];
