@@ -325,7 +325,7 @@ void RunModel(structModel *model){
             conventionalDcActivation = model->parametersModel.bD*conventionalDcKMinus*oligodendrocyteKMinus;
             conventionalDcClearance = model->parametersModel.cCDc*conventionalDcKMinus;
 
-            model->conventionalDc[stepKPlus][line][column] = conventionalDcKMinus + \
+            model->conventionalDc[stepKPlus][line][column] = conventionalDcKMinus;// + \
             model->ht*(conventionalDcDiffusion - conventionalDcChemotaxis - conventionalDcClearance + conventionalDcReaction - conventionalDcActivation);
             if(isnanf(model->conventionalDc[stepKPlus][line][column])){
                 printf("CDC deu erro no tempo %f\n", kTime*HT);
@@ -336,7 +336,7 @@ void RunModel(structModel *model){
             activatedDcClearance = model->parametersModel.cADc*activatedDcKMinus;
             activatedDcMigration = model->thetaPV[line][column]*model->parametersModel.gammaD*(model->dendriticLymphNode[kTime] - activatedDcKMinus);
             
-            model->activatedDc[stepKPlus][line][column] = activatedDcKMinus + model->ht*(activatedDCDiffusion + conventionalDcActivation + activatedDcMigration - activatedDcClearance);
+            model->activatedDc[stepKPlus][line][column] = activatedDcKMinus;// + model->ht*(activatedDCDiffusion + conventionalDcActivation + activatedDcMigration - activatedDcClearance);
             if(isnanf(model->activatedDc[stepKPlus][line][column])){
                 printf("ADC deu erro no tempo %f\n", kTime*HT);
                 exit(0);
@@ -345,7 +345,7 @@ void RunModel(structModel *model){
             //CD8 T update
             tCytotoxicMigration = model->thetaBV[line][column]*model->parametersModel.gammaT*(model->tCytotoxicLymphNode[kTime] - tCytotoxicKMinus);
             
-            model->tCytotoxic[stepKPlus][line][column] = tCytotoxicKMinus + model->ht*(tCytotoxicDiffusion - tCytotoxicChemotaxis + tCytotoxicMigration);
+            model->tCytotoxic[stepKPlus][line][column] = tCytotoxicKMinus;// + model->ht*(tCytotoxicDiffusion - tCytotoxicChemotaxis + tCytotoxicMigration);
             if(isnanf(model->tCytotoxic[stepKPlus][line][column])){
                 printf("tCytotoxic deu erro no tempo %f\n", kTime*HT);
                 exit(0);
@@ -355,7 +355,7 @@ void RunModel(structModel *model){
             odcAntibodyMicrogliaFagocitosis = model->parametersModel.lambAntMic*antibodyKMinus*(model->parametersModel.avgOdc - oligodendrocyteKMinus)*fFunc(microgliaKMinus, model->parametersModel.avgMic);
             antibodyMigration = model->thetaBV[line][column]*model->parametersModel.gammaAntibody*(model->antibodyLymphNode[kTime] - antibodyKMinus);
             
-            model->antibody[stepKPlus][line][column] = antibodyKMinus + model->ht*(antibodyDiffusion + antibodyMigration - odcAntibodyMicrogliaFagocitosis);
+            model->antibody[stepKPlus][line][column] = antibodyKMinus;// + model->ht*(antibodyDiffusion + antibodyMigration - odcAntibodyMicrogliaFagocitosis);
             if(isnanf(model->antibody[stepKPlus][line][column])){
                 printf("antibody deu erro no tempo %f\n", kTime*HT);
                 exit(0);
@@ -365,7 +365,7 @@ void RunModel(structModel *model){
             odcMicrogliaFagocitosis = model->parametersModel.rM*fFunc(microgliaKMinus, model->parametersModel.avgMic)*(model->parametersModel.avgOdc - oligodendrocyteKMinus);
             odcTCytotoxicApoptosis = model->parametersModel.rT*fFunc(tCytotoxicKMinus, model->parametersModel.avgT)*(model->parametersModel.avgOdc - oligodendrocyteKMinus);
 
-            model->oligodendrocyte[stepKPlus][line][column] = oligodendrocyteKMinus + model->ht*(odcAntibodyMicrogliaFagocitosis + odcMicrogliaFagocitosis + odcTCytotoxicApoptosis);
+            model->oligodendrocyte[stepKPlus][line][column] = oligodendrocyteKMinus;// + model->ht*(odcAntibodyMicrogliaFagocitosis + odcMicrogliaFagocitosis + odcTCytotoxicApoptosis);
             if(isnanf(model->oligodendrocyte[stepKPlus][line][column])){
                 printf("oligodendrocyte deu erro no tempo %f\n", kTime*HT);
                 exit(0);
@@ -378,7 +378,8 @@ void RunModel(structModel *model){
                 auxAdcPV += model->activatedDc[stepKPlus][line][column];
             }
         }   
-        }
+        }if(microgliaDiffusion != 0)
+            printf("Difusao = %f", microgliaDiffusion);
         // printf("k resto numFigs: %d -- k/tot: %d/%d\n", kTime%model->intervaloFiguras, kTime, model->timeLen);
         // printf("Valor %f\n", model->oligodendrocyte[stepKPlus][5][11]);
         if(kTime%model->intervaloFiguras == 0 || kTime == model->timeLen)
