@@ -6,7 +6,7 @@
 
 structParameters ParametersInitialize(){
     structParameters params;
-    params.aDcDiffusion = 9.6*24*6.6*pow(10,-5);
+    params.micDiffusion = 9.6*24*6.6*pow(10,-5);
     params.antibodyDiffusion = 9.6*24*6.6*pow(10,-5);
     params.cDcDiffusion = 9.6*24*6.6*pow(10,-5);
     params.aDcDiffusion = 9.6*24*6.6*pow(10,-5);
@@ -21,8 +21,8 @@ structParameters ParametersInitialize(){
     params.bD = 0.001;
     
     params.gammaD = 0.01;
-    params.gammaAntibody = 0.3;
-    params.gammaT = 0.2;
+    params.gammaAntibody = 0.03;
+    params.gammaT = 0.0003;
 
     params.avgT = 37;
     params.avgDc = 33;
