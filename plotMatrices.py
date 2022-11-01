@@ -105,4 +105,4 @@ with open("./result/matrix/antibody.txt", 'r') as f:
             anticorpo_atual[line][column] = lista[line][column]
     printMesh(timePrint, anticorpo_atual, "ant")
 
-print("Terminou o plot!!!")
+print("Terminou o plot - "+str(timePrint))

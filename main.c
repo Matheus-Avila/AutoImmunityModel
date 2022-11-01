@@ -21,7 +21,7 @@ structParameters ParametersInitialize(){
     params.bD = 0.001;
     
     params.gammaD = 0.01;
-    params.gammaAntibody = 0.03;
+    params.gammaAntibody = 0.003;
     params.gammaT = 0.0003;
 
     params.avgT = 37;
@@ -64,6 +64,5 @@ int main(int argc, char* argv){
     structModel model = ModelInitialize(parameters);
     printf("Inicializacao feita!!\n\n");
     RunModel(&model);
-    printf("Acabou de rodar!!!\n");
     return 0;
 }
