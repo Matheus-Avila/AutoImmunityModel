@@ -21,7 +21,7 @@ structParameters ParametersInitialize(){
     params.bD = 0.001;
     
     params.gammaD = 0.01;
-    params.gammaAntibody = 0.003;
+    params.gammaAntibody = 0.3;
     params.gammaT = 0.03;
 
     params.avgT = 37;
