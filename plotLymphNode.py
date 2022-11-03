@@ -42,11 +42,10 @@ with open("./result/dendritic.txt", 'r') as f:
 for i in range(len(TL_c)):
     TL_c_vetor[i] = TL_c[i]
     TL_h_vetor[i] = TL_h[i]
-    B_vector = BV[i]
-    FL_vector = FL[i]
-    PL_vector = PL[i]
-    DL_vector = DL[i]
-    
+    B_vetor[i] = BV[i]
+    FL_vetor[i] = FL[i]
+    PL_vetor[i] = PL[i]
+    DL_vetor[i] = DL[i]
 plt.plot(t,TL_c_vetor, "-r")
 plt.title("Lymph node - T $CD8^+$")
 plt.xlabel("Time (days)")

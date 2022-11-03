@@ -211,7 +211,7 @@ float* EquationsLymphNode(structModel model, float* populationLN, int stepPos){
 
     //Dendritic cell
     float activatedDcMigration = model.parametersModel.gammaD * (model.activatedDCTissueVessels - dcLN) * (float)(model.parametersModel.V_PV/model.parametersModel.V_LN);
-    float activatedDcClearance = model.parametersModel.cDl * dcLN;
+    float activatedDcClearance = 0.0;//model.parametersModel.cDl * dcLN;
     result[0] = activatedDcMigration - activatedDcClearance;
 
     //T Cytotoxic
@@ -439,8 +439,8 @@ void RunModel(structModel *model){
             }
 
             //Antibody update
-            odcAntibodyMicrogliaFagocitosis = 0.0;//model->parametersModel.lambAntMic*antibodyKMinus*(model->parametersModel.avgOdc - oligodendrocyteKMinus)*fFunc(microgliaKMinus, model->parametersModel.avgMic);
-            antibodyMigration = 0.0;// model->thetaBV[line][column]*model->parametersModel.gammaAntibody*(model->antibodyLymphNode[kTime] - antibodyKMinus);
+            odcAntibodyMicrogliaFagocitosis = 0.0; // model->parametersModel.lambAntMic*antibodyKMinus*(model->parametersModel.avgOdc - oligodendrocyteKMinus)*fFunc(microgliaKMinus, model->parametersModel.avgMic);
+            antibodyMigration = model->thetaBV[line][column]*model->parametersModel.gammaAntibody*(model->antibodyLymphNode[kTime] - antibodyKMinus);
             
             model->antibody[stepKPlus][line][column] = antibodyKMinus + model->ht*(antibodyDiffusion + antibodyMigration - odcAntibodyMicrogliaFagocitosis);
             if((model->antibody[stepKPlus][line][column]) < 0 || isnanf (model->antibody[stepKPlus][line][column])){
