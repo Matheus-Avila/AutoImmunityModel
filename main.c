@@ -7,7 +7,7 @@
 structParameters ParametersInitialize(){
     structParameters params;
     params.micDiffusion = 9.6*24*6.6*pow(10,-5);
-    params.antibodyDiffusion = 9.6*24*6.6*pow(10,-5);
+    params.antibodyDiffusion = 9.6*24*6.6*pow(10,-4);
     params.cDcDiffusion = 9.6*24*6.6*pow(10,-5);
     params.aDcDiffusion = 9.6*24*6.6*pow(10,-5);
     params.tCytoDiffusion = 9.6*24*6.6*pow(10,-5);
@@ -33,12 +33,13 @@ structParameters ParametersInitialize(){
     params.cCDc = 0.1;
     params.cADc = 0.1;
     params.cDl = 0.1;
+    params.cF = 0.1;
     params.alphaTHelper = 0.1;
     params.alphaTCytotoxic = 0.1;
     params.alphaB = 0.1;
     params.alphaP = 0.1;
     params.bTHelper = 0.17;
-    params.bTCytotoxic = 0.017;
+    params.bTCytotoxic = 0.001;
     params.bRho = 0.6;
     params.bRhoB = 3.02;
     params.rhoTHelper = 2;
@@ -46,7 +47,7 @@ structParameters ParametersInitialize(){
     params.rhoB = 11;
     params.rhoP = 3;
     params.bRhoP = 1.02;
-    params.rhoAntibody = pow(5.1,-2);
+    params.rhoAntibody = 5.1*pow(10,-2);
     params.estableTHelper = 84;
     params.estableTCytotoxic = 40;
     params.estableB = 25;

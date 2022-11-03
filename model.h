@@ -38,6 +38,7 @@ typedef struct structParameters
     float cCDc;
     float cADc;
     float cDl;
+    float cF;
 
     float alphaTHelper;
     float alphaTCytotoxic;

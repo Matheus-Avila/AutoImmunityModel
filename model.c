@@ -54,7 +54,6 @@ void WritePopulationLymphNode(float population[tSize], char* fileName){
 }
 
 void WriteLymphNodeFiles(float dendritic[tSize], float tHelper[tSize], float tCytotoxic[tSize], float bCell[tSize], float plasmaCell[tSize], float antibody[tSize]){
-    printf("t cito = %f\n", tCytotoxic[0]);
     WritePopulationLymphNode(dendritic, "./result/dendritic.txt");
     WritePopulationLymphNode(tHelper, "./result/tHelper.txt");
     WritePopulationLymphNode(tCytotoxic, "./result/tCyto.txt");
@@ -215,7 +214,7 @@ float* EquationsLymphNode(structModel model, float* populationLN, int stepPos){
     result[0] = activatedDcMigration - activatedDcClearance;
 
     //T Cytotoxic
-    float tCytoActivation = model.parametersModel.bTCytotoxic * (model.parametersModel.rhoTCytotoxic*tCytoLN*dcLN - tCytoLN*tCytoLN*dcLN/model.parametersModel.estableTCytotoxic);
+    float tCytoActivation = model.parametersModel.bTCytotoxic * (model.parametersModel.rhoTCytotoxic*tCytoLN*dcLN - tCytoLN*dcLN);
     float tCytoHomeostasis = model.parametersModel.alphaTCytotoxic * (model.parametersModel.estableTCytotoxic - tCytoLN);
     float tCytoMigration = model.parametersModel.gammaT * (tCytoLN - model.tCytotoxicTissueVessels) * (float)(model.parametersModel.V_BV/model.parametersModel.V_LN);
     result[1] = tCytoActivation + tCytoHomeostasis - tCytoMigration;
@@ -238,6 +237,7 @@ float* EquationsLymphNode(structModel model, float* populationLN, int stepPos){
 
     //Antibody
     float antibodyProduction = model.parametersModel.rhoAntibody * plasmaCellLN;
+    float antibodyDecayment = model.parametersModel.cF * antibodyLN;
     float antibodyMigration = model.parametersModel.gammaAntibody * (antibodyLN - model.antibodyTissueVessels) * (float)(model.parametersModel.V_BV/model.parametersModel.V_LN);
     result[5] = antibodyProduction - antibodyMigration;
 
@@ -323,6 +323,8 @@ void RunModel(structModel *model){
         auxAdcPV = 0.0, auxAntibodyBV = 0.0, auxTCytotoxicBV = 0.0;
         // solve lymphnode
         SolverLymphNode(model, kTime);
+        if(model->tCytotoxicLymphNode[0] != 0)
+            printf("t cito = %f, no tempo %f\n", model->tCytotoxicLymphNode[0], kTime*HT);
         stepKPlus = kTime%2;
         for(int line = 0; line < model->spaceLen; line++){//Iterando todas as colunas de uma linha antes de ir pra proxima linha
         for(int column = 0; column < model->spaceLen; column++){            
