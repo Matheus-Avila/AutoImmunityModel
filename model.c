@@ -130,21 +130,49 @@ float fFunc(float valuePopulation, float avgPopulation){
 
 void DefineBVPV(structModel *model){
     int randomVal;
-    for(int i = 0; i < model->xFinal; i++){
-        for(int j = 0; j < model->xFinal; j++){
+    for(int i = 0; i < xSize; i++){
+        for(int j = 0; j < xSize; j++){
             randomVal = rand() % 100;
             if(randomVal <10){
+                model->parametersModel.V_BV++;
+                model->parametersModel.V_PV++;
                 model->thetaBV[i][j] = 1;
-                if(j != model->xFinal-1)
+                if(j != xSize-1)
                     model->thetaPV[i][j+1] = 1;
                 else
                     model->thetaPV[i][0] = 1;
             }
         }
     }
+    printf("bv = %d, pv = %d \n", model->parametersModel.V_BV, model->parametersModel.V_PV);
+    WriteBVPV(model->thetaBV, model->thetaPV);
 }
 
-// void WriteBVPV(int thetaBV[xSize], int thetaPV[xSize])
+void WriteBVPV(float thetaBV[xSize][xSize], float thetaPV[xSize][xSize]){
+    FILE *fileBV;
+    fileBV = fopen("./result/bv.txt", "w");
+    FILE *filePV;
+    filePV = fopen("./result/pv.txt", "w");
+    for(int i = 0; i < xSize; i++){        
+    for(int j = 0; j < xSize; j++){
+        fprintf(fileBV, "%f ", thetaBV[i][j]);
+        fprintf(filePV, "%f ", thetaPV[i][j]);    
+    }
+    fprintf(fileBV,"\n");
+    fprintf(filePV,"\n");
+    }
+    fclose(fileBV);
+    fclose(filePV);
+    char buffer[10];
+    char command[70] = {};
+    strcat(command, "python3 plotBVPV.py ");
+    snprintf(buffer, sizeof(buffer), "%d", LENGTH);
+    strcat(command, buffer);
+    strcat(command, " ");
+    snprintf(buffer, sizeof(buffer), "%f", HX);
+    strcat(command, buffer);
+    // system(command);
+}
 
 structModel ModelInitialize(structParameters params){
     structModel model;
@@ -182,7 +210,7 @@ float* EquationsLymphNode(structModel model, float* populationLN, int stepPos){
     //Describe equations
 
     //Dendritic cell
-    float activatedDcMigration = model.parametersModel.gammaD * (model.activatedDCTissueVessels - dcLN) * (float)(model.parametersModel.V_LV/model.parametersModel.V_LN);
+    float activatedDcMigration = model.parametersModel.gammaD * (model.activatedDCTissueVessels - dcLN) * (float)(model.parametersModel.V_PV/model.parametersModel.V_LN);
     float activatedDcClearance = model.parametersModel.cDl * dcLN;
     result[0] = activatedDcMigration - activatedDcClearance;
 

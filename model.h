@@ -59,7 +59,7 @@ typedef struct structParameters
     float estableB;
     float estableP;
     float estableTCytotoxic;
-    int V_LV;
+    int V_PV;
     int V_BV;
     int V_LN;
 }structParameters;

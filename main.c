@@ -52,6 +52,8 @@ structParameters ParametersInitialize(){
     params.estableB = 25;
     params.estableP = 2.5;
     params.V_LN = 160;
+    params.V_BV = 0;
+    params.V_PV = 0;
 
     return params;
 }
