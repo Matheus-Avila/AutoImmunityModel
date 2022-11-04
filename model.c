@@ -176,9 +176,8 @@ void WriteBVPV(float thetaBV[xSize][xSize], float thetaPV[xSize][xSize]){
 structModel ModelInitialize(structParameters params){
     structModel model;
     srand(2);
-    
     model.parametersModel = params;
-    model.intervaloFiguras = tSize/NUMFIGURAS;
+    model.intervaloFiguras = (int)tSize/NUMFIGURAS;
     
     model.ht = HT;
     model.hx = HX;
@@ -186,7 +185,6 @@ structModel ModelInitialize(structParameters params){
     model.xFinal = LENGTH;
     model.timeLen = (int)(TIME/HT);
     model.spaceLen = (int)(LENGTH/HX);
-    
     //definir BV e PV
     DefineBVPV(&model);
     //definir lymph node
@@ -421,7 +419,7 @@ void RunModel(structModel *model){
 
             //Activated DC update
             activatedDcClearance = model->parametersModel.cADc*activatedDcKMinus;
-            activatedDcMigration = model->thetaPV[line][column]*model->parametersModel.gammaD*(model->dendriticLymphNode[kTime] - activatedDcKMinus);
+            activatedDcMigration = 0.0;//model->thetaPV[line][column]*model->parametersModel.gammaD*(model->dendriticLymphNode[kTime] - activatedDcKMinus);
             
             model->activatedDc[stepKPlus][line][column] = activatedDcKMinus + model->ht*(activatedDCDiffusion + conventionalDcActivation + activatedDcMigration - activatedDcClearance);
             if((model->activatedDc[stepKPlus][line][column]) < 0 || isnanf (model->activatedDc[stepKPlus][line][column])){
@@ -430,7 +428,7 @@ void RunModel(structModel *model){
             }
 
             //CD8 T update
-            tCytotoxicMigration = model->thetaBV[line][column]*model->parametersModel.gammaT*(model->tCytotoxicLymphNode[kTime] - tCytotoxicKMinus);
+            tCytotoxicMigration = 0.0;//model->thetaBV[line][column]*model->parametersModel.gammaT*(model->tCytotoxicLymphNode[kTime] - tCytotoxicKMinus);
             
             model->tCytotoxic[stepKPlus][line][column] = tCytotoxicKMinus + model->ht*(tCytotoxicDiffusion - tCytotoxicChemotaxis + tCytotoxicMigration);
             if((model->tCytotoxic[stepKPlus][line][column]) < 0 || isnanf (model->tCytotoxic[stepKPlus][line][column])){
@@ -440,7 +438,7 @@ void RunModel(structModel *model){
 
             //Antibody update
             odcAntibodyMicrogliaFagocitosis = model->parametersModel.lambAntMic*antibodyKMinus*(model->parametersModel.avgOdc - oligodendrocyteKMinus)*fFunc(microgliaKMinus, model->parametersModel.avgMic);
-            antibodyMigration = model->thetaBV[line][column]*model->parametersModel.gammaAntibody*(model->antibodyLymphNode[kTime] - antibodyKMinus);
+            antibodyMigration = 0.0;//model->thetaBV[line][column]*model->parametersModel.gammaAntibody*(model->antibodyLymphNode[kTime] - antibodyKMinus);
             
             model->antibody[stepKPlus][line][column] = antibodyKMinus + model->ht*(antibodyDiffusion + antibodyMigration - odcAntibodyMicrogliaFagocitosis);
             if((model->antibody[stepKPlus][line][column]) < 0 || isnanf (model->antibody[stepKPlus][line][column])){

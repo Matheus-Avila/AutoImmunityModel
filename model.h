@@ -49,17 +49,17 @@ typedef struct structParameters
     float bTCytotoxic;
     float bRho;
     float bRhoB;
+    float bRhoP;
     
     float rhoTHelper;
     float rhoTCytotoxic;
     float rhoB;
     float rhoP;
-    float bRhoP;
     float rhoAntibody;
     float estableTHelper;
+    float estableTCytotoxic;
     float estableB;
     float estableP;
-    float estableTCytotoxic;
     int V_PV;
     int V_BV;
     int V_LN;
