@@ -175,7 +175,7 @@ void WriteBVPV(float thetaBV[xSize][xSize], float thetaPV[xSize][xSize]){
 
 structModel ModelInitialize(structParameters params){
     structModel model;
-    srand(time(NULL));
+    srand(2);
     
     model.parametersModel = params;
     model.intervaloFiguras = tSize/NUMFIGURAS;
@@ -197,7 +197,7 @@ structModel ModelInitialize(structParameters params){
 }
 
 float* EquationsLymphNode(structModel model, float* populationLN, int stepPos){
-    static float result[6];
+    float* result =(float *)malloc(sizeof(float)*6);
     
     float dcLN = populationLN[0];
     float tCytoLN = populationLN[1];
@@ -254,7 +254,7 @@ void SolverLymphNode(structModel *model, int stepPos){
     populationLN[4] = model->plasmaCellLymphNode[stepPos-1];
     populationLN[5] = model->antibodyLymphNode[stepPos-1];
     
-    float *solutionLN = (float*)malloc(6*sizeof(float));
+    float* solutionLN;
     solutionLN = EquationsLymphNode(*model, populationLN, stepPos);
     
     //Execute Euler (or RungeKutta4ThOrder)
@@ -264,7 +264,7 @@ void SolverLymphNode(structModel *model, int stepPos){
     model->bCellLymphNode[stepPos] = model->bCellLymphNode[stepPos-1] + model->ht*solutionLN[3];
     model->plasmaCellLymphNode[stepPos] = model->plasmaCellLymphNode[stepPos-1] + model->ht*solutionLN[4];
     model->antibodyLymphNode[stepPos] = model->antibodyLymphNode[stepPos-1] + model->ht*solutionLN[5];
-    // free(solutionLN);
+    free(solutionLN); 
 
     if(model->dendriticLymphNode[stepPos] < 0 ||  isnanf (model->dendriticLymphNode[stepPos])){
         printf("DC lymph node (%f) deu erro no tempo %f\n", model->dendriticLymphNode[stepPos], stepPos*HT);
@@ -322,9 +322,7 @@ void RunModel(structModel *model){
     for(int kTime = 1; kTime <= model->timeLen; kTime++){
         auxAdcPV = 0.0, auxAntibodyBV = 0.0, auxTCytotoxicBV = 0.0;
         // solve lymphnode
-        SolverLymphNode(model, kTime);
-        if(model->tCytotoxicLymphNode[0] != 0)
-            printf("t cito = %f, no tempo %f\n", model->tCytotoxicLymphNode[0], kTime*HT);
+        // SolverLymphNode(model, kTime);
         stepKPlus = kTime%2;
         for(int line = 0; line < model->spaceLen; line++){//Iterando todas as colunas de uma linha antes de ir pra proxima linha
         for(int column = 0; column < model->spaceLen; column++){            
@@ -446,7 +444,7 @@ void RunModel(structModel *model){
             
             model->antibody[stepKPlus][line][column] = antibodyKMinus + model->ht*(antibodyDiffusion + antibodyMigration - odcAntibodyMicrogliaFagocitosis);
             if((model->antibody[stepKPlus][line][column]) < 0 || isnanf (model->antibody[stepKPlus][line][column])){
-                printf("antibody (%f) deu erro no tempo %f\n", (model->antibody[stepKPlus][line][column]), kTime*HT);
+                printf("antibody (%.8f) deu erro no tempo %f\n", (model->antibody[stepKPlus][line][column]), kTime*HT);
                 exit(0);
             }
 

@@ -22,7 +22,7 @@ structParameters ParametersInitialize(){
     
     params.gammaD = 0.01;
     params.gammaAntibody = 0.3;
-    params.gammaT = 0.03;
+    params.gammaT = 2;
 
     params.avgT = 37;
     params.avgDc = 33;
@@ -42,11 +42,11 @@ structParameters ParametersInitialize(){
     params.bTCytotoxic = 0.001;
     params.bRho = 0.6;
     params.bRhoB = 3.02;
+    params.bRhoP = 1.02;
     params.rhoTHelper = 2;
     params.rhoTCytotoxic = 2;
     params.rhoB = 11;
     params.rhoP = 3;
-    params.bRhoP = 1.02;
     params.rhoAntibody = 5.1*pow(10,-2);
     params.estableTHelper = 84;
     params.estableTCytotoxic = 40;
