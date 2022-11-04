@@ -320,7 +320,7 @@ void RunModel(structModel *model){
     for(int kTime = 1; kTime <= model->timeLen; kTime++){
         auxAdcPV = 0.0, auxAntibodyBV = 0.0, auxTCytotoxicBV = 0.0;
         // solve lymphnode
-        // SolverLymphNode(model, kTime);
+        SolverLymphNode(model, kTime);
         stepKPlus = kTime%2;
         for(int line = 0; line < model->spaceLen; line++){//Iterando todas as colunas de uma linha antes de ir pra proxima linha
         for(int column = 0; column < model->spaceLen; column++){            
