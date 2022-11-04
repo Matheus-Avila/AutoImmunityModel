@@ -208,7 +208,7 @@ float* EquationsLymphNode(structModel model, float* populationLN, int stepPos){
 
     //Dendritic cell
     float activatedDcMigration = model.parametersModel.gammaD * (model.activatedDCTissueVessels - dcLN) * (float)(model.parametersModel.V_PV/model.parametersModel.V_LN);
-    float activatedDcClearance = 0.0;//model.parametersModel.cDl * dcLN;
+    float activatedDcClearance = model.parametersModel.cDl * dcLN;
     result[0] = activatedDcMigration - activatedDcClearance;
 
     //T Cytotoxic
@@ -466,9 +466,9 @@ void RunModel(structModel *model){
         }
         if(kTime%model->intervaloFiguras == 0 || kTime == model->timeLen)
             WriteFiles(*model, model->oligodendrocyte[stepKPlus], model->microglia[stepKPlus], model->tCytotoxic[stepKPlus], model->antibody[stepKPlus], model->conventionalDc[stepKPlus], model->activatedDc[stepKPlus], kTime);
-        model->tCytotoxicTissueVessels = auxTCytotoxicBV;
-        model->antibodyTissueVessels = auxAntibodyBV;
-        model->activatedDCTissueVessels = auxAdcPV;
+        model->tCytotoxicTissueVessels = auxTCytotoxicBV/model->parametersModel.V_BV;
+        model->antibodyTissueVessels = auxAntibodyBV/model->parametersModel.V_BV;
+        model->activatedDCTissueVessels = auxAdcPV/model->parametersModel.V_PV;
         stepKMinus += 1;
         stepKMinus = stepKMinus%2;
     }

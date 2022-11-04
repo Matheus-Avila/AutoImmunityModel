@@ -37,7 +37,7 @@ structParameters ParametersInitialize(){
     params.alphaTHelper = 0.1;
     params.alphaTCytotoxic = 0.1;
     params.alphaB = 0.1;
-    params.alphaP = 0.1;
+    params.alphaP = 1;
     params.bTHelper = 0.17;
     params.bTCytotoxic = 0.001;
     params.bRho = 0.6;
