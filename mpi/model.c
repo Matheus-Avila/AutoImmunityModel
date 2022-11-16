@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <mpi.h>
 
 const int xSize = (int)(LENGTH/HX);
 const int tSize = (int)(TIME/HT);
@@ -173,7 +174,7 @@ void WriteBVPV(float thetaBV[xSize][xSize], float thetaPV[xSize][xSize]){
     // system(command);
 }
 
-structModel ModelInitialize(structParameters params){
+structModel ModelInitialize(structParameters params, int my_rank, int comm_sz){
     structModel model;
     srand(2);
     model.parametersModel = params;
@@ -183,8 +184,11 @@ structModel ModelInitialize(structParameters params){
     model.hx = HX;
     model.tFinal = TIME;
     model.xFinal = LENGTH;
-    model.timeLen = (int)(TIME/HT);
-    model.spaceLen = (int)(LENGTH/HX);
+    model.timeLen = (int)(tSize);
+    model.spaceLen = (int)(xSize);
+    model.numLines = (int)(model.spaceLen/comm_sz) + 1;
+    model.startLine = model.numLines*my_rank;
+
     //definir BV e PV
     DefineBVPV(&model);
     //definir lymph node
@@ -296,9 +300,16 @@ void SolverLymphNode(structModel *model, int stepPos){
 }
 
 void RunModel(structModel *model){
-    //Save IC
-    
+    //Save IC    
     WriteFiles(*model, model->oligodendrocyte[0], model->microglia[0], model->tCytotoxic[0], model->antibody[0], model->conventionalDc[0], model->activatedDc[0], 0);
+    
+    MPI_Init(NULL, NULL);
+
+    MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
+    
+    MPI_Comm_size(MPI_COMM_WORLD, &comm_sz);
+
+    numLines = xSize/comm_sz;
 
     int stepKMinus = 0, stepKPlus;
 

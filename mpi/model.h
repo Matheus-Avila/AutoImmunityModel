@@ -75,11 +75,12 @@ typedef struct structModel
 
     int intervaloFiguras;
 
-    // int *timeVec;
-    // int *spaceVec;
-
     int timeLen;
     int spaceLen;
+
+    int numLines;
+    int startLine;
+    int endLine;
 
     float thetaBV[(int)(LENGTH/HX)][(int)(LENGTH/HX)];
     float thetaPV[(int)(LENGTH/HX)][(int)(LENGTH/HX)];
