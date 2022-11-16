@@ -60,7 +60,7 @@ structParameters ParametersInitialize(){
 }
 
 
-int main(int argc, char* argv){
+int main(int argc, char* argv[]){
     printf("Comecei o main\n");
     int tot_thr = strtol(argv[1], NULL, 10);
     structParameters parameters = ParametersInitialize();

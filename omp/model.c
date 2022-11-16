@@ -55,16 +55,16 @@ void WritePopulationLymphNode(float population[tSize], char* fileName){
 }
 
 void WriteLymphNodeFiles(float dendritic[tSize], float tHelper[tSize], float tCytotoxic[tSize], float bCell[tSize], float plasmaCell[tSize], float antibody[tSize]){
-    WritePopulationLymphNode(dendritic, "./result/dendritic.txt");
-    WritePopulationLymphNode(tHelper, "./result/tHelper.txt");
-    WritePopulationLymphNode(tCytotoxic, "./result/tCyto.txt");
-    WritePopulationLymphNode(bCell, "./result/bCell.txt");
-    WritePopulationLymphNode(plasmaCell, "./result/plasmaCell.txt");
-    WritePopulationLymphNode(antibody, "./result/antibody.txt");
+    WritePopulationLymphNode(dendritic, "../result/dendritic.txt");
+    WritePopulationLymphNode(tHelper, "../result/tHelper.txt");
+    WritePopulationLymphNode(tCytotoxic, "../result/tCyto.txt");
+    WritePopulationLymphNode(bCell, "../result/bCell.txt");
+    WritePopulationLymphNode(plasmaCell, "../result/plasmaCell.txt");
+    WritePopulationLymphNode(antibody, "../result/antibody.txt");
 
     char buffer[10];
     char command[40] = {};
-    strcat(command, "python3 plotLymphNode.py ");
+    strcat(command, "python3 ../plotLymphNode.py ");
     snprintf(buffer, sizeof(buffer), "%d", TIME);
     strcat(command, buffer);
     strcat(command, " ");
@@ -77,15 +77,15 @@ void WriteFiles(structModel model, float oligodendrocyte[xSize][xSize], float mi
     char buffer[10];
     float day = time*HT;
     snprintf(buffer, sizeof(buffer), "%f", day);
-    WritePopulation(oligodendrocyte, "./result/matrix/oligo.txt", buffer);
-    WritePopulation(microglia, "./result/matrix/microglia.txt", buffer);
-    WritePopulation(tCytotoxic, "./result/matrix/tCyto.txt", buffer);
-    WritePopulation(antibody, "./result/matrix/antibody.txt", buffer);
-    WritePopulation(conventionalDC, "./result/matrix/conventionalDC.txt", buffer);
-    WritePopulation(activatedDC, "./result/matrix/activatedDC.txt", buffer);
+    WritePopulation(oligodendrocyte, "../result/matrix/oligo.txt", buffer);
+    WritePopulation(microglia, "../result/matrix/microglia.txt", buffer);
+    WritePopulation(tCytotoxic, "../result/matrix/tCyto.txt", buffer);
+    WritePopulation(antibody, "../result/matrix/antibody.txt", buffer);
+    WritePopulation(conventionalDC, "../result/matrix/conventionalDC.txt", buffer);
+    WritePopulation(activatedDC, "../result/matrix/activatedDC.txt", buffer);
     //Fazer chamada de sistema passando o tempo como argumento para o python e no python salvar a matriz das populações
     char command[70] = {};
-    strcat(command, "python3 plotMatrices.py ");
+    strcat(command, "python3 ../plotMatrices.py ");
     snprintf(buffer, sizeof(buffer), "%d", LENGTH);
     strcat(command, buffer);
     strcat(command, " ");
@@ -128,6 +128,32 @@ float fFunc(float valuePopulation, float avgPopulation){
     return valuePopulation*valuePopulation/(float)(valuePopulation + avgPopulation);
 }
 
+void WriteBVPV(float thetaBV[xSize][xSize], float thetaPV[xSize][xSize]){
+    FILE *fileBV;
+    fileBV = fopen("../result/bv.txt", "w");
+    FILE *filePV;
+    filePV = fopen("../result/pv.txt", "w");
+    for(int i = 0; i < xSize; i++){        
+    for(int j = 0; j < xSize; j++){
+        fprintf(fileBV, "%f ", thetaBV[i][j]);
+        fprintf(filePV, "%f ", thetaPV[i][j]);    
+    }
+    fprintf(fileBV,"\n");
+    fprintf(filePV,"\n");
+    }
+    fclose(fileBV);
+    fclose(filePV);
+    char buffer[10];
+    char command[70] = {};
+    strcat(command, "python3 ../plotBVPV.py ");
+    snprintf(buffer, sizeof(buffer), "%d", LENGTH);
+    strcat(command, buffer);
+    strcat(command, " ");
+    snprintf(buffer, sizeof(buffer), "%f", HX);
+    strcat(command, buffer);
+    // system(command);
+}
+
 void DefineBVPV(structModel *model){
     int randomVal;
     for(int i = 0; i < xSize; i++){
@@ -146,32 +172,6 @@ void DefineBVPV(structModel *model){
     }
     printf("bv = %d, pv = %d \n", model->parametersModel.V_BV, model->parametersModel.V_PV);
     WriteBVPV(model->thetaBV, model->thetaPV);
-}
-
-void WriteBVPV(float thetaBV[xSize][xSize], float thetaPV[xSize][xSize]){
-    FILE *fileBV;
-    fileBV = fopen("./result/bv.txt", "w");
-    FILE *filePV;
-    filePV = fopen("./result/pv.txt", "w");
-    for(int i = 0; i < xSize; i++){        
-    for(int j = 0; j < xSize; j++){
-        fprintf(fileBV, "%f ", thetaBV[i][j]);
-        fprintf(filePV, "%f ", thetaPV[i][j]);    
-    }
-    fprintf(fileBV,"\n");
-    fprintf(filePV,"\n");
-    }
-    fclose(fileBV);
-    fclose(filePV);
-    char buffer[10];
-    char command[70] = {};
-    strcat(command, "python3 plotBVPV.py ");
-    snprintf(buffer, sizeof(buffer), "%d", LENGTH);
-    strcat(command, buffer);
-    strcat(command, " ");
-    snprintf(buffer, sizeof(buffer), "%f", HX);
-    strcat(command, buffer);
-    // system(command);
 }
 
 structModel ModelInitialize(structParameters params, int TotThr){
@@ -299,10 +299,9 @@ void SolverLymphNode(structModel *model, int stepPos){
 
 void RunModel(structModel *model){
     //Save IC
-    
-    WriteFiles(*model, model->oligodendrocyte[0], model->microglia[0], model->tCytotoxic[0], model->antibody[0], model->conventionalDc[0], model->activatedDc[0], 0);
+    // WriteFiles(*model, model->oligodendrocyte[0], model->microglia[0], model->tCytotoxic[0], model->antibody[0], model->conventionalDc[0], model->activatedDc[0], 0);
 
-    int stepKMinus = 0, stepKPlus;
+    int stepKMinus = 0, stepKPlus, line, column;
 
     float upperNeumannBC = 0.0, lowerNeumannBC = 0.0, leftNeumannBC = 0.0, rightNeumannBC = 0.0;
     
@@ -318,18 +317,21 @@ void RunModel(structModel *model){
     float microgliaKMinus = 0.0, conventionalDcKMinus = 0.0, activatedDcKMinus = 0.0, tCytotoxicKMinus = 0.0, antibodyKMinus = 0.0, oligodendrocyteKMinus = 0.0;
 
     float auxAdcPV = 0.0, auxAntibodyBV = 0.0, auxTCytotoxicBV = 0.0;
-
+    
     for(int kTime = 1; kTime <= model->timeLen; kTime++){
         auxAdcPV = 0.0, auxAntibodyBV = 0.0, auxTCytotoxicBV = 0.0;
         // solve lymphnode
         SolverLymphNode(model, kTime);
+        
         stepKPlus = kTime%2;
-        // private(line, column, microgliaKMinus, conventionalDcKMinus,\
-        activatedDcKMinus, tCytotoxicKMinus, antibodyKMinus, oligodendrocyteKMinus, valIPlus, valJPlus, valIMinus, valJMinus, gradientOdcI,\
-        gradientOdcJ, )
-        #pragma omp parallel for num_threads(model->totalThreads) shared(model, auxTCytotoxicBV, auxAntibodyBV, auxAdcPV)
-        for(int line = 0; line < model->spaceLen; line++){//Iterando todas as colunas de uma linha antes de ir pra proxima linha
-        for(int column = 0; column < model->spaceLen; column++){            
+        #pragma omp parallel for num_threads(model->totalThreads) default(none) shared(model, auxTCytotoxicBV, auxAntibodyBV, auxAdcPV, lowerNeumannBC, rightNeumannBC, upperNeumannBC, leftNeumannBC, kTime, stepKMinus, stepKPlus)\
+            private(line, column, microgliaKMinus, conventionalDcKMinus,\
+            activatedDcKMinus, tCytotoxicKMinus, antibodyKMinus, oligodendrocyteKMinus, valIPlus, valJPlus, valIMinus, valJMinus, gradientOdcI,\
+            gradientOdcJ, microgliaDiffusion, microgliaChemotaxis, conventionalDcDiffusion, conventionalDcChemotaxis, tCytotoxicDiffusion, tCytotoxicChemotaxis,\
+            activatedDCDiffusion, antibodyDiffusion, microgliaReaction, microgliaClearance, conventionalDcReaction, conventionalDcActivation, conventionalDcClearance,\
+            activatedDcClearance, activatedDcMigration, tCytotoxicMigration, odcAntibodyMicrogliaFagocitosis, antibodyMigration, odcMicrogliaFagocitosis, odcTCytotoxicApoptosis)
+        for(line = 0; line < model->spaceLen; line++){//Iterando todas as colunas de uma linha antes de ir pra proxima linha
+        for(column = 0; column < model->spaceLen; column++){
             
             microgliaKMinus = model->microglia[stepKMinus][line][column];
             conventionalDcKMinus = model->conventionalDc[stepKMinus][line][column];
@@ -473,7 +475,7 @@ void RunModel(structModel *model){
             }
         }
         }
-        if(kTime%model->intervaloFiguras == 0 || kTime == model->timeLen)
+        if((kTime%model->intervaloFiguras == 0 || kTime == model->timeLen) && omp_get_thread_num() == 0)
             WriteFiles(*model, model->oligodendrocyte[stepKPlus], model->microglia[stepKPlus], model->tCytotoxic[stepKPlus], model->antibody[stepKPlus], model->conventionalDc[stepKPlus], model->activatedDc[stepKPlus], kTime);
         model->tCytotoxicTissueVessels = auxTCytotoxicBV/model->parametersModel.V_BV;
         model->antibodyTissueVessels = auxAntibodyBV/model->parametersModel.V_BV;
@@ -481,6 +483,6 @@ void RunModel(structModel *model){
         stepKMinus += 1;
         stepKMinus = stepKMinus%2;
     }
-
+    
     WriteLymphNodeFiles(model->dendriticLymphNode, model->tHelperLymphNode, model->tCytotoxicLymphNode, model->bCellLymphNode, model->plasmaCellLymphNode, model->antibodyLymphNode);
 }

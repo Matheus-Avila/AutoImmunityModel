@@ -53,7 +53,7 @@ def printMesh(time, population, type):
         plt.colorbar(cp, label="Concentration (molecules/$mm^2$)")
     else:
         plt.colorbar(cp, label="Concentration (cells/$mm^2$)")
-    plt.savefig('result/'+type+'/fig'+'{:.4f}'.format(time)+type+'.png', dpi = 300)
+    plt.savefig('../result/'+type+'/fig'+'{:.4f}'.format(time)+type+'.png', dpi = 300)
     plt.clf()
 
 mic_atual = np.zeros(((int(L/h_x)), (int(L/h_x))))
@@ -63,42 +63,42 @@ anticorpo_atual = np.zeros(((int(L/h_x)), (int(L/h_x))))
 dendritica_conv_atual = np.zeros(((int(L/h_x)), (int(L/h_x))))
 dendritica_ativ_atual = np.zeros(((int(L/h_x)), (int(L/h_x))))
 
-with open("./result/matrix/oligo.txt", 'r') as f:
+with open("../result/matrix/oligo.txt", 'r') as f:
     lista = [line.split(' ')  for line in f]
     for line in range(len(lista[0])-1):
         for column in range(len(lista[0])-1):
             olide_atual[line][column] = lista[line][column]
     printMesh(timePrint, olide_atual, "odc")
 
-with open("./result/matrix/microglia.txt", 'r') as f:
+with open("../result/matrix/microglia.txt", 'r') as f:
     lista = [line.split(' ')  for line in f]
     for line in range(len(lista[0])-1):
         for column in range(len(lista[0])-1):
             mic_atual[line][column] = lista[line][column]
     printMesh(timePrint, mic_atual, "mic")
 
-with open("./result/matrix/conventionalDC.txt", 'r') as f:
+with open("../result/matrix/conventionalDC.txt", 'r') as f:
     lista = [line.split(' ')  for line in f]
     for line in range(len(lista[0])-1):
         for column in range(len(lista[0])-1):
             dendritica_conv_atual[line][column] = lista[line][column]
     printMesh(timePrint, dendritica_conv_atual, "dc")
 
-with open("./result/matrix/activatedDC.txt", 'r') as f:
+with open("../result/matrix/activatedDC.txt", 'r') as f:
     lista = [line.split(' ')  for line in f]
     for line in range(len(lista[0])-1):
         for column in range(len(lista[0])-1):
             dendritica_ativ_atual[line][column] = lista[line][column]
     printMesh(timePrint, dendritica_ativ_atual, "da")
 
-with open("./result/matrix/tCyto.txt", 'r') as f:
+with open("../result/matrix/tCyto.txt", 'r') as f:
     lista = [line.split(' ')  for line in f]
     for line in range(len(lista[0])-1):
         for column in range(len(lista[0])-1):
             t_cito_atual[line][column] = lista[line][column]
     printMesh(timePrint, t_cito_atual, "tke")
 
-with open("./result/matrix/antibody.txt", 'r') as f:
+with open("../result/matrix/antibody.txt", 'r') as f:
     lista = [line.split(' ')  for line in f]
     for line in range(len(lista[0])-1):
         for column in range(len(lista[0])-1):
