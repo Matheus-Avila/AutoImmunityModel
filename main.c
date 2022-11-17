@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
-#include <omp.h>
 
 structParameters ParametersInitialize(){
     structParameters params;
@@ -60,8 +59,9 @@ structParameters ParametersInitialize(){
 }
 
 
-int main(int argc, char* argv){
+int main(){
     printf("Comecei o main\n");
+    fflush(stdout);
     structParameters parameters = ParametersInitialize();
     structModel model = ModelInitialize(parameters);
     printf("Inicializacao feita!!\n\n");
