@@ -111,6 +111,7 @@ void WriteFiles(structModel model, float oligodendrocyte[xSize][xSize], float mi
 }   
 
 void PlotResults(){
+    printf("Saving results...\n\n");
     char buffer[10];
     char command[70] = {};
     strcat(command, "python3 plotMatrices.py ");
@@ -506,7 +507,7 @@ void RunModel(structModel *model){
         stepKMinus += 1;
         stepKMinus = stepKMinus%2;
     }
-    printf("Computation Done!!\nSaving results...\n\n");
+    printf("Computation Done!!\n");
     WriteLymphNodeFiles(model->dendriticLymphNodeSavedPoints, model->tHelperLymphNodeSavedPoints, model->tCytotoxicLymphNodeSavedPoints, model->bCellLymphNodeSavedPoints, model->plasmaCellLymphNodeSavedPoints, model->antibodyLymphNodeSavedPoints);
     PlotResults();
 }

@@ -2,7 +2,7 @@
 #define _MODELOMP_H_
 
 #define BUFFER 2
-#define TIME 280
+#define TIME 28
 #define HT 0.0002
 #define LENGTH 20
 #define HX 0.5

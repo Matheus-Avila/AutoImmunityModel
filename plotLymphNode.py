@@ -6,15 +6,6 @@ import sys
 T_final = int(sys.argv[1])
 h_t = float(sys.argv[2])
 
-t = np.linspace(0, T_final, int(T_final/h_t))#+1)
-
-TL_c_vetor = np.zeros(len(t))
-TL_h_vetor = np.zeros(len(t))
-B_vetor = np.zeros(len(t))
-FL_vetor = np.zeros(len(t))
-PL_vetor = np.zeros(len(t))
-DL_vetor = np.zeros(len(t))
-
 with open("./result/tCyto.txt", 'r') as f:
     lines = f.readlines()
     TL_c = [line.rstrip() for line in lines]
@@ -38,6 +29,16 @@ with open("./result/plasmaCell.txt", 'r') as f:
 with open("./result/dendritic.txt", 'r') as f:
     lines = f.readlines()
     DL = [line.rstrip() for line in lines]
+
+
+t = np.linspace(0, T_final, int(len(TL_c)))
+
+TL_c_vetor = np.zeros(len(TL_c))
+TL_h_vetor = np.zeros(len(TL_c))
+B_vetor = np.zeros(len(TL_c))
+FL_vetor = np.zeros(len(TL_c))
+PL_vetor = np.zeros(len(TL_c))
+DL_vetor = np.zeros(len(TL_c))
 
 for i in range(0,len(TL_c)):
     TL_c_vetor[i] = TL_c[i]
