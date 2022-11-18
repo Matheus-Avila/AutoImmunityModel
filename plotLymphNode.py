@@ -6,7 +6,7 @@ import sys
 T_final = int(sys.argv[1])
 h_t = float(sys.argv[2])
 
-t = np.linspace(0, T_final, int(T_final/h_t)+1)
+t = np.linspace(0, T_final, int(T_final/h_t))
 
 TL_c_vetor = np.zeros(len(t))
 TL_h_vetor = np.zeros(len(t))

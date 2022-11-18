@@ -75,14 +75,42 @@ void WriteLymphNodeFiles(float dendritic[NUMPOINTSLYMPHNODE], float tHelper[NUMP
 void WriteFiles(structModel model, float oligodendrocyte[xSize][xSize], float microglia[xSize][xSize], float tCytotoxic[xSize][xSize], float antibody[xSize][xSize], float conventionalDC[xSize][xSize], float  activatedDC[xSize][xSize], float time){
     char buffer[10];
     float day = time*HT;
-    snprintf(buffer, sizeof(buffer), "%f", day);
-    WritePopulation(oligodendrocyte, "./result/matrix/oligo.txt", buffer);
-    WritePopulation(microglia, "./result/matrix/microglia.txt", buffer);
-    WritePopulation(tCytotoxic, "./result/matrix/tCyto.txt", buffer);
-    WritePopulation(antibody, "./result/matrix/antibody.txt", buffer);
-    WritePopulation(conventionalDC, "./result/matrix/conventionalDC.txt", buffer);
-    WritePopulation(activatedDC, "./result/matrix/activatedDC.txt", buffer);
-    //Fazer chamada de sistema passando o tempo como argumento para o python e no python salvar a matriz das populações
+    
+    snprintf(buffer, sizeof(buffer), "%.1f", day);
+    
+    char pathOligodendrocytes[50] = "./result/matrix/oligo";
+    strcat(pathOligodendrocytes, buffer);
+    strcat(pathOligodendrocytes, ".txt");
+    WritePopulation(oligodendrocyte, pathOligodendrocytes, buffer);
+
+    char pathMicroglia[50] = "./result/matrix/microglia";
+    strcat(pathMicroglia, buffer);
+    strcat(pathMicroglia, ".txt");
+    WritePopulation(microglia, pathMicroglia, buffer);
+
+    char pathTCyto[50] = "./result/matrix/tCyto";
+    strcat(pathTCyto, buffer);
+    strcat(pathTCyto, ".txt");
+    WritePopulation(tCytotoxic, pathTCyto, buffer);
+
+    char pathAntibody[50] = "./result/matrix/antibody";
+    strcat(pathAntibody, buffer);
+    strcat(pathAntibody, ".txt");
+    WritePopulation(antibody, pathAntibody, buffer);
+
+    char pathConventionalDC[50] = "./result/matrix/conventionalDC";
+    strcat(pathConventionalDC, buffer);
+    strcat(pathConventionalDC, ".txt");
+    WritePopulation(conventionalDC, pathConventionalDC, buffer);
+
+    char pathActivatedDC[50] = "./result/matrix/activatedDC";
+    strcat(pathActivatedDC, buffer);
+    strcat(pathActivatedDC, ".txt");
+    WritePopulation(activatedDC, pathActivatedDC, buffer);
+}   
+
+void PlotResults(){
+    char buffer[10];
     char command[70] = {};
     strcat(command, "python3 plotMatrices.py ");
     snprintf(buffer, sizeof(buffer), "%d", LENGTH);
@@ -91,7 +119,10 @@ void WriteFiles(structModel model, float oligodendrocyte[xSize][xSize], float mi
     snprintf(buffer, sizeof(buffer), "%f", HX);
     strcat(command, buffer);
     strcat(command, " ");
-    snprintf(buffer, sizeof(buffer), "%f", day);
+    snprintf(buffer, sizeof(buffer), "%f", TIME);
+    strcat(command, buffer);
+    strcat(command, " ");
+    snprintf(buffer, sizeof(buffer), "%f", NUMFIGS);
     strcat(command, buffer);
     system(command);
 }
@@ -293,9 +324,8 @@ void SolverLymphNode(structModel *model, int stepPos){
 
 void RunModel(structModel *model){
     //Save IC
-    
     WriteFiles(*model, model->oligodendrocyte[0], model->microglia[0], model->tCytotoxic[0], model->antibody[0], model->conventionalDc[0], model->activatedDc[0], 0);
-
+    
     int stepKMinus = 0, stepKPlus;
 
     float upperNeumannBC = 0.0, lowerNeumannBC = 0.0, leftNeumannBC = 0.0, rightNeumannBC = 0.0;
@@ -470,4 +500,5 @@ void RunModel(structModel *model){
     }
 
     WriteLymphNodeFiles(model->dendriticLymphNodeSavedPoints, model->tHelperLymphNodeSavedPoints, model->tCytotoxicLymphNodeSavedPoints, model->bCellLymphNodeSavedPoints, model->plasmaCellLymphNodeSavedPoints, model->antibodyLymphNodeSavedPoints);
+    PlotResults();
 }
