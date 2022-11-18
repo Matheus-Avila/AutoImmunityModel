@@ -15,8 +15,6 @@ FL_vetor = np.zeros(len(t))
 PL_vetor = np.zeros(len(t))
 DL_vetor = np.zeros(len(t))
 
-print(len(t))
-
 with open("./result/tCyto.txt", 'r') as f:
     lines = f.readlines()
     TL_c = [line.rstrip() for line in lines]
@@ -41,7 +39,6 @@ with open("./result/dendritic.txt", 'r') as f:
     lines = f.readlines()
     DL = [line.rstrip() for line in lines]
 
-print(len(TL_c))
 for i in range(0,len(TL_c)):
     TL_c_vetor[i] = TL_c[i]
     TL_h_vetor[i] = TL_h[i]
@@ -90,5 +87,3 @@ plt.xlabel("Time (days)")
 plt.ylabel("Concentration (Cells/$mm^2$)")
 plt.savefig('result/dc_linfonodo.png', dpi = 300)
 plt.clf()
-
-print("Terminou o plot!!!")

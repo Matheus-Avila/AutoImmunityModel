@@ -119,10 +119,10 @@ void PlotResults(){
     snprintf(buffer, sizeof(buffer), "%f", HX);
     strcat(command, buffer);
     strcat(command, " ");
-    snprintf(buffer, sizeof(buffer), "%f", TIME);
+    snprintf(buffer, sizeof(buffer), "%d", TIME);
     strcat(command, buffer);
     strcat(command, " ");
-    snprintf(buffer, sizeof(buffer), "%f", NUMFIGS);
+    snprintf(buffer, sizeof(buffer), "%d", NUMFIGS);
     strcat(command, buffer);
     system(command);
 }
@@ -498,7 +498,7 @@ void RunModel(structModel *model){
         stepKMinus += 1;
         stepKMinus = stepKMinus%2;
     }
-
+    printf("Computation Done!!\nSaving results...\n\n");
     WriteLymphNodeFiles(model->dendriticLymphNodeSavedPoints, model->tHelperLymphNodeSavedPoints, model->tCytotoxicLymphNodeSavedPoints, model->bCellLymphNodeSavedPoints, model->plasmaCellLymphNodeSavedPoints, model->antibodyLymphNodeSavedPoints);
     PlotResults();
 }
