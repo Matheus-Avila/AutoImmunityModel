@@ -6,7 +6,8 @@
 #define HT 0.0002
 #define LENGTH 20
 #define HX 0.5
-#define NUMFIGURAS 28
+#define NUMFIGS 28
+#define NUMPOINTSLYMPHNODE 1000
 
 typedef struct structParameters
 {
@@ -95,12 +96,19 @@ typedef struct structModel
     float antibody[BUFFER][(int)(LENGTH/HX)][(int)(LENGTH/HX)];
     float tCytotoxic[BUFFER][(int)(LENGTH/HX)][(int)(LENGTH/HX)];
 
-    float dendriticLymphNode[(int)(TIME/HT)];
-    float tHelperLymphNode[(int)(TIME/HT)];
-    float tCytotoxicLymphNode[(int)(TIME/HT)];
-    float bCellLymphNode[(int)(TIME/HT)];
-    float plasmaCellLymphNode[(int)(TIME/HT)];
-    float antibodyLymphNode[(int)(TIME/HT)];
+    float dendriticLymphNode[BUFFER];
+    float tHelperLymphNode[BUFFER];
+    float tCytotoxicLymphNode[BUFFER];
+    float bCellLymphNode[BUFFER];
+    float plasmaCellLymphNode[BUFFER];
+    float antibodyLymphNode[BUFFER];
+
+    float dendriticLymphNodeSavedPoints[NUMPOINTSLYMPHNODE];
+    float tHelperLymphNodeSavedPoints[NUMPOINTSLYMPHNODE];
+    float tCytotoxicLymphNodeSavedPoints[NUMPOINTSLYMPHNODE];
+    float bCellLymphNodeSavedPoints[NUMPOINTSLYMPHNODE];
+    float plasmaCellLymphNodeSavedPoints[NUMPOINTSLYMPHNODE];
+    float antibodyLymphNodeSavedPoints[NUMPOINTSLYMPHNODE];
 
     structParameters parametersModel;
 
