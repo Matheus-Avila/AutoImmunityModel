@@ -1,4 +1,4 @@
-#include "model.h"
+#include "modelMPI.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>

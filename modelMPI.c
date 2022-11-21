@@ -1,4 +1,4 @@
-#include "model.h"
+#include "modelMPI.h"
 #include <time.h>
 #include <math.h>
 #include <stdio.h>
@@ -45,16 +45,16 @@ void WritePopulation(float population[xSize][xSize], char* fileName, char* buffe
     fclose(file);
 }
 
-void WritePopulationLymphNode(float population[tSize], char* fileName){
+void WritePopulationLymphNode(float population[NUMPOINTSLYMPHNODE], char* fileName){
     FILE *file;
     file = fopen(fileName, "w");
-    for(int i=0;i<tSize;i++) {
+    for(int i=0;i<NUMPOINTSLYMPHNODE;i++) {
         fprintf(file, "%f\n", population[i]);
     }
     fclose(file);
 }
 
-void WriteLymphNodeFiles(float dendritic[tSize], float tHelper[tSize], float tCytotoxic[tSize], float bCell[tSize], float plasmaCell[tSize], float antibody[tSize]){
+void WriteLymphNodeFiles(float dendritic[NUMPOINTSLYMPHNODE], float tHelper[NUMPOINTSLYMPHNODE], float tCytotoxic[NUMPOINTSLYMPHNODE], float bCell[NUMPOINTSLYMPHNODE], float plasmaCell[NUMPOINTSLYMPHNODE], float antibody[NUMPOINTSLYMPHNODE]){
     WritePopulationLymphNode(dendritic, "./result/dendritic.txt");
     WritePopulationLymphNode(tHelper, "./result/tHelper.txt");
     WritePopulationLymphNode(tCytotoxic, "./result/tCyto.txt");
@@ -64,11 +64,11 @@ void WriteLymphNodeFiles(float dendritic[tSize], float tHelper[tSize], float tCy
 
     char buffer[10];
     char command[40] = {};
-    strcat(command, "python3 ../plotLymphNode.py ");
+    strcat(command, "python3 plotLymphNode.py ");
     snprintf(buffer, sizeof(buffer), "%d", TIME);
     strcat(command, buffer);
     strcat(command, " ");
-    snprintf(buffer, sizeof(buffer), "%f", HT);
+    snprintf(buffer, sizeof(buffer), "%f", (tSize/NUMPOINTSLYMPHNODE)*HT);
     strcat(command, buffer);
     system(command);
 }
@@ -76,23 +76,55 @@ void WriteLymphNodeFiles(float dendritic[tSize], float tHelper[tSize], float tCy
 void WriteFiles(structModel model, float oligodendrocyte[xSize][xSize], float microglia[xSize][xSize], float tCytotoxic[xSize][xSize], float antibody[xSize][xSize], float conventionalDC[xSize][xSize], float  activatedDC[xSize][xSize], float time){
     char buffer[10];
     float day = time*HT;
-    snprintf(buffer, sizeof(buffer), "%f", day);
-    WritePopulation(oligodendrocyte, "./result/matrix/oligo.txt", buffer);
-    WritePopulation(microglia, "./result/matrix/microglia.txt", buffer);
-    WritePopulation(tCytotoxic, "./result/matrix/tCyto.txt", buffer);
-    WritePopulation(antibody, "./result/matrix/antibody.txt", buffer);
-    WritePopulation(conventionalDC, "./result/matrix/conventionalDC.txt", buffer);
-    WritePopulation(activatedDC, "./result/matrix/activatedDC.txt", buffer);
-    //Fazer chamada de sistema passando o tempo como argumento para o python e no python salvar a matriz das populações
+    
+    snprintf(buffer, sizeof(buffer), "%.1f", day);
+    
+    char pathOligodendrocytes[50] = "./result/matrix/oligo";
+    strcat(pathOligodendrocytes, buffer);
+    strcat(pathOligodendrocytes, ".txt");
+    WritePopulation(oligodendrocyte, pathOligodendrocytes, buffer);
+
+    char pathMicroglia[50] = "./result/matrix/microglia";
+    strcat(pathMicroglia, buffer);
+    strcat(pathMicroglia, ".txt");
+    WritePopulation(microglia, pathMicroglia, buffer);
+
+    char pathTCyto[50] = "./result/matrix/tCyto";
+    strcat(pathTCyto, buffer);
+    strcat(pathTCyto, ".txt");
+    WritePopulation(tCytotoxic, pathTCyto, buffer);
+
+    char pathAntibody[50] = "./result/matrix/antibody";
+    strcat(pathAntibody, buffer);
+    strcat(pathAntibody, ".txt");
+    WritePopulation(antibody, pathAntibody, buffer);
+
+    char pathConventionalDC[50] = "./result/matrix/conventionalDC";
+    strcat(pathConventionalDC, buffer);
+    strcat(pathConventionalDC, ".txt");
+    WritePopulation(conventionalDC, pathConventionalDC, buffer);
+
+    char pathActivatedDC[50] = "./result/matrix/activatedDC";
+    strcat(pathActivatedDC, buffer);
+    strcat(pathActivatedDC, ".txt");
+    WritePopulation(activatedDC, pathActivatedDC, buffer);
+}   
+
+void PlotResults(){
+    printf("Saving results...\n\n");
+    char buffer[10];
     char command[70] = {};
-    strcat(command, "python3 ../plotMatrices.py ");
+    strcat(command, "python3 plotMatrices.py ");
     snprintf(buffer, sizeof(buffer), "%d", LENGTH);
     strcat(command, buffer);
     strcat(command, " ");
     snprintf(buffer, sizeof(buffer), "%f", HX);
     strcat(command, buffer);
     strcat(command, " ");
-    snprintf(buffer, sizeof(buffer), "%f", day);
+    snprintf(buffer, sizeof(buffer), "%d", TIME);
+    strcat(command, buffer);
+    strcat(command, " ");
+    snprintf(buffer, sizeof(buffer), "%d", NUMFIGS);
     strcat(command, buffer);
     system(command);
 }
@@ -129,23 +161,31 @@ float fFunc(float valuePopulation, float avgPopulation){
 }
 
 void DefineBVPV(structModel *model){
-    int randomVal;
-    for(int i = 0; i < xSize; i++){
-        for(int j = 0; j < xSize; j++){
-            randomVal = rand() % 100;
-            if(randomVal <10){
-                model->parametersModel.V_BV++;
-                model->parametersModel.V_PV++;
-                model->thetaBV[i][j] = 1;
-                if(j != xSize-1)
-                    model->thetaPV[i][j+1] = 1;
-                else
-                    model->thetaPV[i][0] = 1;
+    if(model->my_rank == 0){
+        int randomVal;
+        for(int i = 0; i < xSize; i++){
+            for(int j = 0; j < xSize; j++){
+                randomVal = rand() % 100;
+                if(randomVal <10){
+                    model->parametersModel.V_BV++;
+                    model->parametersModel.V_PV++;
+                    model->thetaBV[i][j] = 1;
+                    if(j != xSize-1)
+                        model->thetaPV[i][j+1] = 1;
+                    else
+                        model->thetaPV[i][0] = 1;
+                }
             }
         }
+        printf("bv = %d, pv = %d \n", model->parametersModel.V_BV, model->parametersModel.V_PV);
+        WriteBVPV(model->thetaBV, model->thetaPV);
     }
-    printf("bv = %d, pv = %d \n", model->parametersModel.V_BV, model->parametersModel.V_PV);
-    WriteBVPV(model->thetaBV, model->thetaPV);
+    // Para cada linha da matriz fazer broadcast
+    for(int i = 0; i < xSize; i++){
+    MPI_Bcast(model->thetaPV[i], xSize*sizeof(int), MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(model->thetaBV[i], xSize*sizeof(int), MPI_INT, 0, MPI_COMM_WORLD);
+    }
+    
 }
 
 void WriteBVPV(float thetaBV[xSize][xSize], float thetaPV[xSize][xSize]){
@@ -165,7 +205,7 @@ void WriteBVPV(float thetaBV[xSize][xSize], float thetaPV[xSize][xSize]){
     fclose(filePV);
     char buffer[10];
     char command[70] = {};
-    strcat(command, "python3 ../plotBVPV.py ");
+    strcat(command, "python3 plotBVPV.py ");
     snprintf(buffer, sizeof(buffer), "%d", LENGTH);
     strcat(command, buffer);
     strcat(command, " ");
@@ -178,17 +218,23 @@ structModel ModelInitialize(structParameters params, int my_rank, int comm_sz){
     structModel model;
     srand(2);
     model.parametersModel = params;
-    model.intervaloFiguras = (int)tSize/NUMFIGURAS;
+    model.intervaloFiguras = (int)tSize/NUMFIGS;
+    
+    model.my_rank = my_rank;
+    model.comm_sz = comm_sz;
     
     model.ht = HT;
     model.hx = HX;
     model.tFinal = TIME;
     model.xFinal = LENGTH;
-    model.timeLen = (int)(tSize);
-    model.spaceLen = (int)(xSize);
-    model.numLines = (int)(model.spaceLen/comm_sz) + 1;
-    model.startLine = model.numLines*my_rank;
+    model.timeLen = (int)(TIME/HT);
+    model.spaceLen = (int)(LENGTH/HX);
 
+    model.numLines = (int)(xSize/my_rank);
+    model.startLine = my_rank*model.numLines;
+    model.endLine = model.startLine + model.numLines-1;
+    if(my_rank == comm_sz - 1)
+        model.endLine = xSize - 1;
     //definir BV e PV
     DefineBVPV(&model);
     //definir lymph node
@@ -246,72 +292,60 @@ float* EquationsLymphNode(structModel model, float* populationLN, int stepPos){
     return result;
 }
 
-void SolverLymphNode(structModel *model, int stepPos){
-    float populationLN[6];
-
-    populationLN[0] = model->dendriticLymphNode[stepPos-1];
-    populationLN[1] = model->tCytotoxicLymphNode[stepPos-1];
-    populationLN[2] = model->tHelperLymphNode[stepPos-1];
-    populationLN[3] = model->bCellLymphNode[stepPos-1];
-    populationLN[4] = model->plasmaCellLymphNode[stepPos-1];
-    populationLN[5] = model->antibodyLymphNode[stepPos-1];
-    
-    float* solutionLN;
-    solutionLN = EquationsLymphNode(*model, populationLN, stepPos);
-    
-    //Execute Euler (or RungeKutta4ThOrder)
-    model->dendriticLymphNode[stepPos] = model->dendriticLymphNode[stepPos-1] + model->ht*solutionLN[0];
-    model->tCytotoxicLymphNode[stepPos] = model->tCytotoxicLymphNode[stepPos-1] + model->ht*solutionLN[1];
-    model->tHelperLymphNode[stepPos] = model->tHelperLymphNode[stepPos-1] + model->ht*solutionLN[2];
-    model->bCellLymphNode[stepPos] = model->bCellLymphNode[stepPos-1] + model->ht*solutionLN[3];
-    model->plasmaCellLymphNode[stepPos] = model->plasmaCellLymphNode[stepPos-1] + model->ht*solutionLN[4];
-    model->antibodyLymphNode[stepPos] = model->antibodyLymphNode[stepPos-1] + model->ht*solutionLN[5];
-    free(solutionLN); 
-
-    if(model->dendriticLymphNode[stepPos] < 0 ||  isnanf (model->dendriticLymphNode[stepPos])){
-        printf("DC lymph node (%f) deu erro no tempo %f\n", model->dendriticLymphNode[stepPos], stepPos*HT);
-        exit(0);
-    }
-
-    if(model->tCytotoxicLymphNode[stepPos] < 0 ||  isnanf (model->tCytotoxicLymphNode[stepPos])){
-        printf("CD8 T lymph node (%f) deu erro no tempo %f\n", model->tCytotoxicLymphNode[stepPos], stepPos*HT);
-        exit(0);
-    }
-
-    if(model->tHelperLymphNode[stepPos] < 0 ||  isnanf (model->tHelperLymphNode[stepPos])){
-        printf("CD4 T lymph node (%f) deu erro no tempo %f\n", model->tHelperLymphNode[stepPos], stepPos*HT);
-        exit(0);
-    }
-
-    if(model->bCellLymphNode[stepPos] < 0 || isnanf (model->bCellLymphNode[stepPos])){
-        printf("B cell lymph node (%f) deu erro no tempo %f\n", model->bCellLymphNode[stepPos], stepPos*HT);
-        exit(0);
-    }
-
-    if(model->plasmaCellLymphNode[stepPos] < 0 || isnanf (model->plasmaCellLymphNode[stepPos])){
-        printf("Plasma cell lymph node (%f) deu erro no tempo %f\n", model->plasmaCellLymphNode[stepPos], stepPos*HT);
-        exit(0);
-    }
-
-    if(model->antibodyLymphNode[stepPos] < 0 || isnanf (model->antibodyLymphNode[stepPos])){
-        printf("Antibody lymph node (%f) deu erro no tempo %f\n", model->antibodyLymphNode[stepPos], stepPos*HT);
+void verifyValues(float value, int time, char* populationName){
+    if(value < 0 ||  isnanf(value)){
+        printf("Error: %s = (%f) :: time = %f\n", populationName, value, time*HT);
         exit(0);
     }
 }
 
+void SolverLymphNode(structModel *model, int stepPos){
+    float populationLN[6];
+    int stepKMinus = stepPos%2;
+    int stepKPlus = (stepKMinus+1)%2;
+    populationLN[0] = model->dendriticLymphNode[stepKMinus];
+    populationLN[1] = model->tCytotoxicLymphNode[stepKMinus];
+    populationLN[2] = model->tHelperLymphNode[stepKMinus];
+    populationLN[3] = model->bCellLymphNode[stepKMinus];
+    populationLN[4] = model->plasmaCellLymphNode[stepKMinus];
+    populationLN[5] = model->antibodyLymphNode[stepKMinus];
+    
+    float* solutionLN;
+    solutionLN = EquationsLymphNode(*model, populationLN, stepPos);
+    
+    //Execute Euler 
+    model->dendriticLymphNode[stepKPlus] = model->dendriticLymphNode[stepKMinus] + model->ht*solutionLN[0];
+    model->tCytotoxicLymphNode[stepKPlus] = model->tCytotoxicLymphNode[stepKMinus] + model->ht*solutionLN[1];
+    model->tHelperLymphNode[stepKPlus] = model->tHelperLymphNode[stepKMinus] + model->ht*solutionLN[2];
+    model->bCellLymphNode[stepKPlus] = model->bCellLymphNode[stepKMinus] + model->ht*solutionLN[3];
+    model->plasmaCellLymphNode[stepKPlus] = model->plasmaCellLymphNode[stepKMinus] + model->ht*solutionLN[4];
+    model->antibodyLymphNode[stepKPlus] = model->antibodyLymphNode[stepKMinus] + model->ht*solutionLN[5];
+    free(solutionLN);
+
+    int intervalPoints = (int)(tSize/NUMPOINTSLYMPHNODE);
+    if(stepPos%intervalPoints){
+        int posSave = stepPos/intervalPoints;
+        model->dendriticLymphNodeSavedPoints[posSave] = model->dendriticLymphNode[stepKPlus];
+        model->tCytotoxicLymphNodeSavedPoints[posSave] = model->tCytotoxicLymphNode[stepKPlus];
+        model->tHelperLymphNodeSavedPoints[posSave] = model->tHelperLymphNode[stepKPlus];
+        model->bCellLymphNodeSavedPoints[posSave] = model->bCellLymphNode[stepKPlus];
+        model->plasmaCellLymphNodeSavedPoints[posSave] = model->plasmaCellLymphNode[stepKPlus];
+        model->antibodyLymphNodeSavedPoints[posSave] = model->antibodyLymphNode[stepKPlus];
+    }
+    verifyValues(model->dendriticLymphNode[stepKPlus], stepPos, "DC lymph node");
+    verifyValues(model->tCytotoxicLymphNode[stepKPlus], stepPos, "CD8 T lymph node");
+    verifyValues(model->tHelperLymphNode[stepKPlus], stepPos, "CD4 T lymph node");
+    verifyValues(model->bCellLymphNode[stepKPlus], stepPos, "B cell lymph node");
+    verifyValues(model->plasmaCellLymphNode[stepKPlus], stepPos, "Plasma cell lymph node");
+    verifyValues(model->antibodyLymphNode[stepKPlus], stepPos, "Antibody lymph node");
+    
+}
+
 void RunModel(structModel *model){
-    //Save IC    
+    //Save IC
     WriteFiles(*model, model->oligodendrocyte[0], model->microglia[0], model->tCytotoxic[0], model->antibody[0], model->conventionalDc[0], model->activatedDc[0], 0);
     
-    MPI_Init(NULL, NULL);
-
-    MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
-    
-    MPI_Comm_size(MPI_COMM_WORLD, &comm_sz);
-
-    numLines = xSize/comm_sz;
-
-    int stepKMinus = 0, stepKPlus;
+    int stepKMinus = 0, stepKPlus, line, column;
 
     float upperNeumannBC = 0.0, lowerNeumannBC = 0.0, leftNeumannBC = 0.0, rightNeumannBC = 0.0;
     
@@ -333,8 +367,8 @@ void RunModel(structModel *model){
         // solve lymphnode
         SolverLymphNode(model, kTime);
         stepKPlus = kTime%2;
-        for(int line = 0; line < model->spaceLen; line++){//Iterando todas as colunas de uma linha antes de ir pra proxima linha
-        for(int column = 0; column < model->spaceLen; column++){            
+        for(line = model->startLine; line <= model->endLine; line++){
+        for(column = 0; column < model->spaceLen; column++){
             
             microgliaKMinus = model->microglia[stepKMinus][line][column];
             conventionalDcKMinus = model->conventionalDc[stepKMinus][line][column];
@@ -430,7 +464,7 @@ void RunModel(structModel *model){
 
             //Activated DC update
             activatedDcClearance = model->parametersModel.cADc*activatedDcKMinus;
-            activatedDcMigration = model->thetaPV[line][column]*model->parametersModel.gammaD*(model->dendriticLymphNode[kTime] - activatedDcKMinus);
+            activatedDcMigration = model->thetaPV[line][column]*model->parametersModel.gammaD*(model->dendriticLymphNode[stepKPlus] - activatedDcKMinus);
             
             model->activatedDc[stepKPlus][line][column] = activatedDcKMinus + model->ht*(activatedDCDiffusion + conventionalDcActivation + activatedDcMigration - activatedDcClearance);
             if((model->activatedDc[stepKPlus][line][column]) < 0 || isnanf (model->activatedDc[stepKPlus][line][column])){
@@ -439,7 +473,7 @@ void RunModel(structModel *model){
             }
 
             //CD8 T update
-            tCytotoxicMigration = model->thetaBV[line][column]*model->parametersModel.gammaT*(model->tCytotoxicLymphNode[kTime] - tCytotoxicKMinus);
+            tCytotoxicMigration = model->thetaBV[line][column]*model->parametersModel.gammaT*(model->tCytotoxicLymphNode[stepKPlus] - tCytotoxicKMinus);
             
             model->tCytotoxic[stepKPlus][line][column] = tCytotoxicKMinus + model->ht*(tCytotoxicDiffusion - tCytotoxicChemotaxis + tCytotoxicMigration);
             if((model->tCytotoxic[stepKPlus][line][column]) < 0 || isnanf (model->tCytotoxic[stepKPlus][line][column])){
@@ -449,7 +483,7 @@ void RunModel(structModel *model){
 
             //Antibody update
             odcAntibodyMicrogliaFagocitosis = model->parametersModel.lambAntMic*antibodyKMinus*(model->parametersModel.avgOdc - oligodendrocyteKMinus)*fFunc(microgliaKMinus, model->parametersModel.avgMic);
-            antibodyMigration = model->thetaBV[line][column]*model->parametersModel.gammaAntibody*(model->antibodyLymphNode[kTime] - antibodyKMinus);
+            antibodyMigration = model->thetaBV[line][column]*model->parametersModel.gammaAntibody*(model->antibodyLymphNode[stepKPlus] - antibodyKMinus);
             
             model->antibody[stepKPlus][line][column] = antibodyKMinus + model->ht*(antibodyDiffusion + antibodyMigration - odcAntibodyMicrogliaFagocitosis);
             if((model->antibody[stepKPlus][line][column]) < 0 || isnanf (model->antibody[stepKPlus][line][column])){
@@ -480,9 +514,50 @@ void RunModel(structModel *model){
         model->tCytotoxicTissueVessels = auxTCytotoxicBV/model->parametersModel.V_BV;
         model->antibodyTissueVessels = auxAntibodyBV/model->parametersModel.V_BV;
         model->activatedDCTissueVessels = auxAdcPV/model->parametersModel.V_PV;
+        
+        MPI_Send(model->oligodendrocyte[stepKPlus][model->endLine], xSize*sizeof(float), MPI_FLOAT, model->my_rank+1, 0, MPI_COMM_WORLD);
+        MPI_Send(model->tCytotoxic[stepKPlus][model->endLine], xSize*sizeof(float), MPI_FLOAT, model->my_rank+1, 0, MPI_COMM_WORLD);
+        MPI_Send(model->microglia[stepKPlus][model->endLine], xSize*sizeof(float), MPI_FLOAT, model->my_rank+1, 0, MPI_COMM_WORLD);
+        MPI_Send(model->antibody[stepKPlus][model->endLine], xSize*sizeof(float), MPI_FLOAT, model->my_rank+1, 0, MPI_COMM_WORLD);
+        MPI_Send(model->conventionalDc[stepKPlus][model->endLine], xSize*sizeof(float), MPI_FLOAT, model->my_rank+1, 0, MPI_COMM_WORLD);
+        MPI_Send(model->activatedDc[stepKPlus][model->endLine], xSize*sizeof(float), MPI_FLOAT, model->my_rank+1, 0, MPI_COMM_WORLD);
+
+        for(int iterRank = 1; iterRank < model->comm_sz-1; iterRank++){
+            if(iterRank%2 == 0){
+                MPI_Send(model->oligodendrocyte[stepKPlus][model->endLine], xSize*sizeof(float), MPI_FLOAT, model->my_rank+1, 0, MPI_COMM_WORLD);
+                MPI_Send(model->tCytotoxic[stepKPlus][model->endLine], xSize*sizeof(float), MPI_FLOAT, model->my_rank+1, 0, MPI_COMM_WORLD);
+                MPI_Send(model->microglia[stepKPlus][model->endLine], xSize*sizeof(float), MPI_FLOAT, model->my_rank+1, 0, MPI_COMM_WORLD);
+                MPI_Send(model->antibody[stepKPlus][model->endLine], xSize*sizeof(float), MPI_FLOAT, model->my_rank+1, 0, MPI_COMM_WORLD);
+                MPI_Send(model->conventionalDc[stepKPlus][model->endLine], xSize*sizeof(float), MPI_FLOAT, model->my_rank+1, 0, MPI_COMM_WORLD);
+                MPI_Send(model->activatedDc[stepKPlus][model->endLine], xSize*sizeof(float), MPI_FLOAT, model->my_rank+1, 0, MPI_COMM_WORLD);
+                
+                MPI_Recv(model->oligodendrocyte[stepKPlus][model->endLine], xSize*sizeof(float), MPI_FLOAT, model->my_rank-1, 0, MPI_COMM_WORLD);
+                MPI_Recv(model->tCytotoxic[stepKPlus][model->endLine], xSize*sizeof(float), MPI_FLOAT, model->my_rank-1, 0, MPI_COMM_WORLD);
+                MPI_Recv(model->microglia[stepKPlus][model->endLine], xSize*sizeof(float), MPI_FLOAT, model->my_rank-1, 0, MPI_COMM_WORLD);
+                MPI_Recv(model->antibody[stepKPlus][model->endLine], xSize*sizeof(float), MPI_FLOAT, model->my_rank-1, 0, MPI_COMM_WORLD);
+                MPI_Recv(model->conventionalDc[stepKPlus][model->endLine], xSize*sizeof(float), MPI_FLOAT, model->my_rank-1, 0, MPI_COMM_WORLD);
+                MPI_Recv(model->activatedDc[stepKPlus][model->endLine], xSize*sizeof(float), MPI_FLOAT, model->my_rank-1, 0, MPI_COMM_WORLD);
+            }else{
+                MPI_Recv(model->oligodendrocyte[stepKPlus][model->endLine], xSize*sizeof(float), MPI_FLOAT, model->my_rank-1, 0, MPI_COMM_WORLD);
+                MPI_Recv(model->tCytotoxic[stepKPlus][model->endLine], xSize*sizeof(float), MPI_FLOAT, model->my_rank-1, 0, MPI_COMM_WORLD);
+                MPI_Recv(model->microglia[stepKPlus][model->endLine], xSize*sizeof(float), MPI_FLOAT, model->my_rank-1, 0, MPI_COMM_WORLD);
+                MPI_Recv(model->antibody[stepKPlus][model->endLine], xSize*sizeof(float), MPI_FLOAT, model->my_rank-1, 0, MPI_COMM_WORLD);
+                MPI_Recv(model->conventionalDc[stepKPlus][model->endLine], xSize*sizeof(float), MPI_FLOAT, model->my_rank-1, 0, MPI_COMM_WORLD);
+                MPI_Recv(model->activatedDc[stepKPlus][model->endLine], xSize*sizeof(float), MPI_FLOAT, model->my_rank-1, 0, MPI_COMM_WORLD);
+                
+                MPI_Send(model->oligodendrocyte[stepKPlus][model->endLine], xSize*sizeof(float), MPI_FLOAT, model->my_rank+1, 0, MPI_COMM_WORLD);
+                MPI_Send(model->tCytotoxic[stepKPlus][model->endLine], xSize*sizeof(float), MPI_FLOAT, model->my_rank+1, 0, MPI_COMM_WORLD);
+                MPI_Send(model->microglia[stepKPlus][model->endLine], xSize*sizeof(float), MPI_FLOAT, model->my_rank+1, 0, MPI_COMM_WORLD);
+                MPI_Send(model->antibody[stepKPlus][model->endLine], xSize*sizeof(float), MPI_FLOAT, model->my_rank+1, 0, MPI_COMM_WORLD);
+                MPI_Send(model->conventionalDc[stepKPlus][model->endLine], xSize*sizeof(float), MPI_FLOAT, model->my_rank+1, 0, MPI_COMM_WORLD);
+                MPI_Send(model->activatedDc[stepKPlus][model->endLine], xSize*sizeof(float), MPI_FLOAT, model->my_rank+1, 0, MPI_COMM_WORLD);
+            }
+        }
+
         stepKMinus += 1;
         stepKMinus = stepKMinus%2;
     }
-
-    WriteLymphNodeFiles(model->dendriticLymphNode, model->tHelperLymphNode, model->tCytotoxicLymphNode, model->bCellLymphNode, model->plasmaCellLymphNode, model->antibodyLymphNode);
+    printf("Computation Done!!\n");
+    WriteLymphNodeFiles(model->dendriticLymphNodeSavedPoints, model->tHelperLymphNodeSavedPoints, model->tCytotoxicLymphNodeSavedPoints, model->bCellLymphNodeSavedPoints, model->plasmaCellLymphNodeSavedPoints, model->antibodyLymphNodeSavedPoints);
+    PlotResults();
 }
