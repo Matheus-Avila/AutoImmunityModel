@@ -63,7 +63,7 @@ structParameters ParametersInitialize(){
 int main(int argc, char* argv[]){
     printf("Comecei o main\n");
 
-    int my_rank, comm_sz, numLines, startLine, endLine;
+    int my_rank, comm_sz;
 
     MPI_Init(NULL, NULL);
 
@@ -75,5 +75,6 @@ int main(int argc, char* argv[]){
     structModel model = ModelInitialize(parameters, my_rank, comm_sz);
     printf("Inicializacao feita!!\n\n");
     RunModel(&model);
+    MPI_Finalize();
     return 0;
 }
