@@ -491,10 +491,13 @@ void RunModel(structModel *model){
                 exit(0);
             }
             if(model->thetaBV[line][column] == 1){
+                #pragma omp atomic
                 auxTCytotoxicBV += model->tCytotoxic[stepKPlus][line][column];
+                #pragma omp atomic
                 auxAntibodyBV += model->antibody[stepKPlus][line][column];
             }
             if(model->thetaPV[line][column] == 1){
+                #pragma omp atomic
                 auxAdcPV += model->activatedDc[stepKPlus][line][column];
             }
         }
