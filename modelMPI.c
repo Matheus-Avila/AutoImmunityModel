@@ -361,10 +361,10 @@ void RunModel(structModel *model){
 
     float microgliaKMinus = 0.0, conventionalDcKMinus = 0.0, activatedDcKMinus = 0.0, tCytotoxicKMinus = 0.0, antibodyKMinus = 0.0, oligodendrocyteKMinus = 0.0;
 
-    float auxAdcPV = 0.0, auxAntibodyBV = 0.0, auxTCytotoxicBV = 0.0;
+    float auxAdcPV = 0.0, auxAntibodyBV = 0.0, auxTCytotoxicBV = 0.0, auxTT = 0.0, auxAT = 0.0, auxDC = 0.0;
 
     for(int kTime = 1; kTime <= model->timeLen; kTime++){
-        auxAdcPV = 0.0, auxAntibodyBV = 0.0, auxTCytotoxicBV = 0.0;
+        auxAdcPV = 0.0, auxAntibodyBV = 0.0, auxTCytotoxicBV = 0.0, auxTT = 0.0, auxAT = 0.0, auxDC = 0.0;
         // solve lymphnode
         SolverLymphNode(model, kTime);
         stepKPlus = kTime%2;
@@ -514,7 +514,7 @@ void RunModel(structModel *model){
             //Cada myRank manda o resultado para o myrank 0
             if(model->my_rank == 0){
                 for(int iterRank = 1; iterRank < model->comm_sz; iterRank++){
-                    for(int line = model.numLines*iterRank; line < model.numLines*(iterRank + 1) - 1; line++){
+                    for(int line = model->numLines*iterRank; line < model->numLines*(iterRank + 1) - 1; line++){
                         MPI_Recv(model->oligodendrocyte[stepKPlus][line], xSize*sizeof(float), MPI_FLOAT, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
                         MPI_Recv(model->tCytotoxic[stepKPlus][line], xSize*sizeof(float), MPI_FLOAT, 0, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
                         MPI_Recv(model->microglia[stepKPlus][line], xSize*sizeof(float), MPI_FLOAT, 0, 2, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
@@ -524,7 +524,7 @@ void RunModel(structModel *model){
                     }
                 }
                 //Se tiver mais alguma linha pra ser enviada pelo ultimo processo
-                int lastLineRead = model.numLines*model->comm_sz - 1;
+                int lastLineRead = model->numLines*model->comm_sz - 1;
                 if(lastLineRead < xSize - 1 && model->my_rank == model->comm_sz - 1){
                     for(int line = lastLineRead; line < xSize; line++){
                         MPI_Recv(model->oligodendrocyte[stepKPlus][line], xSize*sizeof(float), MPI_FLOAT, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
@@ -548,12 +548,14 @@ void RunModel(structModel *model){
             if(model->my_rank == 0)
                 WriteFiles(*model, model->oligodendrocyte[stepKPlus], model->microglia[stepKPlus], model->tCytotoxic[stepKPlus], model->antibody[stepKPlus], model->conventionalDc[stepKPlus], model->activatedDc[stepKPlus], kTime);
         }
-        MPI_AllReduce(&auxTCytotoxicBV, &auxTCytotoxicBV, 0, MPI_FLOAT, MPI_SUM, MPI_COMM_WORLD);
-        MPI_AllReduce(&auxAntibodyBV, &auxAntibodyBV, 1, MPI_FLOAT, MPI_SUM, MPI_COMM_WORLD);
-        MPI_AllReduce(&auxAdcPV, &auxAdcPV, 2, MPI_FLOAT, MPI_SUM, MPI_COMM_WORLD);
-        model->tCytotoxicTissueVessels = auxTCytotoxicBV/model->parametersModel.V_BV;
-        model->antibodyTissueVessels = auxAntibodyBV/model->parametersModel.V_BV;
-        model->activatedDCTissueVessels = auxAdcPV/model->parametersModel.V_PV;
+        MPI_Allreduce(&auxTCytotoxicBV, &auxTT, 1, MPI_FLOAT, MPI_SUM, MPI_COMM_WORLD);
+        MPI_Allreduce(&auxAntibodyBV, &auxAT, 1, MPI_FLOAT, MPI_SUM, MPI_COMM_WORLD);
+        MPI_Allreduce(&auxAdcPV, &auxDC, 1, MPI_FLOAT, MPI_SUM, MPI_COMM_WORLD);
+
+        model->tCytotoxicTissueVessels = auxTT/model->parametersModel.V_BV;
+        model->antibodyTissueVessels = auxAT/model->parametersModel.V_BV;
+        model->activatedDCTissueVessels = auxDC/model->parametersModel.V_PV;
+
         // Transformar em funcao!!!!
         if(model->my_rank%2 == 0){
             if(model->my_rank != model->comm_sz-1){
@@ -621,13 +623,12 @@ void RunModel(structModel *model){
         }
         stepKMinus += 1;
         stepKMinus = stepKMinus%2;
-        // Trocar MPI_COMM_WORLD por model->comm_sz
         MPI_Barrier(MPI_COMM_WORLD);
     }
     
     if(model->my_rank == 0){
         printf("Computation Done!!\n");
         WriteLymphNodeFiles(model->dendriticLymphNodeSavedPoints, model->tHelperLymphNodeSavedPoints, model->tCytotoxicLymphNodeSavedPoints, model->bCellLymphNodeSavedPoints, model->plasmaCellLymphNodeSavedPoints, model->antibodyLymphNodeSavedPoints);
+        PlotResults();
     }
-    // PlotResults();
 }
