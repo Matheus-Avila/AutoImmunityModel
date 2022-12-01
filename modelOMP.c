@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include <omp.h>
 
 const int xSize = (int)(LENGTH/HX);
@@ -47,8 +48,11 @@ void WritePopulation(float population[xSize][xSize], char* fileName, char* buffe
 }
 
 void WritePopulationLymphNode(float population[NUMPOINTSLYMPHNODE], char* fileName){
+    char absolutePath[70];
+    getcwd(absolutePath, sizeof(absolutePath));
+    strcat(absolutePath, fileName);
     FILE *file;
-    file = fopen(fileName, "w");
+    file = fopen(absolutePath, "w");
     for(int i=0;i<NUMPOINTSLYMPHNODE;i++) {
         fprintf(file, "%f\n", population[i]);
     }
@@ -56,12 +60,12 @@ void WritePopulationLymphNode(float population[NUMPOINTSLYMPHNODE], char* fileNa
 }
 
 void WriteLymphNodeFiles(float dendritic[NUMPOINTSLYMPHNODE], float tHelper[NUMPOINTSLYMPHNODE], float tCytotoxic[NUMPOINTSLYMPHNODE], float bCell[NUMPOINTSLYMPHNODE], float plasmaCell[NUMPOINTSLYMPHNODE], float antibody[NUMPOINTSLYMPHNODE]){
-    WritePopulationLymphNode(dendritic, "./result/dendritic.txt");
-    WritePopulationLymphNode(tHelper, "./result/tHelper.txt");
-    WritePopulationLymphNode(tCytotoxic, "./result/tCyto.txt");
-    WritePopulationLymphNode(bCell, "./result/bCell.txt");
-    WritePopulationLymphNode(plasmaCell, "./result/plasmaCell.txt");
-    WritePopulationLymphNode(antibody, "./result/antibody.txt");
+    WritePopulationLymphNode(dendritic, "/modelomp/result/dendritic.txt");
+    WritePopulationLymphNode(tHelper, "/modelomp/result/tHelper.txt");
+    WritePopulationLymphNode(tCytotoxic, "/modelomp/result/tCyto.txt");
+    WritePopulationLymphNode(bCell, "/modelomp/result/bCell.txt");
+    WritePopulationLymphNode(plasmaCell, "/modelomp/result/plasmaCell.txt");
+    WritePopulationLymphNode(antibody, "/modelomp/result/antibody.txt");
 
     char buffer[10];
     char command[40] = {};
@@ -80,32 +84,44 @@ void WriteFiles(structModel model, float oligodendrocyte[xSize][xSize], float mi
     
     snprintf(buffer, sizeof(buffer), "%.1f", day);
     
-    char pathOligodendrocytes[50] = "./result/matrix/oligo";
+    char pathOligodendrocytes[70];
+    getcwd(pathOligodendrocytes, sizeof(pathOligodendrocytes));
+    strcat(pathOligodendrocytes, "/modelomp/result/matrix/oligo");
     strcat(pathOligodendrocytes, buffer);
     strcat(pathOligodendrocytes, ".txt");
     WritePopulation(oligodendrocyte, pathOligodendrocytes, buffer);
 
-    char pathMicroglia[50] = "./result/matrix/microglia";
+    char pathMicroglia[70];
+    getcwd(pathMicroglia, sizeof(pathMicroglia));
+    strcat(pathMicroglia, "/modelomp/result/matrix/microglia");
     strcat(pathMicroglia, buffer);
     strcat(pathMicroglia, ".txt");
     WritePopulation(microglia, pathMicroglia, buffer);
 
-    char pathTCyto[50] = "./result/matrix/tCyto";
+    char pathTCyto[70];
+    getcwd(pathTCyto, sizeof(pathTCyto));
+    strcat(pathTCyto, "/modelomp/result/matrix/tCyto");
     strcat(pathTCyto, buffer);
     strcat(pathTCyto, ".txt");
     WritePopulation(tCytotoxic, pathTCyto, buffer);
 
-    char pathAntibody[50] = "./result/matrix/antibody";
+    char pathAntibody[70];
+    getcwd(pathAntibody, sizeof(pathAntibody));
+    strcat(pathAntibody, "/modelomp/result/matrix/antibody");
     strcat(pathAntibody, buffer);
     strcat(pathAntibody, ".txt");
     WritePopulation(antibody, pathAntibody, buffer);
 
-    char pathConventionalDC[50] = "./result/matrix/conventionalDC";
+    char pathConventionalDC[70];
+    getcwd(pathConventionalDC, sizeof(pathConventionalDC));
+    strcat(pathConventionalDC, "/modelomp/result/matrix/conventionalDC");
     strcat(pathConventionalDC, buffer);
     strcat(pathConventionalDC, ".txt");
     WritePopulation(conventionalDC, pathConventionalDC, buffer);
 
-    char pathActivatedDC[50] = "./result/matrix/activatedDC";
+    char pathActivatedDC[70];
+    getcwd(pathActivatedDC, sizeof(pathActivatedDC));
+    strcat(pathActivatedDC, "/modelomp/result/matrix/activatedDC");
     strcat(pathActivatedDC, buffer);
     strcat(pathActivatedDC, ".txt");
     WritePopulation(activatedDC, pathActivatedDC, buffer);
@@ -183,9 +199,9 @@ void DefineBVPV(structModel *model){
 
 void WriteBVPV(float thetaBV[xSize][xSize], float thetaPV[xSize][xSize]){
     FILE *fileBV;
-    fileBV = fopen("./result/bv.txt", "w");
+    fileBV = fopen("./modelomp/result/bv.txt", "w");
     FILE *filePV;
-    filePV = fopen("./result/pv.txt", "w");
+    filePV = fopen("./modelomp/result/pv.txt", "w");
     for(int i = 0; i < xSize; i++){        
     for(int j = 0; j < xSize; j++){
         fprintf(fileBV, "%f ", thetaBV[i][j]);
