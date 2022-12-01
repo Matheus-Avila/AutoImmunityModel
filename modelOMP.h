@@ -116,7 +116,7 @@ typedef struct structModel
 
 }structModel;
 
-int VerifyCFL(structParameters parametersModel, float ht, float hx);
+int VerifyCFL(structParameters parametersModel);
 
 float AdvectionTerm(float populationPoint, float avgValue);
 

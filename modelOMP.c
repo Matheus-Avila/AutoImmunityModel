@@ -28,8 +28,9 @@ void InitialConditionLymphNode(structModel* model, float dendriticLN, float thel
     model->antibodyLymphNode[0] = antibodyLN;
 }
 
-int VerifyCFL(structParameters parametersModel, float ht, float hx){
-
+int VerifyCFL(structParameters parametersModel){
+    if(parametersModel.micDiffusion*HT/(HX*HX) < 0.25 && parametersModel.cDcDiffusion*HT/(HX*HX) < 0.25 && parametersModel.aDcDiffusion*HT/(HX*HX) < 0.25 && parametersModel.tCytoDiffusion*HT/(HX*HX) < 0.25 && parametersModel.chi*HT/HX < 1)
+        return 1;
     return 0;
 }
 
@@ -210,6 +211,11 @@ structModel ModelInitialize(structParameters params, int TotThr){
     structModel model;
     srand(2);
     model.parametersModel = params;
+    if(!VerifyCFL(model.parametersModel)){
+        printf("Falhou CFL!!\n");
+        exit(0);
+    }        
+
     model.intervaloFiguras = (int)tSize/NUMFIGS;
     
     model.ht = HT;
