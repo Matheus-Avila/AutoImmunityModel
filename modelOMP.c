@@ -373,12 +373,13 @@ void RunModel(structModel *model){
         // solve lymphnode
         SolverLymphNode(model, kTime);
         stepKPlus = kTime%2;
-        #pragma omp parallel for num_threads(model->totalThreads) default(none) shared(model, auxTCytotoxicBV, auxAntibodyBV, auxAdcPV, lowerNeumannBC, rightNeumannBC, upperNeumannBC, leftNeumannBC, kTime, stepKMinus, stepKPlus)\
+        #pragma omp parallel for num_threads(model->totalThreads) default(none) shared(model, lowerNeumannBC, rightNeumannBC, upperNeumannBC, leftNeumannBC, kTime, stepKMinus, stepKPlus)\
             private(line, column, microgliaKMinus, conventionalDcKMinus,\
             activatedDcKMinus, tCytotoxicKMinus, antibodyKMinus, oligodendrocyteKMinus, valIPlus, valJPlus, valIMinus, valJMinus, gradientOdcI,\
             gradientOdcJ, microgliaDiffusion, microgliaChemotaxis, conventionalDcDiffusion, conventionalDcChemotaxis, tCytotoxicDiffusion, tCytotoxicChemotaxis,\
             activatedDCDiffusion, antibodyDiffusion, microgliaReaction, microgliaClearance, conventionalDcReaction, conventionalDcActivation, conventionalDcClearance,\
-            activatedDcClearance, activatedDcMigration, tCytotoxicMigration, odcAntibodyMicrogliaFagocitosis, antibodyMigration, odcMicrogliaFagocitosis, odcTCytotoxicApoptosis)
+            activatedDcClearance, activatedDcMigration, tCytotoxicMigration, odcAntibodyMicrogliaFagocitosis, antibodyMigration, odcMicrogliaFagocitosis, odcTCytotoxicApoptosis)\
+            reduction(+:auxTCytotoxicBV, auxAntibodyBV, auxAdcPV)
         for(line = 0; line < model->spaceLen; line++){
         for(column = 0; column < model->spaceLen; column++){
             
@@ -513,13 +514,10 @@ void RunModel(structModel *model){
                 exit(0);
             }
             if(model->thetaBV[line][column] == 1){
-                #pragma omp atomic
                 auxTCytotoxicBV += model->tCytotoxic[stepKPlus][line][column];
-                #pragma omp atomic
                 auxAntibodyBV += model->antibody[stepKPlus][line][column];
             }
             if(model->thetaPV[line][column] == 1){
-                #pragma omp atomic
                 auxAdcPV += model->activatedDc[stepKPlus][line][column];
             }
         }
