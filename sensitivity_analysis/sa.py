@@ -4,10 +4,10 @@ import os
 from SALib.sample import saltelli
 from SALib.analyze import sobol
 
-def modelo(chi, d_mic, mu_m, r_m, d_dc, d_da, d_t_cit, d_anti, lamb_f_m, b_d, r_t, mu_dc, gamma_D, gamma_F, gamma_T, alpha_T_h, alpha_T_c, alpha_B, alpha_P,
-cMic, cCDc, cADc, cDl, cF, b_Th, b_Tc, b_rho, b_rho_b, b_rho_p, rho_Th, rho_Tc, rho_B, rho_P, rho_F):
+def modelo(d_mic, d_anti, d_dc, d_da, d_t_cit, chi, mu_dc, mu_m, r_m, r_t, lamb_f_m, b_d, gamma_D, gamma_F, gamma_T,
+cMic, cCDc, cADc, cDl, cF, alpha_T_h, alpha_T_c, alpha_B, alpha_P, b_Th, b_Tc, b_rho, b_rho_b, b_rho_p, rho_Th, rho_Tc, rho_B, rho_P, rho_F):
     #Escrever parametros em um txt
-    with open('DE_parameters.txt', 'w') as filep:
+    with open('./sensitivity_analysis/SA_parameters.txt', 'w') as filep:
         filep.write(str(chi)+"\n"+str(d_mic)+"\n"+str(d_dc)+"\n"+str(d_da)+"\n"+str(d_t_cit)+"\n"+str(d_anti)+
         "\n"+str(mu_m)+"\n"+str(r_m)+"\n"+str(lamb_f_m)+"\n"+str(b_d)+"\n"+str(r_t)+
         "\n"+str(mu_dc)+"\n"+str(gamma_D)+"\n"+str(gamma_F)+"\n"+str(gamma_T)+"\n"+str(alpha_T_h)+"\n"+str(alpha_T_c)+
@@ -15,10 +15,10 @@ cMic, cCDc, cADc, cDl, cF, b_Th, b_Tc, b_rho, b_rho_b, b_rho_p, rho_Th, rho_Tc, 
         "\n"+str(b_Th)+"\n"+str(b_Tc)+"\n"+str(b_rho)+"\n"+str(b_rho_b)+"\n"+str(b_rho_p)+"\n"+str(rho_Th)+
         "\n"+str(rho_Tc)+"\n"+str(rho_B)+"\n"+str(rho_P)+"\n"+str(rho_F))
     #Executar codigo em C
-    os.system("./mainOMP 4")#Executa o modelo C
+    os.system("./mainOMP 2 1")#Executa o modelo C
     #Ler resultado em C
     outPut = 0
-    with open("output.txt", 'r') as f:
+    with open("./sensitivity_analysis/SAoutput.txt", 'r') as f:
         outPut = f.readline()
     outPut = float(outPut)
     return outPut
@@ -33,14 +33,14 @@ chi_mean = 0.298*60*2
 
 mu_dc_mean = 60*24*3*10**-4
 mu_m_mean = 60*24*3*10**-6
-r_m_mean = 60*24*3.96*10**-6
+r_m_mean = 5.702**10**-3
 r_t_mean = 0.1
-lamb_f_m_mean = 60*24*3.96*10**-6
+lamb_f_m_mean = 5.702*10**-3
 b_d_mean = 0.001
 
 gamma_D_mean = 0.01
-gamma_F_mean = 0.03
-gamma_T_mean = 0.2
+gamma_F_mean = 0.3
+gamma_T_mean = 2
 
 cMic_mean = 0.1
 cCDc_mean = 0.1
@@ -55,14 +55,19 @@ alpha_P_mean = 1
 
 b_T_mean = 0.17
 b_Tc_mean = 0.001
-b_rho_mean = 10**5
+b_rho_mean = 0.6
 b_rho_b_mean = 3
 b_rho_p_mean = 1.02
+
 rho_T_mean = 2
 rho_Tc_mean = 2
 rho_B_mean = 11
 rho_P_mean = 3
 rho_F_mean = 5.1*10**-2
+
+multiplyTerm = .1
+upperBound = 1 + multiplyTerm
+lowerBound = 1 - multiplyTerm
 
 problem = {
     'num_vars': 34,
@@ -107,44 +112,44 @@ problem = {
         'rho_F'
     ],
     'bounds': [
-        [0.9*d_mic_mean, 1.1*d_mic_mean],
-        [0.9*d_anti_mean, 1.1*d_anti_mean],
-        [0.9*d_dc_mean, 1.1*d_dc_mean],
-        [0.9*d_da_mean, 1.1*d_da_mean],
-        [0.9*d_t_cit_mean, 1.1*d_t_cit_mean],
-        [0.9*chi_mean, 1.1*chi_mean],
+        [lowerBound*d_mic_mean, upperBound*d_mic_mean],
+        [lowerBound*d_anti_mean, upperBound*d_anti_mean],
+        [lowerBound*d_dc_mean, upperBound*d_dc_mean],
+        [lowerBound*d_da_mean, upperBound*d_da_mean],
+        [lowerBound*d_t_cit_mean, upperBound*d_t_cit_mean],
+        [lowerBound*chi_mean, upperBound*chi_mean],
 
-        [0.9*mu_dc_mean, 1.1*mu_dc_mean],
-        [0.9*mu_m_mean, 1.1*mu_m_mean],
-        [0.9*r_m_mean, 1.1*r_m_mean],
-        [0.9*r_t_mean, 1.1*r_t_mean],
-        [0.9*lamb_f_m_mean, 1.1*lamb_f_m_mean],
-        [0.9*b_d_mean, 1.1*b_d_mean],
+        [lowerBound*mu_dc_mean, upperBound*mu_dc_mean],
+        [lowerBound*mu_m_mean, upperBound*mu_m_mean],
+        [lowerBound*r_m_mean, upperBound*r_m_mean],
+        [lowerBound*r_t_mean, upperBound*r_t_mean],
+        [lowerBound*lamb_f_m_mean, upperBound*lamb_f_m_mean],
+        [lowerBound*b_d_mean, upperBound*b_d_mean],
 
-        [0.9*gamma_D_mean, 1.1*gamma_D_mean],
-        [0.9*gamma_F_mean, 1.1*gamma_F_mean],
-        [0.9*gamma_T_mean, 1.1*gamma_T_mean],
+        [lowerBound*gamma_D_mean, upperBound*gamma_D_mean],
+        [lowerBound*gamma_F_mean, upperBound*gamma_F_mean],
+        [lowerBound*gamma_T_mean, upperBound*gamma_T_mean],
 
-        [.9*cMic_mean, 1.1*cMic_mean],
-        [.9*cCDc_mean, 1.1*cCDc_mean],
-        [.9*cADc_mean, 1.1*cADc_mean],
-        [.9*cDl_mean, 1.1*cDl_mean],
-        [.9*cF_mean, 1.1*cF_mean],
+        [.9*cMic_mean, upperBound*cMic_mean],
+        [.9*cCDc_mean, upperBound*cCDc_mean],
+        [.9*cADc_mean, upperBound*cADc_mean],
+        [.9*cDl_mean, upperBound*cDl_mean],
+        [.9*cF_mean, upperBound*cF_mean],
 
-        [0.9*alpha_T_h_mean, 1.1*alpha_T_h_mean],
-        [0.9*alpha_T_c_mean, 1.1*alpha_T_c_mean],
-        [0.9*alpha_B_mean, 1.1*alpha_B_mean],
-        [0.9*alpha_P_mean, 1.1*alpha_P_mean],
-        [0.9*b_T_mean, 1.1*b_T_mean],
-        [0.9*b_Tc_mean, 1.1*b_Tc_mean],
-        [0.9*b_rho_mean, 1.1*b_rho_mean],
-        [0.9*b_rho_b_mean, 1.1*b_rho_b_mean],
-        [0.9*b_rho_p_mean, 1.1*b_rho_p_mean],
-        [0.9*rho_T_mean, 1.1*rho_T_mean],
-        [0.9*rho_Tc_mean, 1.1*rho_Tc_mean],
-        [0.9*rho_B_mean, 1.1*rho_B_mean],
-        [0.9*rho_P_mean, 1.1*rho_P_mean],
-        [0.9*rho_F_mean, 1.1*rho_F_mean]
+        [lowerBound*alpha_T_h_mean, upperBound*alpha_T_h_mean],
+        [lowerBound*alpha_T_c_mean, upperBound*alpha_T_c_mean],
+        [lowerBound*alpha_B_mean, upperBound*alpha_B_mean],
+        [lowerBound*alpha_P_mean, upperBound*alpha_P_mean],
+        [lowerBound*b_T_mean, upperBound*b_T_mean],
+        [lowerBound*b_Tc_mean, upperBound*b_Tc_mean],
+        [lowerBound*b_rho_mean, upperBound*b_rho_mean],
+        [lowerBound*b_rho_b_mean, upperBound*b_rho_b_mean],
+        [lowerBound*b_rho_p_mean, upperBound*b_rho_p_mean],
+        [lowerBound*rho_T_mean, upperBound*rho_T_mean],
+        [lowerBound*rho_Tc_mean, upperBound*rho_Tc_mean],
+        [lowerBound*rho_B_mean, upperBound*rho_B_mean],
+        [lowerBound*rho_P_mean, upperBound*rho_P_mean],
+        [lowerBound*rho_F_mean, upperBound*rho_F_mean]
     ]
 }
 
@@ -163,7 +168,7 @@ problem_teste = {
 }
 
 print("Running Model")
-sample = saltelli.sample(problem, 100, calc_second_order=False)
+sample = saltelli.sample(problem, 4, calc_second_order=False)
 Y = np.empty([sample.shape[0]])
 
 inputFile = open("sample.txt", "w")

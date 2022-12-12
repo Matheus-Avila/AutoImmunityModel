@@ -6,16 +6,17 @@
 
 structParameters ReadParameters(){
     FILE *file;
-    file = fopen("./sensitivity_analysis/DE_parameters.txt","r");
+    file = fopen("./sensitivity_analysis/SA_parameters.txt","r");
     char lineRead[25];
     structParameters params;
     float fileParameters[34];
     int fileIter = 0;
     while (fgets(lineRead, sizeof(lineRead), file) != NULL){
-        const char* valParam = strtok(lineRead, "\n");
-        fileParameters[fileIter] = atof(valParam);
+        // char* valParam = strtok(lineRead, "\n");
+        fileParameters[fileIter] = atof(lineRead);
+        fileIter++;
     }
-
+    fclose(file);
     //Escrever o vetor de parametros na estrutura parametros
     params.chi = fileParameters[0];
     params.micDiffusion = fileParameters[1];
@@ -111,11 +112,13 @@ structParameters ParametersInitialize(){
     params.bRho = 0.6;
     params.bRhoB = 3.02;
     params.bRhoP = 1.02;
+
     params.rhoTHelper = 2;
     params.rhoTCytotoxic = 2;
     params.rhoB = 11;
     params.rhoP = 3;
     params.rhoAntibody = 5.1*pow(10,-2);
+
     params.estableTHelper = 84;
     params.estableTCytotoxic = 40;
     params.estableB = 25;
@@ -129,16 +132,15 @@ structParameters ParametersInitialize(){
 
 
 int main(int argc, char* argv[]){
-    printf("Comecei o main\n");
     int tot_thr = strtol(argv[1], NULL, 10);
-    int calculateQoI = strtol(argv[2], NULL, 10);
+    int calculateQoI = 0;
+    calculateQoI = strtol(argv[2], NULL, 10);
     structParameters parameters;
     if(calculateQoI==0)
         parameters = ParametersInitialize();
     else
         parameters = ReadParameters();
-    structModel model = ModelInitialize(parameters, tot_thr);
-    printf("Inicializacao feita!!\n\n");
+    structModel model = ModelInitialize(parameters, tot_thr, calculateQoI);
     float start = omp_get_wtime();
     RunModel(&model);
     float end = omp_get_wtime();

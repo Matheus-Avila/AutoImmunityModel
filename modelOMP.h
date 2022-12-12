@@ -69,6 +69,7 @@ typedef struct structParameters
 typedef struct structModel
 {
     int totalThreads;
+    int calculateQoI;
 
     float ht;
     float hx;
@@ -133,9 +134,11 @@ float* EquationsLymphNode(structModel model, float* populationLN, int stepPos);
 
 void SolverLymphNode(structModel *model, int stepPos);
 
-structModel ModelInitialize(structParameters params, int totThr);
+structModel ModelInitialize(structParameters params, int totThr, int calculateQoI);
 
 void DefineBVPV(structModel *model);
+
+void WriteQoI(float qoI);
 
 void InitialConditionTissueMicroglia(structModel* model);
 
