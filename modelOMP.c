@@ -194,7 +194,7 @@ void DefineBVPV(structModel *model){
         }
     }
     printf("bv = %d, pv = %d \n", model->parametersModel.V_BV, model->parametersModel.V_PV);
-    WriteBVPV(model->thetaBV, model->thetaPV);
+    // WriteBVPV(model->thetaBV, model->thetaPV);
 }
 
 void WriteBVPV(float thetaBV[xSize][xSize], float thetaPV[xSize][xSize]){
@@ -349,7 +349,7 @@ void SolverLymphNode(structModel *model, int stepPos){
 
 void RunModel(structModel *model){
     //Save IC
-    WriteFiles(*model, model->oligodendrocyte[0], model->microglia[0], model->tCytotoxic[0], model->antibody[0], model->conventionalDc[0], model->activatedDc[0], 0);
+    // WriteFiles(*model, model->oligodendrocyte[0], model->microglia[0], model->tCytotoxic[0], model->antibody[0], model->conventionalDc[0], model->activatedDc[0], 0);
     
     int stepKMinus = 0, stepKPlus, line, column;
 
@@ -522,8 +522,8 @@ void RunModel(structModel *model){
             }
         }
         }
-        if(kTime%model->intervaloFiguras == 0 || kTime == model->timeLen)
-            WriteFiles(*model, model->oligodendrocyte[stepKPlus], model->microglia[stepKPlus], model->tCytotoxic[stepKPlus], model->antibody[stepKPlus], model->conventionalDc[stepKPlus], model->activatedDc[stepKPlus], kTime);
+        // if(kTime%model->intervaloFiguras == 0 || kTime == model->timeLen)
+        //     WriteFiles(*model, model->oligodendrocyte[stepKPlus], model->microglia[stepKPlus], model->tCytotoxic[stepKPlus], model->antibody[stepKPlus], model->conventionalDc[stepKPlus], model->activatedDc[stepKPlus], kTime);
         model->tCytotoxicTissueVessels = auxTCytotoxicBV/model->parametersModel.V_BV;
         model->antibodyTissueVessels = auxAntibodyBV/model->parametersModel.V_BV;
         model->activatedDCTissueVessels = auxAdcPV/model->parametersModel.V_PV;
@@ -531,6 +531,6 @@ void RunModel(structModel *model){
         stepKMinus = stepKMinus%2;
     }
     printf("Computation Done!!\n");
-    WriteLymphNodeFiles(model->dendriticLymphNodeSavedPoints, model->tHelperLymphNodeSavedPoints, model->tCytotoxicLymphNodeSavedPoints, model->bCellLymphNodeSavedPoints, model->plasmaCellLymphNodeSavedPoints, model->antibodyLymphNodeSavedPoints);
-    PlotResults();
+    // WriteLymphNodeFiles(model->dendriticLymphNodeSavedPoints, model->tHelperLymphNodeSavedPoints, model->tCytotoxicLymphNodeSavedPoints, model->bCellLymphNodeSavedPoints, model->plasmaCellLymphNodeSavedPoints, model->antibodyLymphNodeSavedPoints);
+    // PlotResults();
 }
