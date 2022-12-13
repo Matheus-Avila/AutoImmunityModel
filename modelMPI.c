@@ -6,6 +6,8 @@
 #include <string.h>
 #include <mpi.h>
 
+#define DEBUG 1
+
 const int xSize = (int)(LENGTH/HX);
 const int tSize = (int)(TIME/HT);
 
@@ -81,44 +83,38 @@ void WriteLymphNodeFiles(float dendritic[NUMPOINTSLYMPHNODE], float tHelper[NUMP
 void WriteFiles(structModel model, float oligodendrocyte[xSize][xSize], float microglia[xSize][xSize], float tCytotoxic[xSize][xSize], float antibody[xSize][xSize], float conventionalDC[xSize][xSize], float  activatedDC[xSize][xSize], float time){
     char buffer[10];
     float day = time*HT;
-    
     snprintf(buffer, sizeof(buffer), "%.1f", day);
-    
     char pathOligodendrocytes[70];
     getcwd(pathOligodendrocytes, sizeof(pathOligodendrocytes));
     strcat(pathOligodendrocytes, "/modelmpi/result/matrix/oligo");
     strcat(pathOligodendrocytes, buffer);
     strcat(pathOligodendrocytes, ".txt");
+    printf("%s\n", pathOligodendrocytes);
     WritePopulation(oligodendrocyte, pathOligodendrocytes, buffer);
-
     char pathMicroglia[70];
     getcwd(pathMicroglia, sizeof(pathMicroglia));
     strcat(pathMicroglia, "/modelmpi/result/matrix/microglia");
     strcat(pathMicroglia, buffer);
     strcat(pathMicroglia, ".txt");
     WritePopulation(microglia, pathMicroglia, buffer);
-
     char pathTCyto[70];
     getcwd(pathTCyto, sizeof(pathTCyto));
     strcat(pathTCyto, "/modelmpi/result/matrix/tCyto");
     strcat(pathTCyto, buffer);
     strcat(pathTCyto, ".txt");
     WritePopulation(tCytotoxic, pathTCyto, buffer);
-
     char pathAntibody[70];
     getcwd(pathAntibody, sizeof(pathAntibody));
     strcat(pathAntibody, "/modelmpi/result/matrix/antibody");
     strcat(pathAntibody, buffer);
     strcat(pathAntibody, ".txt");
     WritePopulation(antibody, pathAntibody, buffer);
-
     char pathConventionalDC[70];
     getcwd(pathConventionalDC, sizeof(pathConventionalDC));
     strcat(pathConventionalDC, "/modelmpi/result/matrix/conventionalDC");
     strcat(pathConventionalDC, buffer);
     strcat(pathConventionalDC, ".txt");
     WritePopulation(conventionalDC, pathConventionalDC, buffer);
-
     char pathActivatedDC[70];
     getcwd(pathActivatedDC, sizeof(pathActivatedDC));
     strcat(pathActivatedDC, "/modelmpi/result/matrix/activatedDC");
@@ -224,12 +220,22 @@ void DefineBVPV(structModel *model){
         // WriteBVPV(model->thetaBV, model->thetaPV);
     }
     // Para cada linha da matriz fazer broadcast
+    float* linearizedPV = (float*)malloc(xSize * xSize * sizeof(float)); 
+    float* linearizedBV = (float*)malloc(xSize * xSize * sizeof(float));
+    #ifdef DEBUG
+    LinearizeVector(model, linearizedPV, linearizedBV);
+    printf("Linearized thetaPV\n");
+    PrintLinearized(linearizedPV);
+    printf("Linearized thetaBV\n");
+    PrintLinearized(linearizedBV);
+    #endif
     for(int i = 0; i < xSize; i++){
     MPI_Bcast(model->thetaPV[i], xSize*sizeof(int), MPI_INT, 0, MPI_COMM_WORLD);
     MPI_Bcast(model->thetaBV[i], xSize*sizeof(int), MPI_INT, 0, MPI_COMM_WORLD);
     }
     MPI_Bcast(&model->parametersModel.V_BV, 1, MPI_INT, 0, MPI_COMM_WORLD);
     MPI_Bcast(&model->parametersModel.V_PV, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    printf("BCAST FINISHED\n");
 }
 
 structModel ModelInitialize(structParameters params, int my_rank, int comm_sz){
@@ -430,6 +436,7 @@ void SendBorderThread(structModel *model, int stepKPlus){
 void RunModel(structModel *model){
     //Save IC
     WriteFiles(*model, model->oligodendrocyte[0], model->microglia[0], model->tCytotoxic[0], model->antibody[0], model->conventionalDc[0], model->activatedDc[0], 0);
+    printf("Files writed\n");
     int stepKMinus = 0, stepKPlus, line, column;
 
     float upperNeumannBC = 0.0, lowerNeumannBC = 0.0, leftNeumannBC = 0.0, rightNeumannBC = 0.0;
@@ -653,3 +660,25 @@ void RunModel(structModel *model){
         PlotResults();
     }
 }
+
+void LinearizeVector(structModel *model, float* linearizedPV, float* linearizedBV) {
+    printf("Iniciou o loop de linearizacao\n");
+    for(int i = 0; i < xSize; i++) {
+        for(int j = 0; j < xSize; j++) {
+            linearizedPV[i * xSize + j] = model->thetaPV[i][j];
+            linearizedBV[i * xSize + j] = model->thetaBV[i][j];
+        }
+    }
+}
+
+#ifdef DEBUG
+void PrintLinearized(float* linearized) {
+    printf("Linearized vector: \n");
+    for(int i = 0; i < xSize; i++) {
+        for(int j = 0; j < xSize; j++) {
+            printf("%.2f ", linearized[i * xSize + j]);
+        }
+        printf("\n");
+    }
+}
+#endif

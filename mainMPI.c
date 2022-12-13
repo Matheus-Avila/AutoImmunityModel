@@ -69,10 +69,11 @@ int main(int argc, char* argv[]){
     MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
 
     MPI_Comm_size(MPI_COMM_WORLD, &comm_sz);
-
     structParameters parameters = ParametersInitialize();
     structModel model = ModelInitialize(parameters, my_rank, comm_sz);
+    printf("Model Initialized\n");
     RunModel(&model);
+    printf("Model runned\n");
     MPI_Finalize();
     return 0;
 }
