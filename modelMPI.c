@@ -200,6 +200,8 @@ void WriteBVPV(float thetaBV[xSize][xSize], float thetaPV[xSize][xSize]){
 }
 
 void DefineBVPV(structModel *model){
+    float* linearizedPV = (float*)malloc(xSize * xSize * sizeof(float)); 
+    float* linearizedBV = (float*)malloc(xSize * xSize * sizeof(float));
     if(model->my_rank == 0){
         int randomVal;
         for(int i = 0; i < xSize; i++){
@@ -216,26 +218,16 @@ void DefineBVPV(structModel *model){
                 }
             }
         }
+        LinearizePVBV(model, linearizedPV, linearizedBV);
         printf("bv = %d, pv = %d \n", model->parametersModel.V_BV, model->parametersModel.V_PV);
         // WriteBVPV(model->thetaBV, model->thetaPV);
     }
     // Para cada linha da matriz fazer broadcast
-    float* linearizedPV = (float*)malloc(xSize * xSize * sizeof(float)); 
-    float* linearizedBV = (float*)malloc(xSize * xSize * sizeof(float));
-    #ifdef DEBUG
-    LinearizeVector(model, linearizedPV, linearizedBV);
-    printf("Linearized thetaPV\n");
-    PrintLinearized(linearizedPV);
-    printf("Linearized thetaBV\n");
-    PrintLinearized(linearizedBV);
-    #endif
-    for(int i = 0; i < xSize; i++){
-    MPI_Bcast(model->thetaPV[i], xSize*sizeof(int), MPI_INT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(model->thetaBV[i], xSize*sizeof(int), MPI_INT, 0, MPI_COMM_WORLD);
-    }
+    MPI_Bcast(linearizedPV, xSize*xSize, MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(linearizedBV, xSize*xSize, MPI_FLOAT, 0, MPI_COMM_WORLD);
+    DelinearizePVBV(model, linearizedPV, linearizedBV);
     MPI_Bcast(&model->parametersModel.V_BV, 1, MPI_INT, 0, MPI_COMM_WORLD);
     MPI_Bcast(&model->parametersModel.V_PV, 1, MPI_INT, 0, MPI_COMM_WORLD);
-    printf("BCAST FINISHED\n");
 }
 
 structModel ModelInitialize(structParameters params, int my_rank, int comm_sz){
@@ -661,7 +653,7 @@ void RunModel(structModel *model){
     }
 }
 
-void LinearizeVector(structModel *model, float* linearizedPV, float* linearizedBV) {
+void LinearizePVBV(structModel *model, float* linearizedPV, float* linearizedBV) {
     printf("Iniciou o loop de linearizacao\n");
     for(int i = 0; i < xSize; i++) {
         for(int j = 0; j < xSize; j++) {
@@ -669,6 +661,17 @@ void LinearizeVector(structModel *model, float* linearizedPV, float* linearizedB
             linearizedBV[i * xSize + j] = model->thetaBV[i][j];
         }
     }
+}
+
+void DelinearizePVBV(structModel* model, float* linearizedPV, float* linearizedBV) {
+    printf("Iniciou o loop de Delinearizacao\n");
+    for(int i = 0; i < xSize; i++) {
+        for(int j = 0; j < xSize; j++) {
+            model->thetaPV[i][j] = linearizedPV[i * xSize + j];
+            model->thetaBV[i][j] = linearizedBV[i * xSize + j];
+        }
+    }
+    printf("Finalizou o loop de Delinearizacao\n");
 }
 
 #ifdef DEBUG

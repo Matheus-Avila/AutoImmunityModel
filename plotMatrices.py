@@ -3,6 +3,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
 import sys
+import config
+
+basePath = config.init()
 sns.set()
 
 #Ler L e h_x como parâmetro no terminal e o tempo que é para salvar
@@ -42,7 +45,7 @@ def printMesh(time, population, type):
         plt.colorbar(cp, label="Concentration (molecules/$mm^2$)")
     else:
         plt.colorbar(cp, label="Concentration (cells/$mm^2$)")
-    plt.savefig('result/'+type+'/fig'+'{:.1f}'.format(time)+type+'.png', dpi = 300)
+    plt.savefig(basePath+type+'/fig'+'{:.1f}'.format(time)+type+'.png', dpi = 300)
     plt.clf()
 
 mic_atual = np.zeros(((int(L/h_x)), (int(L/h_x))))
@@ -53,42 +56,42 @@ dendritica_conv_atual = np.zeros(((int(L/h_x)), (int(L/h_x))))
 dendritica_ativ_atual = np.zeros(((int(L/h_x)), (int(L/h_x))))
 
 for t in timesPlots:
-    with open("./result/matrix/oligo"+str(t)+".txt", 'r') as f:
+    with open(basePath + "matrix/oligo"+str(t)+".txt", 'r') as f:
         lista = [line.split(' ')  for line in f]
         for line in range(len(lista[0])-1):
             for column in range(len(lista[0])-1):
                 olide_atual[line][column] = lista[line][column]
         printMesh(t, olide_atual, "odc")
 
-    with open("./result/matrix/microglia"+str(t)+".txt", 'r') as f:
+    with open(basePath + "matrix/microglia"+str(t)+".txt", 'r') as f:
         lista = [line.split(' ')  for line in f]
         for line in range(len(lista[0])-1):
             for column in range(len(lista[0])-1):
                 mic_atual[line][column] = lista[line][column]
         printMesh(t, mic_atual, "mic")
 
-    with open("./result/matrix/conventionalDC"+str(t)+".txt", 'r') as f:
+    with open(basePath + "matrix/conventionalDC"+str(t)+".txt", 'r') as f:
         lista = [line.split(' ')  for line in f]
         for line in range(len(lista[0])-1):
             for column in range(len(lista[0])-1):
                 dendritica_conv_atual[line][column] = lista[line][column]
         printMesh(t, dendritica_conv_atual, "dc")
 
-    with open("./result/matrix/activatedDC"+str(t)+".txt", 'r') as f:
+    with open(basePath + "matrix/activatedDC"+str(t)+".txt", 'r') as f:
         lista = [line.split(' ')  for line in f]
         for line in range(len(lista[0])-1):
             for column in range(len(lista[0])-1):
                 dendritica_ativ_atual[line][column] = lista[line][column]
         printMesh(t, dendritica_ativ_atual, "da")
 
-    with open("./result/matrix/tCyto"+str(t)+".txt", 'r') as f:
+    with open(basePath + "matrix/tCyto"+str(t)+".txt", 'r') as f:
         lista = [line.split(' ')  for line in f]
         for line in range(len(lista[0])-1):
             for column in range(len(lista[0])-1):
                 t_cito_atual[line][column] = lista[line][column]
         printMesh(t, t_cito_atual, "tke")
 
-    with open("./result/matrix/antibody"+str(t)+".txt", 'r') as f:
+    with open(basePath + "matrix/antibody"+str(t)+".txt", 'r') as f:
         lista = [line.split(' ')  for line in f]
         for line in range(len(lista[0])-1):
             for column in range(len(lista[0])-1):
