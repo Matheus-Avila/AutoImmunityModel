@@ -225,7 +225,10 @@ void DefineBVPV(structModel *model){
     // Para cada linha da matriz fazer broadcast
     MPI_Bcast(linearizedPV, xSize*xSize, MPI_FLOAT, 0, MPI_COMM_WORLD);
     MPI_Bcast(linearizedBV, xSize*xSize, MPI_FLOAT, 0, MPI_COMM_WORLD);
+    if(model->my_rank != 0)
     DelinearizePVBV(model, linearizedPV, linearizedBV);
+    free(linearizedPV);
+    free(linearizedBV);
     MPI_Bcast(&model->parametersModel.V_BV, 1, MPI_INT, 0, MPI_COMM_WORLD);
     MPI_Bcast(&model->parametersModel.V_PV, 1, MPI_INT, 0, MPI_COMM_WORLD);
 }
@@ -427,6 +430,10 @@ void SendBorderThread(structModel *model, int stepKPlus){
 
 void RunModel(structModel *model){
     //Save IC
+    double initTime, endTime;
+    if(model->my_rank == 0) {
+        initTime = MPI_Wtime();
+    }
     WriteFiles(*model, model->oligodendrocyte[0], model->microglia[0], model->tCytotoxic[0], model->antibody[0], model->conventionalDc[0], model->activatedDc[0], 0);
     printf("Files writed\n");
     int stepKMinus = 0, stepKPlus, line, column;
@@ -645,8 +652,10 @@ void RunModel(structModel *model){
         stepKMinus = stepKMinus%2;
         MPI_Barrier(MPI_COMM_WORLD);
     }
-    
     if(model->my_rank == 0){
+        endTime = MPI_Wtime();
+        double totalTime = endTime - initTime;
+        printf("Time to launch code in MPI is: %.2lf\n", totalTime);
         printf("Computation Done!!\n");
         WriteLymphNodeFiles(model->dendriticLymphNodeSavedPoints, model->tHelperLymphNodeSavedPoints, model->tCytotoxicLymphNodeSavedPoints, model->bCellLymphNodeSavedPoints, model->plasmaCellLymphNodeSavedPoints, model->antibodyLymphNodeSavedPoints);
         PlotResults();
@@ -655,21 +664,21 @@ void RunModel(structModel *model){
 
 void LinearizePVBV(structModel *model, float* linearizedPV, float* linearizedBV) {
     printf("Iniciou o loop de linearizacao\n");
-    for(int i = 0; i < xSize; i++) {
-        for(int j = 0; j < xSize; j++) {
-            linearizedPV[i * xSize + j] = model->thetaPV[i][j];
-            linearizedBV[i * xSize + j] = model->thetaBV[i][j];
-        }
+    for(int k = 0; k < xSize * xSize; k++) {
+        int i = k / xSize;
+        int j = k % xSize;
+        linearizedPV[i * xSize + j] = model->thetaPV[i][j];
+        linearizedBV[i * xSize + j] = model->thetaBV[i][j];
     }
 }
 
 void DelinearizePVBV(structModel* model, float* linearizedPV, float* linearizedBV) {
     printf("Iniciou o loop de Delinearizacao\n");
-    for(int i = 0; i < xSize; i++) {
-        for(int j = 0; j < xSize; j++) {
-            model->thetaPV[i][j] = linearizedPV[i * xSize + j];
-            model->thetaBV[i][j] = linearizedBV[i * xSize + j];
-        }
+    for(int k = 0; k < xSize * xSize; k++) {
+        int i = k / xSize;
+        int j = k % xSize;
+        model->thetaPV[i][j] = linearizedPV[i * xSize + j];
+        model->thetaBV[i][j] = linearizedBV[i * xSize + j];
     }
     printf("Finalizou o loop de Delinearizacao\n");
 }
