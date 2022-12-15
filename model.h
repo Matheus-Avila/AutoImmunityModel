@@ -75,6 +75,7 @@ typedef struct structModel
     int xFinal;
 
     int intervaloFiguras;
+    int numPointsLN;
 
     // int *timeVec;
     // int *spaceVec;
@@ -82,33 +83,33 @@ typedef struct structModel
     int timeLen;
     int spaceLen;
 
-    float thetaBV[(int)(LENGTH/HX)][(int)(LENGTH/HX)];
-    float thetaPV[(int)(LENGTH/HX)][(int)(LENGTH/HX)];
+    float *thetaBV;
+    float *thetaPV;
 
     float activatedDCTissueVessels;
     float antibodyTissueVessels;
     float tCytotoxicTissueVessels;
     
-    float microglia[BUFFER][(int)(LENGTH/HX)][(int)(LENGTH/HX)];
-    float oligodendrocyte[BUFFER][(int)(LENGTH/HX)][(int)(LENGTH/HX)];
-    float conventionalDc[BUFFER][(int)(LENGTH/HX)][(int)(LENGTH/HX)];
-    float activatedDc[BUFFER][(int)(LENGTH/HX)][(int)(LENGTH/HX)];
-    float antibody[BUFFER][(int)(LENGTH/HX)][(int)(LENGTH/HX)];
-    float tCytotoxic[BUFFER][(int)(LENGTH/HX)][(int)(LENGTH/HX)];
+    float **microglia;
+    float **oligodendrocyte;
+    float **conventionalDc;
+    float **activatedDc;
+    float **antibody;
+    float **tCytotoxic;
 
-    float dendriticLymphNode[BUFFER];
-    float tHelperLymphNode[BUFFER];
-    float tCytotoxicLymphNode[BUFFER];
-    float bCellLymphNode[BUFFER];
-    float plasmaCellLymphNode[BUFFER];
-    float antibodyLymphNode[BUFFER];
+    float *dendriticLymphNode;
+    float *tHelperLymphNode;
+    float *tCytotoxicLymphNode;
+    float *bCellLymphNode;
+    float *plasmaCellLymphNode;
+    float *antibodyLymphNode;
 
-    float dendriticLymphNodeSavedPoints[NUMPOINTSLYMPHNODE];
-    float tHelperLymphNodeSavedPoints[NUMPOINTSLYMPHNODE];
-    float tCytotoxicLymphNodeSavedPoints[NUMPOINTSLYMPHNODE];
-    float bCellLymphNodeSavedPoints[NUMPOINTSLYMPHNODE];
-    float plasmaCellLymphNodeSavedPoints[NUMPOINTSLYMPHNODE];
-    float antibodyLymphNodeSavedPoints[NUMPOINTSLYMPHNODE];
+    float *dendriticLymphNodeSavedPoints;
+    float *tHelperLymphNodeSavedPoints;
+    float *tCytotoxicLymphNodeSavedPoints;
+    float *bCellLymphNodeSavedPoints;
+    float *plasmaCellLymphNodeSavedPoints;
+    float *antibodyLymphNodeSavedPoints;
 
     structParameters parametersModel;
 
@@ -131,7 +132,7 @@ float* EquationsLymphNode(structModel model, float* populationLN, int stepPos);
 
 void SolverLymphNode(structModel *model, int stepPos);
 
-structModel ModelInitialize(structParameters params);
+structModel ModelInitialize(structParameters params, float ht, float hx, float time, float space, int numFigs, int numPointsLN);
 
 void DefineBVPV(structModel *model);
 
@@ -141,7 +142,7 @@ void InitialConditionLymphNode(structModel* model, float dendriticLN, float thel
 
 void RunModel(structModel *model);
 
-void WritePopulation(float population[(int)(LENGTH/HX)][(int)(LENGTH/HX)], char* fileName, char* bufferTime);
+void WritePopulation(float *population, char* fileName, char* bufferTime);
 
-void WriteFiles(structModel model, float oligodendrocyte[(int)(LENGTH/HX)][(int)(LENGTH/HX)], float microglia[(int)(LENGTH/HX)][(int)(LENGTH/HX)], float tCytotoxic[(int)(LENGTH/HX)][(int)(LENGTH/HX)], float antibody[(int)(LENGTH/HX)][(int)(LENGTH/HX)], float conventionalDC[(int)(LENGTH/HX)][(int)(LENGTH/HX)], float  activatedDC[(int)(LENGTH/HX)][(int)(LENGTH/HX)], float time);
+void WriteFiles(structModel model, float *oligodendrocyte, float *microglia, float *tCytotoxic, float *antibody, float *conventionalDC, float  *activatedDC, float time);
 #endif
