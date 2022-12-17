@@ -89,8 +89,8 @@ typedef struct structModel
     int timeLen;
     int spaceLen;
 
-    float thetaBV[(int)(LENGTH/HX)][(int)(LENGTH/HX)];
-    float thetaPV[(int)(LENGTH/HX)][(int)(LENGTH/HX)];
+    float thetaBV[(int)(LENGTH/HX)*(int)(LENGTH/HX)];
+    float thetaPV[(int)(LENGTH/HX)*(int)(LENGTH/HX)];
 
     float activatedDCTissueVessels;
     float antibodyTissueVessels;

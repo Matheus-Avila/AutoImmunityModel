@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <mpi.h>
+#include "log.h"
 
 #define DEBUG 1
 
@@ -173,15 +174,15 @@ float fFunc(float valuePopulation, float avgPopulation){
     return valuePopulation*valuePopulation/(float)(valuePopulation + avgPopulation);
 }
 
-void WriteBVPV(float thetaBV[xSize][xSize], float thetaPV[xSize][xSize]){
+void WriteBVPV(float thetaBV[xSize*xSize], float thetaPV[xSize*xSize]){
     FILE *fileBV;
     fileBV = fopen("./modelmpi/result/bv.txt", "w");
     FILE *filePV;
     filePV = fopen("./modelmpi/result/pv.txt", "w");
     for(int i = 0; i < xSize; i++){        
     for(int j = 0; j < xSize; j++){
-        fprintf(fileBV, "%f ", thetaBV[i][j]);
-        fprintf(filePV, "%f ", thetaPV[i][j]);    
+        fprintf(fileBV, "%f ", thetaBV[i * xSize + j]);
+        fprintf(filePV, "%f ", thetaPV[i * xSize + j]);    
     }
     fprintf(fileBV,"\n");
     fprintf(filePV,"\n");
@@ -200,35 +201,28 @@ void WriteBVPV(float thetaBV[xSize][xSize], float thetaPV[xSize][xSize]){
 }
 
 void DefineBVPV(structModel *model){
-    float* linearizedPV = (float*)malloc(xSize * xSize * sizeof(float)); 
-    float* linearizedBV = (float*)malloc(xSize * xSize * sizeof(float));
     if(model->my_rank == 0){
         int randomVal;
-        for(int i = 0; i < xSize; i++){
-            for(int j = 0; j < xSize; j++){
-                randomVal = rand() % 100;
-                if(randomVal <10){
-                    model->parametersModel.V_BV++;
-                    model->parametersModel.V_PV++;
-                    model->thetaBV[i][j] = 1;
-                    if(j != xSize-1)
-                        model->thetaPV[i][j+1] = 1;
-                    else
-                        model->thetaPV[i][0] = 1;
-                }
+        for(int k = 0; k < xSize; k++){
+            int i = k / xSize;
+            int j = k % xSize;
+            randomVal = rand() % 100;
+            if(randomVal <10){
+                model->parametersModel.V_BV++;
+                model->parametersModel.V_PV++;
+                model->thetaBV[i * xSize + j] = 1;
+                if(j != xSize-1)
+                    model->thetaPV[i * xSize + (j + 1)] = 1;
+                else
+                    model->thetaPV[i * xSize] = 1;
             }
         }
-        LinearizePVBV(model, linearizedPV, linearizedBV);
         printf("bv = %d, pv = %d \n", model->parametersModel.V_BV, model->parametersModel.V_PV);
         // WriteBVPV(model->thetaBV, model->thetaPV);
     }
     // Para cada linha da matriz fazer broadcast
-    MPI_Bcast(linearizedPV, xSize*xSize, MPI_FLOAT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(linearizedBV, xSize*xSize, MPI_FLOAT, 0, MPI_COMM_WORLD);
-    if(model->my_rank != 0)
-    DelinearizePVBV(model, linearizedPV, linearizedBV);
-    free(linearizedPV);
-    free(linearizedBV);
+    MPI_Bcast(model->thetaPV, xSize*xSize, MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(model->thetaBV, xSize*xSize, MPI_FLOAT, 0, MPI_COMM_WORLD);
     MPI_Bcast(&model->parametersModel.V_BV, 1, MPI_INT, 0, MPI_COMM_WORLD);
     MPI_Bcast(&model->parametersModel.V_PV, 1, MPI_INT, 0, MPI_COMM_WORLD);
 }
@@ -452,153 +446,154 @@ void RunModel(structModel *model){
     float microgliaKMinus = 0.0, conventionalDcKMinus = 0.0, activatedDcKMinus = 0.0, tCytotoxicKMinus = 0.0, antibodyKMinus = 0.0, oligodendrocyteKMinus = 0.0;
 
     float auxAdcPV = 0.0, auxAntibodyBV = 0.0, auxTCytotoxicBV = 0.0, auxTT = 0.0, auxAT = 0.0, auxDC = 0.0;
-
+    
     for(int kTime = 1; kTime <= model->timeLen; kTime++){
         auxAdcPV = 0.0, auxAntibodyBV = 0.0, auxTCytotoxicBV = 0.0, auxTT = 0.0, auxAT = 0.0, auxDC = 0.0;
         // solve lymphnode
         SolverLymphNode(model, kTime);
         stepKPlus = kTime%2;
         for(line = model->startLine; line <= model->endLine; line++){
-        for(column = 0; column < model->spaceLen; column++){
+            for(column = 0; column < model->spaceLen; column++){
+                
+                microgliaKMinus = model->microglia[stepKMinus][line][column];
+                conventionalDcKMinus = model->conventionalDc[stepKMinus][line][column];
+                activatedDcKMinus = model->activatedDc[stepKMinus][line][column];
+                tCytotoxicKMinus = model->tCytotoxic[stepKMinus][line][column];
+                antibodyKMinus = model->antibody[stepKMinus][line][column];
+                oligodendrocyteKMinus = model->oligodendrocyte[stepKMinus][line][column];
+
+                //Define gradient ODCs
+                valIPlus = (line != model->spaceLen-1)? model->oligodendrocyte[stepKMinus][line+1][column]: model->oligodendrocyte[stepKMinus][line][column];
+                valJPlus = (column != model->spaceLen-1)? model->oligodendrocyte[stepKMinus][line][column+1]: model->oligodendrocyte[stepKMinus][line][column];
+                valIMinus = (line != 0)? model->oligodendrocyte[stepKMinus][line-1][column]: model->oligodendrocyte[stepKMinus][line][column];
+                valJMinus = (column != 0)? model->oligodendrocyte[stepKMinus][line][column-1]: model->oligodendrocyte[stepKMinus][line][column];
+                
+                gradientOdcI = (float)(valIPlus - valIMinus)/(float)(2*HX);
+                gradientOdcJ = (float)(valJPlus - valJMinus)/(float)(2*HX);
+
+                //Diffusion and Chemotaxis Mic
+
+                valIPlus  = (line != model->spaceLen-1)? model->microglia[stepKMinus][line+1][column]: model->microglia[stepKMinus][line][column] - (float)(2*HX*lowerNeumannBC);
+                valJPlus  = (column != model->spaceLen-1)? model->microglia[stepKMinus][line][column+1]: model->microglia[stepKMinus][line][column] - (float)(2*HX*rightNeumannBC);
+                valIMinus = (line != 0)? model->microglia[stepKMinus][line-1][column]: model->microglia[stepKMinus][line][column] - (float)(2*HX*upperNeumannBC);
+                valJMinus = (column != 0)? model->microglia[stepKMinus][line][column-1]: model->microglia[stepKMinus][line][column] - (float)(2*HX*leftNeumannBC);
+                
+                microgliaDiffusion = model->parametersModel.micDiffusion*CalculateDiffusion(valJPlus, valJMinus, valIPlus, valIMinus, model->microglia[stepKMinus][line][column]);
+                microgliaChemotaxis = model->parametersModel.chi*CalculateChemottaxis(valJPlus, valJMinus, valIPlus, valIMinus, model->microglia[stepKMinus][line][column],\
+                model->parametersModel.avgMic, gradientOdcI, gradientOdcJ);
+
+                //Diffusion and Chemotaxis CDC
+
+                valIPlus  = (line != model->spaceLen-1)? model->conventionalDc[stepKMinus][line+1][column]: model->conventionalDc[stepKMinus][line][column] - (float)(2*HX*lowerNeumannBC);
+                valJPlus  = (column != model->spaceLen-1)? model->conventionalDc[stepKMinus][line][column+1]: model->conventionalDc[stepKMinus][line][column] - (float)(2*HX*rightNeumannBC);
+                valIMinus = (line != 0)? model->conventionalDc[stepKMinus][line-1][column]: model->conventionalDc[stepKMinus][line][column] - (float)(2*HX*upperNeumannBC);
+                valJMinus = (column != 0)? model->conventionalDc[stepKMinus][line][column-1]: model->conventionalDc[stepKMinus][line][column] - (float)(2*HX*leftNeumannBC);
+
+                conventionalDcDiffusion = model->parametersModel.cDcDiffusion*CalculateDiffusion(valJPlus, valJMinus, valIPlus, valIMinus, model->conventionalDc[stepKMinus][line][column]);
+                conventionalDcChemotaxis = model->parametersModel.chi*CalculateChemottaxis(valJPlus, valJMinus, valIPlus, valIMinus, model->conventionalDc[stepKMinus][line][column],\
+                model->parametersModel.avgDc, gradientOdcI, gradientOdcJ);
+
+                //Difussion and Chemotaxis CD8T
+
+                valIPlus  = (line != model->spaceLen-1)? model->tCytotoxic[stepKMinus][line+1][column]: model->tCytotoxic[stepKMinus][line][column] - (float)(2*HX*lowerNeumannBC);
+                valJPlus  = (column != model->spaceLen-1)? model->tCytotoxic[stepKMinus][line][column+1]: model->tCytotoxic[stepKMinus][line][column] - (float)(2*HX*rightNeumannBC);
+                valIMinus = (line != 0)? model->tCytotoxic[stepKMinus][line-1][column]: model->tCytotoxic[stepKMinus][line][column] - (float)(2*HX*upperNeumannBC);
+                valJMinus = (column != 0)? model->tCytotoxic[stepKMinus][line][column-1]: model->tCytotoxic[stepKMinus][line][column] - (float)(2*HX*leftNeumannBC);
+
+                tCytotoxicDiffusion = model->parametersModel.tCytoDiffusion*CalculateDiffusion(valJPlus, valJMinus, valIPlus, valIMinus, model->tCytotoxic[stepKMinus][line][column]);
+                tCytotoxicChemotaxis = model->parametersModel.chi*CalculateChemottaxis(valJPlus, valJMinus, valIPlus, valIMinus, model->tCytotoxic[stepKMinus][line][column],\
+                model->parametersModel.avgT, gradientOdcI, gradientOdcJ);
+
+                //Difussion ADC
+
+                valIPlus  = (line != model->spaceLen-1)? model->activatedDc[stepKMinus][line+1][column]: model->activatedDc[stepKMinus][line][column] - (float)(2*HX*lowerNeumannBC);
+                valJPlus  = (column != model->spaceLen-1)? model->activatedDc[stepKMinus][line][column+1]: model->activatedDc[stepKMinus][line][column] - (float)(2*HX*rightNeumannBC);
+                valIMinus = (line != 0)? model->activatedDc[stepKMinus][line-1][column]: model->activatedDc[stepKMinus][line][column] - (float)(2*HX*upperNeumannBC);
+                valJMinus = (column != 0)? model->activatedDc[stepKMinus][line][column-1]: model->activatedDc[stepKMinus][line][column] - (float)(2*HX*leftNeumannBC);
+
+                activatedDCDiffusion = model->parametersModel.aDcDiffusion*CalculateDiffusion(valJPlus, valJMinus, valIPlus, valIMinus, model->activatedDc[stepKMinus][line][column]);
+
+                //Difussion Antibody
+
+                valIPlus  = (line != model->spaceLen-1)? model->antibody[stepKMinus][line+1][column]: model->antibody[stepKMinus][line][column] - (float)(2*HX*lowerNeumannBC);
+                valJPlus  = (column != model->spaceLen-1)? model->antibody[stepKMinus][line][column+1]: model->antibody[stepKMinus][line][column] - (float)(2*HX*rightNeumannBC);
+                valIMinus = (line != 0)? model->antibody[stepKMinus][line-1][column]: model->antibody[stepKMinus][line][column] - (float)(2*HX*upperNeumannBC);
+                valJMinus = (column != 0)? model->antibody[stepKMinus][line][column-1]: model->antibody[stepKMinus][line][column] - (float)(2*HX*leftNeumannBC);
+
+                antibodyDiffusion = model->parametersModel.antibodyDiffusion*CalculateDiffusion(valJPlus, valJMinus, valIPlus, valIMinus, model->antibody[stepKMinus][line][column]);
+
+                //*******************************************Solving Tissue equations*****************************************************
+
+                //Microglia update
+                microgliaReaction = model->parametersModel.muMic*microgliaKMinus*(model->parametersModel.avgMic - microgliaKMinus);
+                microgliaClearance = model->parametersModel.cMic*microgliaKMinus;
+
+                model->microglia[stepKPlus][line][column] = microgliaKMinus + \
+                model->ht*(microgliaDiffusion - microgliaChemotaxis + microgliaReaction - microgliaClearance);
+                if((model->microglia[stepKPlus][line][column]) < 0 || isnanf (model->microglia[stepKPlus][line][column])){
+                    printf("Microglia (%f) deu erro no tempo %f\n", model->microglia[stepKPlus][line][column], kTime*HT);
+                    exit(0);
+                }
+
+                //Conventional DC update
+                conventionalDcReaction = model->parametersModel.muCDc*oligodendrocyteKMinus*(model->parametersModel.avgDc - conventionalDcKMinus);
+                conventionalDcActivation = model->parametersModel.bD*conventionalDcKMinus*oligodendrocyteKMinus;
+                conventionalDcClearance = model->parametersModel.cCDc*conventionalDcKMinus;
+
+                model->conventionalDc[stepKPlus][line][column] = conventionalDcKMinus + \
+                model->ht*(conventionalDcDiffusion - conventionalDcChemotaxis - conventionalDcClearance + conventionalDcReaction - conventionalDcActivation);
+                if((model->conventionalDc[stepKPlus][line][column]) < 0 || isnanf (model->conventionalDc[stepKPlus][line][column])){
+                    printf("CDC (%f) deu erro no tempo %f\n", model->conventionalDc[stepKPlus][line][column], kTime*HT);
+                    exit(0);
+                }
+
+                //Activated DC update
+                activatedDcClearance = model->parametersModel.cADc*activatedDcKMinus;
+                activatedDcMigration = model->thetaPV[line * xSize + column]*model->parametersModel.gammaD*(model->dendriticLymphNode[stepKPlus] - activatedDcKMinus);
+                
+                model->activatedDc[stepKPlus][line][column] = activatedDcKMinus + model->ht*(activatedDCDiffusion + conventionalDcActivation + activatedDcMigration - activatedDcClearance);
+                if((model->activatedDc[stepKPlus][line][column]) < 0 || isnanf (model->activatedDc[stepKPlus][line][column])){
+                    printf("ADC (%f) deu erro no tempo %f\n", model->activatedDc[stepKPlus][line][column], kTime*HT);
+                    exit(0);
+                }
+
+                //CD8 T update
+                tCytotoxicMigration = model->thetaBV[line * xSize + column]*model->parametersModel.gammaT*(model->tCytotoxicLymphNode[stepKPlus] - tCytotoxicKMinus);
+                
+                model->tCytotoxic[stepKPlus][line][column] = tCytotoxicKMinus + model->ht*(tCytotoxicDiffusion - tCytotoxicChemotaxis + tCytotoxicMigration);
+                if((model->tCytotoxic[stepKPlus][line][column]) < 0 || isnanf (model->tCytotoxic[stepKPlus][line][column])){
+                    printf("tCytotoxic (%f) deu erro no tempo %f\n", model->tCytotoxic[stepKPlus][line][column], kTime*HT);
+                    exit(0);
+                }
+
+                //Antibody update
+                odcAntibodyMicrogliaFagocitosis = model->parametersModel.lambAntMic*antibodyKMinus*(model->parametersModel.avgOdc - oligodendrocyteKMinus)*fFunc(microgliaKMinus, model->parametersModel.avgMic);
+                antibodyMigration = model->thetaBV[line * xSize + column]*model->parametersModel.gammaAntibody*(model->antibodyLymphNode[stepKPlus] - antibodyKMinus);
+                
+                model->antibody[stepKPlus][line][column] = antibodyKMinus + model->ht*(antibodyDiffusion + antibodyMigration - odcAntibodyMicrogliaFagocitosis);
+                if((model->antibody[stepKPlus][line][column]) < 0 || isnanf (model->antibody[stepKPlus][line][column])){
+                    printf("antibody (%.8f) deu erro no tempo %f\n", (model->antibody[stepKPlus][line][column]), kTime*HT);
+                    exit(0);
+                }
+
+                //Oligodendrocytes update
+                odcMicrogliaFagocitosis = model->parametersModel.rM*fFunc(microgliaKMinus, model->parametersModel.avgMic)*(model->parametersModel.avgOdc - oligodendrocyteKMinus);
+                odcTCytotoxicApoptosis = model->parametersModel.rT*fFunc(tCytotoxicKMinus, model->parametersModel.avgT)*(model->parametersModel.avgOdc - oligodendrocyteKMinus);
+
+                model->oligodendrocyte[stepKPlus][line][column] = oligodendrocyteKMinus + model->ht*(odcAntibodyMicrogliaFagocitosis + odcMicrogliaFagocitosis + odcTCytotoxicApoptosis);
+                if((model->oligodendrocyte[stepKPlus][line][column]) < 0 || isnanf (model->oligodendrocyte[stepKPlus][line][column])){
+                    printf("oligodendrocyte (%f) deu erro no tempo %f\n", model->oligodendrocyte[stepKPlus][line][column], kTime*HT);
+                    exit(0);
+                }
+                if(model->thetaBV[line * xSize + column] == 1){
+                    auxTCytotoxicBV += model->tCytotoxic[stepKPlus][line][column];
+                    auxAntibodyBV += model->antibody[stepKPlus][line][column];
+                }
+                if(model->thetaPV[line * xSize + column] == 1){
+                    auxAdcPV += model->activatedDc[stepKPlus][line][column];
+                }
+            }
             
-            microgliaKMinus = model->microglia[stepKMinus][line][column];
-            conventionalDcKMinus = model->conventionalDc[stepKMinus][line][column];
-            activatedDcKMinus = model->activatedDc[stepKMinus][line][column];
-            tCytotoxicKMinus = model->tCytotoxic[stepKMinus][line][column];
-            antibodyKMinus = model->antibody[stepKMinus][line][column];
-            oligodendrocyteKMinus = model->oligodendrocyte[stepKMinus][line][column];
-
-            //Define gradient ODCs
-            valIPlus = (line != model->spaceLen-1)? model->oligodendrocyte[stepKMinus][line+1][column]: model->oligodendrocyte[stepKMinus][line][column];
-            valJPlus = (column != model->spaceLen-1)? model->oligodendrocyte[stepKMinus][line][column+1]: model->oligodendrocyte[stepKMinus][line][column];
-            valIMinus = (line != 0)? model->oligodendrocyte[stepKMinus][line-1][column]: model->oligodendrocyte[stepKMinus][line][column];
-            valJMinus = (column != 0)? model->oligodendrocyte[stepKMinus][line][column-1]: model->oligodendrocyte[stepKMinus][line][column];
-            
-            gradientOdcI = (float)(valIPlus - valIMinus)/(float)(2*HX);
-            gradientOdcJ = (float)(valJPlus - valJMinus)/(float)(2*HX);
-
-            //Diffusion and Chemotaxis Mic
-
-            valIPlus  = (line != model->spaceLen-1)? model->microglia[stepKMinus][line+1][column]: model->microglia[stepKMinus][line][column] - (float)(2*HX*lowerNeumannBC);
-            valJPlus  = (column != model->spaceLen-1)? model->microglia[stepKMinus][line][column+1]: model->microglia[stepKMinus][line][column] - (float)(2*HX*rightNeumannBC);
-            valIMinus = (line != 0)? model->microglia[stepKMinus][line-1][column]: model->microglia[stepKMinus][line][column] - (float)(2*HX*upperNeumannBC);
-            valJMinus = (column != 0)? model->microglia[stepKMinus][line][column-1]: model->microglia[stepKMinus][line][column] - (float)(2*HX*leftNeumannBC);
-            
-            microgliaDiffusion = model->parametersModel.micDiffusion*CalculateDiffusion(valJPlus, valJMinus, valIPlus, valIMinus, model->microglia[stepKMinus][line][column]);
-            microgliaChemotaxis = model->parametersModel.chi*CalculateChemottaxis(valJPlus, valJMinus, valIPlus, valIMinus, model->microglia[stepKMinus][line][column],\
-            model->parametersModel.avgMic, gradientOdcI, gradientOdcJ);
-
-            //Diffusion and Chemotaxis CDC
-
-            valIPlus  = (line != model->spaceLen-1)? model->conventionalDc[stepKMinus][line+1][column]: model->conventionalDc[stepKMinus][line][column] - (float)(2*HX*lowerNeumannBC);
-            valJPlus  = (column != model->spaceLen-1)? model->conventionalDc[stepKMinus][line][column+1]: model->conventionalDc[stepKMinus][line][column] - (float)(2*HX*rightNeumannBC);
-            valIMinus = (line != 0)? model->conventionalDc[stepKMinus][line-1][column]: model->conventionalDc[stepKMinus][line][column] - (float)(2*HX*upperNeumannBC);
-            valJMinus = (column != 0)? model->conventionalDc[stepKMinus][line][column-1]: model->conventionalDc[stepKMinus][line][column] - (float)(2*HX*leftNeumannBC);
-
-            conventionalDcDiffusion = model->parametersModel.cDcDiffusion*CalculateDiffusion(valJPlus, valJMinus, valIPlus, valIMinus, model->conventionalDc[stepKMinus][line][column]);
-            conventionalDcChemotaxis = model->parametersModel.chi*CalculateChemottaxis(valJPlus, valJMinus, valIPlus, valIMinus, model->conventionalDc[stepKMinus][line][column],\
-            model->parametersModel.avgDc, gradientOdcI, gradientOdcJ);
-
-            //Difussion and Chemotaxis CD8T
-
-            valIPlus  = (line != model->spaceLen-1)? model->tCytotoxic[stepKMinus][line+1][column]: model->tCytotoxic[stepKMinus][line][column] - (float)(2*HX*lowerNeumannBC);
-            valJPlus  = (column != model->spaceLen-1)? model->tCytotoxic[stepKMinus][line][column+1]: model->tCytotoxic[stepKMinus][line][column] - (float)(2*HX*rightNeumannBC);
-            valIMinus = (line != 0)? model->tCytotoxic[stepKMinus][line-1][column]: model->tCytotoxic[stepKMinus][line][column] - (float)(2*HX*upperNeumannBC);
-            valJMinus = (column != 0)? model->tCytotoxic[stepKMinus][line][column-1]: model->tCytotoxic[stepKMinus][line][column] - (float)(2*HX*leftNeumannBC);
-
-            tCytotoxicDiffusion = model->parametersModel.tCytoDiffusion*CalculateDiffusion(valJPlus, valJMinus, valIPlus, valIMinus, model->tCytotoxic[stepKMinus][line][column]);
-            tCytotoxicChemotaxis = model->parametersModel.chi*CalculateChemottaxis(valJPlus, valJMinus, valIPlus, valIMinus, model->tCytotoxic[stepKMinus][line][column],\
-            model->parametersModel.avgT, gradientOdcI, gradientOdcJ);
-
-            //Difussion ADC
-
-            valIPlus  = (line != model->spaceLen-1)? model->activatedDc[stepKMinus][line+1][column]: model->activatedDc[stepKMinus][line][column] - (float)(2*HX*lowerNeumannBC);
-            valJPlus  = (column != model->spaceLen-1)? model->activatedDc[stepKMinus][line][column+1]: model->activatedDc[stepKMinus][line][column] - (float)(2*HX*rightNeumannBC);
-            valIMinus = (line != 0)? model->activatedDc[stepKMinus][line-1][column]: model->activatedDc[stepKMinus][line][column] - (float)(2*HX*upperNeumannBC);
-            valJMinus = (column != 0)? model->activatedDc[stepKMinus][line][column-1]: model->activatedDc[stepKMinus][line][column] - (float)(2*HX*leftNeumannBC);
-
-            activatedDCDiffusion = model->parametersModel.aDcDiffusion*CalculateDiffusion(valJPlus, valJMinus, valIPlus, valIMinus, model->activatedDc[stepKMinus][line][column]);
-
-            //Difussion Antibody
-
-            valIPlus  = (line != model->spaceLen-1)? model->antibody[stepKMinus][line+1][column]: model->antibody[stepKMinus][line][column] - (float)(2*HX*lowerNeumannBC);
-            valJPlus  = (column != model->spaceLen-1)? model->antibody[stepKMinus][line][column+1]: model->antibody[stepKMinus][line][column] - (float)(2*HX*rightNeumannBC);
-            valIMinus = (line != 0)? model->antibody[stepKMinus][line-1][column]: model->antibody[stepKMinus][line][column] - (float)(2*HX*upperNeumannBC);
-            valJMinus = (column != 0)? model->antibody[stepKMinus][line][column-1]: model->antibody[stepKMinus][line][column] - (float)(2*HX*leftNeumannBC);
-
-            antibodyDiffusion = model->parametersModel.antibodyDiffusion*CalculateDiffusion(valJPlus, valJMinus, valIPlus, valIMinus, model->antibody[stepKMinus][line][column]);
-
-            //*******************************************Solving Tissue equations*****************************************************
-
-            //Microglia update
-            microgliaReaction = model->parametersModel.muMic*microgliaKMinus*(model->parametersModel.avgMic - microgliaKMinus);
-            microgliaClearance = model->parametersModel.cMic*microgliaKMinus;
-
-            model->microglia[stepKPlus][line][column] = microgliaKMinus + \
-            model->ht*(microgliaDiffusion - microgliaChemotaxis + microgliaReaction - microgliaClearance);
-            if((model->microglia[stepKPlus][line][column]) < 0 || isnanf (model->microglia[stepKPlus][line][column])){
-                printf("Microglia (%f) deu erro no tempo %f\n", model->microglia[stepKPlus][line][column], kTime*HT);
-                exit(0);
-            }
-
-            //Conventional DC update
-            conventionalDcReaction = model->parametersModel.muCDc*oligodendrocyteKMinus*(model->parametersModel.avgDc - conventionalDcKMinus);
-            conventionalDcActivation = model->parametersModel.bD*conventionalDcKMinus*oligodendrocyteKMinus;
-            conventionalDcClearance = model->parametersModel.cCDc*conventionalDcKMinus;
-
-            model->conventionalDc[stepKPlus][line][column] = conventionalDcKMinus + \
-            model->ht*(conventionalDcDiffusion - conventionalDcChemotaxis - conventionalDcClearance + conventionalDcReaction - conventionalDcActivation);
-            if((model->conventionalDc[stepKPlus][line][column]) < 0 || isnanf (model->conventionalDc[stepKPlus][line][column])){
-                printf("CDC (%f) deu erro no tempo %f\n", model->conventionalDc[stepKPlus][line][column], kTime*HT);
-                exit(0);
-            }
-
-            //Activated DC update
-            activatedDcClearance = model->parametersModel.cADc*activatedDcKMinus;
-            activatedDcMigration = model->thetaPV[line][column]*model->parametersModel.gammaD*(model->dendriticLymphNode[stepKPlus] - activatedDcKMinus);
-            
-            model->activatedDc[stepKPlus][line][column] = activatedDcKMinus + model->ht*(activatedDCDiffusion + conventionalDcActivation + activatedDcMigration - activatedDcClearance);
-            if((model->activatedDc[stepKPlus][line][column]) < 0 || isnanf (model->activatedDc[stepKPlus][line][column])){
-                printf("ADC (%f) deu erro no tempo %f\n", model->activatedDc[stepKPlus][line][column], kTime*HT);
-                exit(0);
-            }
-
-            //CD8 T update
-            tCytotoxicMigration = model->thetaBV[line][column]*model->parametersModel.gammaT*(model->tCytotoxicLymphNode[stepKPlus] - tCytotoxicKMinus);
-            
-            model->tCytotoxic[stepKPlus][line][column] = tCytotoxicKMinus + model->ht*(tCytotoxicDiffusion - tCytotoxicChemotaxis + tCytotoxicMigration);
-            if((model->tCytotoxic[stepKPlus][line][column]) < 0 || isnanf (model->tCytotoxic[stepKPlus][line][column])){
-                printf("tCytotoxic (%f) deu erro no tempo %f\n", model->tCytotoxic[stepKPlus][line][column], kTime*HT);
-                exit(0);
-            }
-
-            //Antibody update
-            odcAntibodyMicrogliaFagocitosis = model->parametersModel.lambAntMic*antibodyKMinus*(model->parametersModel.avgOdc - oligodendrocyteKMinus)*fFunc(microgliaKMinus, model->parametersModel.avgMic);
-            antibodyMigration = model->thetaBV[line][column]*model->parametersModel.gammaAntibody*(model->antibodyLymphNode[stepKPlus] - antibodyKMinus);
-            
-            model->antibody[stepKPlus][line][column] = antibodyKMinus + model->ht*(antibodyDiffusion + antibodyMigration - odcAntibodyMicrogliaFagocitosis);
-            if((model->antibody[stepKPlus][line][column]) < 0 || isnanf (model->antibody[stepKPlus][line][column])){
-                printf("antibody (%.8f) deu erro no tempo %f\n", (model->antibody[stepKPlus][line][column]), kTime*HT);
-                exit(0);
-            }
-
-            //Oligodendrocytes update
-            odcMicrogliaFagocitosis = model->parametersModel.rM*fFunc(microgliaKMinus, model->parametersModel.avgMic)*(model->parametersModel.avgOdc - oligodendrocyteKMinus);
-            odcTCytotoxicApoptosis = model->parametersModel.rT*fFunc(tCytotoxicKMinus, model->parametersModel.avgT)*(model->parametersModel.avgOdc - oligodendrocyteKMinus);
-
-            model->oligodendrocyte[stepKPlus][line][column] = oligodendrocyteKMinus + model->ht*(odcAntibodyMicrogliaFagocitosis + odcMicrogliaFagocitosis + odcTCytotoxicApoptosis);
-            if((model->oligodendrocyte[stepKPlus][line][column]) < 0 || isnanf (model->oligodendrocyte[stepKPlus][line][column])){
-                printf("oligodendrocyte (%f) deu erro no tempo %f\n", model->oligodendrocyte[stepKPlus][line][column], kTime*HT);
-                exit(0);
-            }
-            if(model->thetaBV[line][column] == 1){
-                auxTCytotoxicBV += model->tCytotoxic[stepKPlus][line][column];
-                auxAntibodyBV += model->antibody[stepKPlus][line][column];
-            }
-            if(model->thetaPV[line][column] == 1){
-                auxAdcPV += model->activatedDc[stepKPlus][line][column];
-            }
-        }
         }
         if(kTime%model->intervaloFiguras == 0 || kTime == model->timeLen){
             //Cada myRank manda o resultado para o myrank 0
@@ -662,35 +657,4 @@ void RunModel(structModel *model){
     }
 }
 
-void LinearizePVBV(structModel *model, float* linearizedPV, float* linearizedBV) {
-    printf("Iniciou o loop de linearizacao\n");
-    for(int k = 0; k < xSize * xSize; k++) {
-        int i = k / xSize;
-        int j = k % xSize;
-        linearizedPV[i * xSize + j] = model->thetaPV[i][j];
-        linearizedBV[i * xSize + j] = model->thetaBV[i][j];
-    }
-}
 
-void DelinearizePVBV(structModel* model, float* linearizedPV, float* linearizedBV) {
-    printf("Iniciou o loop de Delinearizacao\n");
-    for(int k = 0; k < xSize * xSize; k++) {
-        int i = k / xSize;
-        int j = k % xSize;
-        model->thetaPV[i][j] = linearizedPV[i * xSize + j];
-        model->thetaBV[i][j] = linearizedBV[i * xSize + j];
-    }
-    printf("Finalizou o loop de Delinearizacao\n");
-}
-
-#ifdef DEBUG
-void PrintLinearized(float* linearized) {
-    printf("Linearized vector: \n");
-    for(int i = 0; i < xSize; i++) {
-        for(int j = 0; j < xSize; j++) {
-            printf("%.2f ", linearized[i * xSize + j]);
-        }
-        printf("\n");
-    }
-}
-#endif
