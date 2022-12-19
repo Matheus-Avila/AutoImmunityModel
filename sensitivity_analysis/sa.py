@@ -209,7 +209,6 @@ def RunSA():
     print("Higher-order or total (interactions) indices")
     print(sensitivity['ST'])
     return sensitivity
-# sensitivity = RunSA()
 
 def ReadSensitivity():
     sensitivity = {
@@ -234,7 +233,8 @@ def ReadSensitivity():
     }
     return sensitivity
 
-sensitivity = ReadSensitivity()
+sensitivity = RunSA()
+# sensitivity = ReadSensitivity()
 
 def printResult(indexes):
     labels = ["d_mic",

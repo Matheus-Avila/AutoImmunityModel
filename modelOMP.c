@@ -353,6 +353,11 @@ void WriteQoI(float qoI){
     fileQoI = fopen("./sensitivity_analysis/SAoutput.txt", "w");
     fprintf(fileQoI, "%f", qoI);
     fclose(fileQoI);
+
+    FILE *fileAllQoI;
+    fileAllQoI = fopen("./sensitivity_analysis/SAalloutput.txt", "a");
+    fprintf(fileAllQoI, "%f\n", qoI);
+    fclose(fileAllQoI);
 }
 
 void RunModel(structModel *model){
