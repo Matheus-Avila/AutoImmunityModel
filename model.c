@@ -35,10 +35,15 @@ int VerifyCFL(structParameters parametersModel, float ht, float hx){
 void WritePopulation(float *population, char* fileName, char* bufferTime){
     FILE *file;
     file = fopen(fileName, "w");
-    for(int k=0;k<xSize*xSize;k++) {
-        fprintf(file, "%f ", population[k]);
-        if(k%xSize == 0 && k != 0)
-            fprintf(file,"\n");
+    int k = 0;
+    while (k < xSize*xSize){
+        int i = k;
+        while (i < k + xSize){
+            fprintf(file, "%f ", population[i]);
+            i++;
+        }
+        fprintf(file,"\n");
+        k+=xSize;
     }
     fclose(file);
 }
