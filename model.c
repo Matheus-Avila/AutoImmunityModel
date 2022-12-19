@@ -57,7 +57,7 @@ void WritePopulationLymphNode(float *population, char* fileName){
     fclose(file);
 }
 
-void WriteLymphNodeFiles(float *dendritic, float *tHelper, float *tCytotoxic, float *bCell, float *plasmaCell, float *antibody){
+void WriteLymphNodeFiles(structModel model, float *dendritic, float *tHelper, float *tCytotoxic, float *bCell, float *plasmaCell, float *antibody){
     WritePopulationLymphNode(dendritic, "./result/dendritic.txt");
     WritePopulationLymphNode(tHelper, "./result/tHelper.txt");
     WritePopulationLymphNode(tCytotoxic, "./result/tCyto.txt");
@@ -68,17 +68,17 @@ void WriteLymphNodeFiles(float *dendritic, float *tHelper, float *tCytotoxic, fl
     char buffer[10];
     char command[40] = {};
     strcat(command, "python3 plotLymphNode.py ");
-    snprintf(buffer, sizeof(buffer), "%d", TIME);
+    snprintf(buffer, sizeof(buffer), "%d", model.ht);
     strcat(command, buffer);
     strcat(command, " ");
-    snprintf(buffer, sizeof(buffer), "%f", (tSize/NUMPOINTSLYMPHNODE)*HT);
+    snprintf(buffer, sizeof(buffer), "%f", (tSize/model.numPointsLN)*model.ht);
     strcat(command, buffer);
     system(command);
 }
 
 void WriteFiles(structModel model, float *oligodendrocyte, float *microglia, float *tCytotoxic, float *antibody, float *conventionalDC, float  *activatedDC, float time){
     char buffer[10];
-    float day = time*HT;
+    float day = time * model.ht;
     
     snprintf(buffer, sizeof(buffer), "%.1f", day);
     
@@ -113,20 +113,20 @@ void WriteFiles(structModel model, float *oligodendrocyte, float *microglia, flo
     WritePopulation(activatedDC, pathActivatedDC, buffer);
 }   
 
-void PlotResults(){
+void PlotResults(structModel model){
     char buffer[10];
     char command[70] = {};
     strcat(command, "python3 plotMatrices.py ");
-    snprintf(buffer, sizeof(buffer), "%d", LENGTH);
+    snprintf(buffer, sizeof(buffer), "%d", model.spaceLen);
     strcat(command, buffer);
     strcat(command, " ");
-    snprintf(buffer, sizeof(buffer), "%f", HX);
+    snprintf(buffer, sizeof(buffer), "%f", model.hx);
     strcat(command, buffer);
     strcat(command, " ");
-    snprintf(buffer, sizeof(buffer), "%d", TIME);
+    snprintf(buffer, sizeof(buffer), "%d", model.timeLen);
     strcat(command, buffer);
     strcat(command, " ");
-    snprintf(buffer, sizeof(buffer), "%d", NUMFIGS);
+    snprintf(buffer, sizeof(buffer), "%d", model.intervalFigures);
     strcat(command, buffer);
     system(command);
 }
@@ -216,14 +216,15 @@ structModel ModelInitialize(structParameters params, float ht, float hx, float t
 
     //Pegar os valores pelos parametros
     model.parametersModel = params;
-    model.intervaloFiguras = (int)tSize/NUMFIGS;
+    model.intervalFigures = (int)tSize/numFigs;
+    model.numFigs = numFigs;
     model.numPointsLN = numPointsLN;
-    model.ht = HT;
-    model.hx = HX;
-    model.tFinal = TIME;
-    model.xFinal = LENGTH;
-    model.timeLen = (int)(TIME/HT);
-    model.spaceLen = (int)(LENGTH/HX);
+    model.ht = ht;
+    model.hx = hx;
+    model.tFinal = time;
+    model.xFinal = space;
+    model.timeLen = (int)(time/ht);
+    model.spaceLen = (int)(space/hx);
 
     //inicializar dinamicamente todos os vetores do tecido
     model.microglia = (float**)malloc(BUFFER * sizeof(float*));
@@ -528,7 +529,7 @@ void RunModel(structModel *model){
                 auxAdcPV += model->activatedDc[stepKPlus][kPos];
             }
         }
-        if(kTime%model->intervaloFiguras == 0 || kTime == model->timeLen)
+        if(kTime%model->intervalFigures == 0 || kTime == model->timeLen)
             WriteFiles(*model, model->oligodendrocyte[stepKPlus], model->microglia[stepKPlus], model->tCytotoxic[stepKPlus], model->antibody[stepKPlus], model->conventionalDc[stepKPlus], model->activatedDc[stepKPlus], kTime);
         model->tCytotoxicTissueVessels = auxTCytotoxicBV/model->parametersModel.V_BV;
         model->antibodyTissueVessels = auxAntibodyBV/model->parametersModel.V_BV;

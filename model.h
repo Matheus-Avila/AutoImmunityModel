@@ -2,12 +2,6 @@
 #define _MODEL_H_
 
 #define BUFFER 2
-#define TIME 28
-#define HT 0.0002
-#define LENGTH 20
-#define HX 0.5
-#define NUMFIGS 28
-#define NUMPOINTSLYMPHNODE 1000
 
 typedef struct structParameters
 {
@@ -74,9 +68,9 @@ typedef struct structModel
     int tFinal;
     int xFinal;
 
-    int intervaloFiguras;
+    int intervalFigures;
     int numPointsLN;
-
+    int numFigs;
     // int *timeVec;
     // int *spaceVec;
 
