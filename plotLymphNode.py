@@ -39,6 +39,7 @@ with open("./result/dendritic.txt", 'r') as f:
     lines = f.readlines()
     DL = [line.rstrip() for line in lines]
 
+
 for i in range(0,len(TL_c)):
     TL_c_vetor[i] = TL_c[i]
     TL_h_vetor[i] = TL_h[i]

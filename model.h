@@ -74,8 +74,8 @@ typedef struct structModel
     // int *timeVec;
     // int *spaceVec;
 
-    int timeLen;
-    int spaceLen;
+    int tSize;
+    int xSize;
 
     float *thetaBV;
     float *thetaPV;
@@ -115,10 +115,10 @@ float AdvectionTerm(float populationPoint, float avgValue);
 
 float UpDownWind(float frontIPoint, float ijPoint, float avgValue);
 
-float CalculateChemottaxis(float ponto_posterior_j, float ponto_anterior_j, float ponto_posterior_i, float ponto_anterior_i, float ponto_atual,\
+float CalculateChemottaxis(structModel model, float ponto_posterior_j, float ponto_anterior_j, float ponto_posterior_i, float ponto_anterior_i, float ponto_atual,\
  float valor_medio, float gradiente_odc_i, float gradiente_odc_j);
 
-float CalculateDiffusion(float ponto_posterior_j, float ponto_anterior_j, float ponto_posterior_i, float ponto_anterior_i, float ponto_atual);
+float CalculateDiffusion(structModel model, float ponto_posterior_j, float ponto_anterior_j, float ponto_posterior_i, float ponto_anterior_i, float ponto_atual);
 
 float fFunc(float valuePopulation, float avgPopulation);
 
@@ -136,7 +136,7 @@ void InitialConditionLymphNode(structModel* model, float dendriticLN, float thel
 
 void RunModel(structModel *model);
 
-void WritePopulation(float *population, char* fileName, char* bufferTime);
+void WritePopulation(structModel model, float *population, char* fileName, char* bufferTime);
 
 void WriteFiles(structModel model, float *oligodendrocyte, float *microglia, float *tCytotoxic, float *antibody, float *conventionalDC, float  *activatedDC, float time);
 #endif
