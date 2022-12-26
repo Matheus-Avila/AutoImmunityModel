@@ -246,8 +246,10 @@ structModel ModelInitialize(structParameters params, int my_rank, int comm_sz){
     model.numLines = model.spaceLen/comm_sz;
     model.startLine = my_rank*model.numLines;
     model.endLine = model.startLine + model.numLines-1;
-    if(my_rank == comm_sz - 1)
-        model.endLine = xSize - 1;
+    model.microglia = (float**)malloc(BUFFER * sizeof(float*));
+    for (int index=0;index<BUFFER;++index){
+        model.microglia[index] = (float*)malloc(model.xSize*model.xSize * sizeof(float));
+    }
     //definir BV e PV
     DefineBVPV(&model);
     //definir lymph node
