@@ -12,11 +12,13 @@
 const int xSize = (int)(LENGTH/HX);
 const int tSize = (int)(TIME/HT);
 
+float xSize = 0;
+
 void InitialConditionTissueMicroglia(structModel* model){
     for(int i = 0; i < xSize; i++){
         for(int j = 0; j < xSize; j++){
             if(pow((i-(int)(xSize/2)),2) + pow((j-(int)(xSize/2)),2) < 5){
-                model->microglia[0][i][j] = (float)model->parametersModel.avgMic/3;
+                model->microglia[0][i * xSize + j] = (float)model->parametersModel.avgMic/3;
             }
         }
     }
@@ -31,98 +33,91 @@ void InitialConditionLymphNode(structModel* model, float dendriticLN, float thel
     model->antibodyLymphNode[0] = antibodyLN;
 }
 
-int VerifyCFL(structParameters parametersModel){
-    if(parametersModel.micDiffusion*HT/(HX*HX) < 0.25 && parametersModel.cDcDiffusion*HT/(HX*HX) < 0.25 && parametersModel.aDcDiffusion*HT/(HX*HX) < 0.25 && parametersModel.tCytoDiffusion*HT/(HX*HX) < 0.25 && parametersModel.chi*HT/HX < 1)
-        return 1;
+int VerifyCFL(structParameters parametersModel, float ht, float hx){
+
     return 0;
 }
 
-void WritePopulation(float population[xSize][xSize], char* fileName, char* bufferTime){
+void WritePopulation(structModel model, float *population, char* fileName, char* bufferTime){
     FILE *file;
     file = fopen(fileName, "w");
-    for(int i=0;i<xSize;i++) {
-        for(int j=0;j<xSize;j++){
-            fprintf(file, "%f ", population[i][j]);
+    int k = 0;
+    while (k < model.xSize*model.xSize){
+        int i = k;
+        while (i < k + model.xSize){
+            fprintf(file, "%f ", population[i]);
+            i++;
         }
         fprintf(file,"\n");
+        k+=model.xSize;
     }
     fclose(file);
 }
 
-void WritePopulationLymphNode(float population[NUMPOINTSLYMPHNODE], char* fileName){
-    char absolutePath[70];
-    getcwd(absolutePath, sizeof(absolutePath));
-    strcat(absolutePath, fileName);
+void WritePopulationLymphNode(structModel model, float *population, char* fileName){
     FILE *file;
-    file = fopen(absolutePath, "w");
-    for(int i=0;i<NUMPOINTSLYMPHNODE;i++) {
+    file = fopen(fileName, "w");
+    for(int i=0;i<model.numPointsLN;i++){
         fprintf(file, "%f\n", population[i]);
     }
     fclose(file);
 }
 
-
-void WriteLymphNodeFiles(float dendritic[NUMPOINTSLYMPHNODE], float tHelper[NUMPOINTSLYMPHNODE], float tCytotoxic[NUMPOINTSLYMPHNODE], float bCell[NUMPOINTSLYMPHNODE], float plasmaCell[NUMPOINTSLYMPHNODE], float antibody[NUMPOINTSLYMPHNODE]){
-    WritePopulationLymphNode(dendritic, "/modelmpi/result/dendritic.txt");
-    WritePopulationLymphNode(tHelper, "/modelmpi/result/tHelper.txt");
-    WritePopulationLymphNode(tCytotoxic, "/modelmpi/result/tCyto.txt");
-    WritePopulationLymphNode(bCell, "/modelmpi/result/bCell.txt");
-    WritePopulationLymphNode(plasmaCell, "/modelmpi/result/plasmaCell.txt");
-    WritePopulationLymphNode(antibody, "/modelmpi/result/antibody.txt");
+void WriteLymphNodeFiles(structModel model, float *dendritic, float *tHelper, float *tCytotoxic, float *bCell, float *plasmaCell, float *antibody){
+    WritePopulationLymphNode(model, dendritic, "./result/dendritic.txt");
+    WritePopulationLymphNode(model, tHelper, "./result/tHelper.txt");
+    WritePopulationLymphNode(model, tCytotoxic, "./result/tCyto.txt");
+    WritePopulationLymphNode(model, bCell, "./result/bCell.txt");
+    WritePopulationLymphNode(model, plasmaCell, "./result/plasmaCell.txt");
+    WritePopulationLymphNode(model, antibody, "./result/antibody.txt");
 
     char buffer[10];
     char command[40] = {};
     strcat(command, "python3 plotLymphNode.py ");
-    snprintf(buffer, sizeof(buffer), "%d", TIME);
+    snprintf(buffer, sizeof(buffer), "%d", model.tFinal);
     strcat(command, buffer);
     strcat(command, " ");
-    snprintf(buffer, sizeof(buffer), "%f", (tSize/NUMPOINTSLYMPHNODE)*HT);
+    snprintf(buffer, sizeof(buffer), "%f", (model.tSize/model.numPointsLN)*model.ht);
     strcat(command, buffer);
     system(command);
 }
 
-void WriteFiles(structModel model, float oligodendrocyte[xSize][xSize], float microglia[xSize][xSize], float tCytotoxic[xSize][xSize], float antibody[xSize][xSize], float conventionalDC[xSize][xSize], float  activatedDC[xSize][xSize], float time){
+void WriteFiles(structModel model, float *oligodendrocyte, float *microglia, float *tCytotoxic, float *antibody, float *conventionalDC, float  *activatedDC, float time){
     char buffer[10];
-    float day = time*HT;
+    float day = time * model.ht;
+    
     snprintf(buffer, sizeof(buffer), "%.1f", day);
-    char pathOligodendrocytes[70];
-    getcwd(pathOligodendrocytes, sizeof(pathOligodendrocytes));
-    strcat(pathOligodendrocytes, "/modelmpi/result/matrix/oligo");
+    
+    char pathOligodendrocytes[50] = "./result/matrix/oligo";
     strcat(pathOligodendrocytes, buffer);
     strcat(pathOligodendrocytes, ".txt");
-    printf("%s\n", pathOligodendrocytes);
-    WritePopulation(oligodendrocyte, pathOligodendrocytes, buffer);
-    char pathMicroglia[70];
-    getcwd(pathMicroglia, sizeof(pathMicroglia));
-    strcat(pathMicroglia, "/modelmpi/result/matrix/microglia");
+    WritePopulation(model, oligodendrocyte, pathOligodendrocytes, buffer);
+
+    char pathMicroglia[50] = "./result/matrix/microglia";
     strcat(pathMicroglia, buffer);
     strcat(pathMicroglia, ".txt");
-    WritePopulation(microglia, pathMicroglia, buffer);
-    char pathTCyto[70];
-    getcwd(pathTCyto, sizeof(pathTCyto));
-    strcat(pathTCyto, "/modelmpi/result/matrix/tCyto");
+    WritePopulation(model, microglia, pathMicroglia, buffer);
+
+    char pathTCyto[50] = "./result/matrix/tCyto";
     strcat(pathTCyto, buffer);
     strcat(pathTCyto, ".txt");
-    WritePopulation(tCytotoxic, pathTCyto, buffer);
-    char pathAntibody[70];
-    getcwd(pathAntibody, sizeof(pathAntibody));
-    strcat(pathAntibody, "/modelmpi/result/matrix/antibody");
+    WritePopulation(model, tCytotoxic, pathTCyto, buffer);
+
+    char pathAntibody[50] = "./result/matrix/antibody";
     strcat(pathAntibody, buffer);
     strcat(pathAntibody, ".txt");
-    WritePopulation(antibody, pathAntibody, buffer);
-    char pathConventionalDC[70];
-    getcwd(pathConventionalDC, sizeof(pathConventionalDC));
-    strcat(pathConventionalDC, "/modelmpi/result/matrix/conventionalDC");
+    WritePopulation(model, antibody, pathAntibody, buffer);
+
+    char pathConventionalDC[50] = "./result/matrix/conventionalDC";
     strcat(pathConventionalDC, buffer);
     strcat(pathConventionalDC, ".txt");
-    WritePopulation(conventionalDC, pathConventionalDC, buffer);
-    char pathActivatedDC[70];
-    getcwd(pathActivatedDC, sizeof(pathActivatedDC));
-    strcat(pathActivatedDC, "/modelmpi/result/matrix/activatedDC");
+    WritePopulation(model, conventionalDC, pathConventionalDC, buffer);
+
+    char pathActivatedDC[50] = "./result/matrix/activatedDC";
     strcat(pathActivatedDC, buffer);
     strcat(pathActivatedDC, ".txt");
-    WritePopulation(activatedDC, pathActivatedDC, buffer);
-}      
+    WritePopulation(model, activatedDC, pathActivatedDC, buffer);
+}       
 
 void PlotResults(){
     printf("Saving results...\n\n");
@@ -227,14 +222,11 @@ void DefineBVPV(structModel *model){
     MPI_Bcast(&model->parametersModel.V_PV, 1, MPI_INT, 0, MPI_COMM_WORLD);
 }
 
-structModel ModelInitialize(structParameters params, int my_rank, int comm_sz){
+structModel ModelInitialize(structParameters params, float ht, float hx, float time, float space, int numFigs, int numPointsLN){
     structModel model;
     srand(2);
     model.parametersModel = params;
     model.intervaloFiguras = (int)tSize/NUMFIGS;
-    
-    model.my_rank = my_rank;
-    model.comm_sz = comm_sz;
     
     model.ht = HT;
     model.hx = HX;
@@ -242,13 +234,26 @@ structModel ModelInitialize(structParameters params, int my_rank, int comm_sz){
     model.xFinal = LENGTH;
     model.timeLen = (int)(TIME/HT);
     model.spaceLen = (int)(LENGTH/HX);
+    model.tSize = (int)(time/ht);
+    model.xSize = (int)(space/hx);
+    xSize = model.xSize;
 
     model.numLines = model.spaceLen/comm_sz;
     model.startLine = my_rank*model.numLines;
     model.endLine = model.startLine + model.numLines-1;
     model.microglia = (float**)malloc(BUFFER * sizeof(float*));
+    model.oligodendrocyte = (float**)malloc(BUFFER * sizeof(float*));
+    model.tCytotoxic = (float**)malloc(BUFFER * sizeof(float*));
+    model.antibody = (float**)malloc(BUFFER * sizeof(float*));
+    model.conventionalDc = (float**)malloc(BUFFER * sizeof(float*));
+    model.activatedDc = (float**)malloc(BUFFER * sizeof(float*));
     for (int index=0;index<BUFFER;++index){
         model.microglia[index] = (float*)malloc(model.xSize*model.xSize * sizeof(float));
+        model.oligodendrocyte[index] = (float*)malloc(model.xSize*model.xSize * sizeof(float));
+        model.tCytotoxic[index] = (float*)malloc(model.xSize*model.xSize * sizeof(float));
+        model.antibody[index] = (float*)malloc(model.xSize*model.xSize * sizeof(float));
+        model.conventionalDc[index] = (float*)malloc(model.xSize*model.xSize * sizeof(float));
+        model.activatedDc[index] = (float*)malloc(model.xSize*model.xSize * sizeof(float));
     }
     //definir BV e PV
     DefineBVPV(&model);

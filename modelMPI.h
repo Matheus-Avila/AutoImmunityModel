@@ -68,58 +68,53 @@ typedef struct structParameters
 
 typedef struct structModel
 {
-    int my_rank;
-    int comm_sz;
-    
-    int numLines;
-    int startLine;
-    int endLine;
-
     float ht;
     float hx;
 
     int tFinal;
     int xFinal;
 
-    int intervaloFiguras;
-
+    int intervalFigures;
+    int numPointsLN;
+    int numFigs;
     // int *timeVec;
     // int *spaceVec;
 
-    int timeLen;
-    int spaceLen;
+    int tSize;
+    int xSize;
 
-    float thetaBV[(int)(LENGTH/HX)*(int)(LENGTH/HX)];
-    float thetaPV[(int)(LENGTH/HX)*(int)(LENGTH/HX)];
+    float *thetaBV;
+    float *thetaPV;
 
     float activatedDCTissueVessels;
     float antibodyTissueVessels;
     float tCytotoxicTissueVessels;
     
     float **microglia;
-    float oligodendrocyte[BUFFER][(int)(LENGTH/HX)][(int)(LENGTH/HX)];
-    float conventionalDc[BUFFER][(int)(LENGTH/HX)][(int)(LENGTH/HX)];
-    float activatedDc[BUFFER][(int)(LENGTH/HX)][(int)(LENGTH/HX)];
-    float antibody[BUFFER][(int)(LENGTH/HX)][(int)(LENGTH/HX)];
-    float tCytotoxic[BUFFER][(int)(LENGTH/HX)][(int)(LENGTH/HX)];
+    float **oligodendrocyte;
+    float **conventionalDc;
+    float **activatedDc;
+    float **antibody;
+    float **tCytotoxic;
 
-    float dendriticLymphNode[BUFFER];
-    float tHelperLymphNode[BUFFER];
-    float tCytotoxicLymphNode[BUFFER];
-    float bCellLymphNode[BUFFER];
-    float plasmaCellLymphNode[BUFFER];
-    float antibodyLymphNode[BUFFER];
+    float *dendriticLymphNode;
+    float *tHelperLymphNode;
+    float *tCytotoxicLymphNode;
+    float *bCellLymphNode;
+    float *plasmaCellLymphNode;
+    float *antibodyLymphNode;
 
-    float dendriticLymphNodeSavedPoints[NUMPOINTSLYMPHNODE];
-    float tHelperLymphNodeSavedPoints[NUMPOINTSLYMPHNODE];
-    float tCytotoxicLymphNodeSavedPoints[NUMPOINTSLYMPHNODE];
-    float bCellLymphNodeSavedPoints[NUMPOINTSLYMPHNODE];
-    float plasmaCellLymphNodeSavedPoints[NUMPOINTSLYMPHNODE];
-    float antibodyLymphNodeSavedPoints[NUMPOINTSLYMPHNODE];
+    float *dendriticLymphNodeSavedPoints;
+    float *tHelperLymphNodeSavedPoints;
+    float *tCytotoxicLymphNodeSavedPoints;
+    float *bCellLymphNodeSavedPoints;
+    float *plasmaCellLymphNodeSavedPoints;
+    float *antibodyLymphNodeSavedPoints;
 
     structParameters parametersModel;
 
 }structModel;
+
 
 int VerifyCFL(structParameters parametersModel);
 
