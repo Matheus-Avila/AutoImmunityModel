@@ -2,12 +2,6 @@
 #define _MODEL_H_
 
 #define BUFFER 2
-#define TIME 28
-#define HT 0.0002
-#define LENGTH 20
-#define HX 0.5
-#define NUMFIGS 28
-#define NUMPOINTSLYMPHNODE 1000
 
 typedef struct structParameters
 {
@@ -77,8 +71,14 @@ typedef struct structModel
     int intervalFigures;
     int numPointsLN;
     int numFigs;
+    int numLines;
+    int startLine;
+    int endLine;
     // int *timeVec;
     // int *spaceVec;
+
+    int my_rank;
+    int comm_sz;
 
     int tSize;
     int xSize;
@@ -115,17 +115,16 @@ typedef struct structModel
 
 }structModel;
 
-
-int VerifyCFL(structParameters parametersModel);
+int VerifyCFL(structParameters parametersModel, float ht, float hx);
 
 float AdvectionTerm(float populationPoint, float avgValue);
 
 float UpDownWind(float frontIPoint, float ijPoint, float avgValue);
 
-float CalculateChemottaxis(float ponto_posterior_j, float ponto_anterior_j, float ponto_posterior_i, float ponto_anterior_i, float ponto_atual,\
- float valor_medio, float gradiente_odc_i, float gradiente_odc_j);
+float CalculateChemottaxis(float frontJPoint, float rearJPoint, float frontIPoint, float rearIPoint, float ijPoint,\
+ float avgValue, float gradientOdcI, float gradientOdcJ, float HX);
 
-float CalculateDiffusion(float ponto_posterior_j, float ponto_anterior_j, float ponto_posterior_i, float ponto_anterior_i, float ponto_atual);
+float CalculateDiffusion(float frontJPoint, float rearJPoint, float frontIPoint, float rearIPoint, float ijPoint, float HX);
 
 float fFunc(float valuePopulation, float avgPopulation);
 
@@ -133,7 +132,7 @@ float* EquationsLymphNode(structModel model, float* populationLN, int stepPos);
 
 void SolverLymphNode(structModel *model, int stepPos);
 
-structModel ModelInitialize(structParameters params, int my_rank, int comm_sz);
+structModel ModelInitialize(structParameters params, float ht, float hx, float time, float space, int numFigs, int numPointsLN, int my_rank, int comm_sz);
 
 void DefineBVPV(structModel *model);
 
@@ -143,7 +142,7 @@ void InitialConditionLymphNode(structModel* model, float dendriticLN, float thel
 
 void RunModel(structModel *model);
 
-void WritePopulation(float population[(int)(LENGTH/HX)][(int)(LENGTH/HX)], char* fileName, char* bufferTime);
+void WritePopulation(structModel model, float *population, char* fileName, char* bufferTime);
 
-void WriteFiles(structModel model, float oligodendrocyte[(int)(LENGTH/HX)][(int)(LENGTH/HX)], float microglia[(int)(LENGTH/HX)][(int)(LENGTH/HX)], float tCytotoxic[(int)(LENGTH/HX)][(int)(LENGTH/HX)], float antibody[(int)(LENGTH/HX)][(int)(LENGTH/HX)], float conventionalDC[(int)(LENGTH/HX)][(int)(LENGTH/HX)], float  activatedDC[(int)(LENGTH/HX)][(int)(LENGTH/HX)], float time);
+void WriteFiles(structModel model, float *oligodendrocyte, float *microglia, float *tCytotoxic, float *antibody, float *conventionalDC, float  *activatedDC, float time);
 #endif
