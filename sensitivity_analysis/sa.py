@@ -4,6 +4,7 @@ import os
 from SALib.sample import saltelli
 from SALib.analyze import sobol
 
+
 def printResult(indexes, title, fileName):
     labels = ["d_mic",
     "d_anti",
@@ -203,6 +204,7 @@ problem = {
 
 def RunSA():
     print("Running Model")
+    open("./sensitivity_analysis/SAalloutput.txt", "w").close()
     numSamples = 4
     calcSecondOrder=False
     sample = saltelli.sample(problem, numSamples, calc_second_order=calcSecondOrder)
