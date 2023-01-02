@@ -201,20 +201,6 @@ problem = {
     ]
 }
 
-problem_teste = {
-    'num_vars': 3,
-    'names': [
-        'a',
-        'b',
-        'c'
-    ],
-    'bounds': [
-        [-1,1],
-        [-1,1],
-        [-1,1]
-    ]
-}
-
 def RunSA():
     print("Running Model")
     numSamples = 4
@@ -234,7 +220,7 @@ def RunSA():
     # evaluate the model for eah point in the input sample
     for i in range(len(Y)):
         x = sample[i]
-        # Y[i] = modelo(x[0], x[1], x[2], x[3], x[4], x[5], x[6], x[7], x[8], x[9], x[10], x[11], x[2], x[13], x[14], x[15], x[16], x[17], x[18], x[19], x[20], x[21], x[22], x[23], x[24], x[25], x[26], x[27], x[28], x[29], x[30], x[31], x[32], x[33])
+        Y[i] = modelo(x[0], x[1], x[2], x[3], x[4], x[5], x[6], x[7], x[8], x[9], x[10], x[11], x[2], x[13], x[14], x[15], x[16], x[17], x[18], x[19], x[20], x[21], x[22], x[23], x[24], x[25], x[26], x[27], x[28], x[29], x[30], x[31], x[32], x[33])
 
     output_file = np.zeros(numOutPuts)
     i = 0
