@@ -80,6 +80,9 @@ typedef struct structModel
     int my_rank;
     int comm_sz;
 
+    int spaceLen;
+    int timeLen;
+
     int tSize;
     int xSize;
 
