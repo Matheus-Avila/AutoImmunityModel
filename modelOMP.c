@@ -263,6 +263,19 @@ float* EquationsLymphNode(structModel model, float* populationLN, int stepPos){
     //Avaliate dependent parameters
 
     float time = model.ht*stepPos;
+
+    if(time < 1){
+        model.parametersModel.gammaD = 0;
+        model.parametersModel.gammaT = 0;
+        model.parametersModel.gammaAntibody = 0;
+    }else{
+        if(time < 7){
+            model.parametersModel.gammaD = model.parametersModel.gammaD*((1/6)*(time - 1));
+            model.parametersModel.gammaT = model.parametersModel.gammaT*((1/6)*(time - 1));
+            model.parametersModel.gammaAntibody = model.parametersModel.gammaAntibody*((1/6)*(time - 1));
+        }
+    }
+
     if(dcLN < .1){
         model.parametersModel.bTHelper = 0;
         model.parametersModel.bTCytotoxic = 0;
