@@ -27,8 +27,9 @@ void InitialConditionLymphNode(structModel* model, float dendriticLN, float thel
     model->antibodyLymphNode[0] = antibodyLN;
 }
 
-int VerifyCFL(structParameters parametersModel, float ht, float hx){
-
+int VerifyCFL(structParameters parametersModel){
+    if(parametersModel.micDiffusion*HT/(HX*HX) < 0.25 && parametersModel.cDcDiffusion*HT/(HX*HX) < 0.25 && parametersModel.aDcDiffusion*HT/(HX*HX) < 0.25 && parametersModel.tCytoDiffusion*HT/(HX*HX) < 0.25 && parametersModel.chi*HT/HX < 1)
+        return 1;
     return 0;
 }
 
@@ -204,7 +205,7 @@ void WriteBVPV(float thetaBV[xSize][xSize], float thetaPV[xSize][xSize]){
     // system(command);
 }
 
-structModel ModelInitialize(structParameters params){
+structModel ModelInitialize(structParameters params, int calculateQoI){
     structModel model;
     srand(2);
     model.parametersModel = params;
@@ -216,6 +217,7 @@ structModel ModelInitialize(structParameters params){
     model.xFinal = LENGTH;
     model.timeLen = (int)(TIME/HT);
     model.spaceLen = (int)(LENGTH/HX);
+    model.calculateQoI = calculateQoI;
     //definir BV e PV
     DefineBVPV(&model);
     //definir lymph node
@@ -322,6 +324,18 @@ void SolverLymphNode(structModel *model, int stepPos){
     
 }
 
+void WriteQoI(float qoI){
+    FILE *fileQoI;
+    fileQoI = fopen("./sensitivity_analysis/SAoutput.txt", "w");
+    fprintf(fileQoI, "%f", qoI);
+    fclose(fileQoI);
+
+    FILE *fileAllQoI;
+    fileAllQoI = fopen("./sensitivity_analysis/SAalloutput.txt", "a");
+    fprintf(fileAllQoI, "%f\n", qoI);
+    fclose(fileAllQoI);
+}
+
 void RunModel(structModel *model){
     //Save IC
     WriteFiles(*model, model->oligodendrocyte[0], model->microglia[0], model->tCytotoxic[0], model->antibody[0], model->conventionalDc[0], model->activatedDc[0], 0);
@@ -342,6 +356,8 @@ void RunModel(structModel *model){
     float microgliaKMinus = 0.0, conventionalDcKMinus = 0.0, activatedDcKMinus = 0.0, tCytotoxicKMinus = 0.0, antibodyKMinus = 0.0, oligodendrocyteKMinus = 0.0;
 
     float auxAdcPV = 0.0, auxAntibodyBV = 0.0, auxTCytotoxicBV = 0.0;
+
+    int qoI = 0;
 
     for(int kTime = 1; kTime <= model->timeLen; kTime++){
         auxAdcPV = 0.0, auxAntibodyBV = 0.0, auxTCytotoxicBV = 0.0;
@@ -488,9 +504,11 @@ void RunModel(structModel *model){
             if(model->thetaPV[line][column] == 1){
                 auxAdcPV += model->activatedDc[stepKPlus][line][column];
             }
+            if(model->calculateQoI && kTime == model->timeLen)
+                qoI += model->oligodendrocyte[stepKPlus][line][column];
         }
         }
-        if(kTime%model->intervaloFiguras == 0 || kTime == model->timeLen)
+        if((kTime%model->intervaloFiguras == 0 || kTime == model->timeLen) && !model->calculateQoI)
             WriteFiles(*model, model->oligodendrocyte[stepKPlus], model->microglia[stepKPlus], model->tCytotoxic[stepKPlus], model->antibody[stepKPlus], model->conventionalDc[stepKPlus], model->activatedDc[stepKPlus], kTime);
         model->tCytotoxicTissueVessels = auxTCytotoxicBV/model->parametersModel.V_BV;
         model->antibodyTissueVessels = auxAntibodyBV/model->parametersModel.V_BV;
@@ -498,7 +516,10 @@ void RunModel(structModel *model){
         stepKMinus += 1;
         stepKMinus = stepKMinus%2;
     }
-    printf("Computation Done!!\nSaving results...\n\n");
+    printf("Computation Done!!\n");
     WriteLymphNodeFiles(model->dendriticLymphNodeSavedPoints, model->tHelperLymphNodeSavedPoints, model->tCytotoxicLymphNodeSavedPoints, model->bCellLymphNodeSavedPoints, model->plasmaCellLymphNodeSavedPoints, model->antibodyLymphNodeSavedPoints);
-    PlotResults();
+    if(!model->calculateQoI)
+        PlotResults();
+    else
+        WriteQoI(qoI);
 }

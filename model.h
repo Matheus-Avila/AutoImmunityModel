@@ -76,6 +76,8 @@ typedef struct structModel
 
     int intervaloFiguras;
 
+    int calculateQoI;
+
     // int *timeVec;
     // int *spaceVec;
 
@@ -114,7 +116,7 @@ typedef struct structModel
 
 }structModel;
 
-int VerifyCFL(structParameters parametersModel, float ht, float hx);
+int VerifyCFL(structParameters parametersModel);
 
 float AdvectionTerm(float populationPoint, float avgValue);
 
@@ -131,7 +133,7 @@ float* EquationsLymphNode(structModel model, float* populationLN, int stepPos);
 
 void SolverLymphNode(structModel *model, int stepPos);
 
-structModel ModelInitialize(structParameters params);
+structModel ModelInitialize(structParameters params, int calculateQoI);
 
 void DefineBVPV(structModel *model);
 
