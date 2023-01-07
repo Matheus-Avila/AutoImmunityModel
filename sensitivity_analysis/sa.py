@@ -7,8 +7,8 @@ from SALib.analyze import sobol
 
 def printResult(indexes, title, fileName):
     labels = ["mu_m",
-        "r_m",
-        "lamb_f_m",
+        "d_mic"
+        # "lamb_f_m",
     ]
     # labels = ["d_mic",
     # "d_anti",
@@ -59,8 +59,7 @@ def printResult(indexes, title, fileName):
 
 # def model(d_mic, d_anti, d_dc, d_da, d_t_cit, chi, mu_dc, mu_m, r_m, r_t, lamb_f_m, b_d, gamma_D, gamma_F, gamma_T,
 # cMic, cCDc, cADc, cDl, cF, alpha_T_h, alpha_T_c, alpha_B, alpha_P, b_Th, b_Tc, b_rho, b_rho_b, b_rho_p, rho_Th, rho_Tc, rho_B, rho_P, rho_F):
-def model (mu_m, r_m, lamb_f_m):
-    d_mic = 1520*10**-5
+def model (mu_m, d_mic):
     d_anti = 1520*10**-4
     d_dc = 1520*10**-5
     d_da = 1520*10**-5
@@ -69,7 +68,9 @@ def model (mu_m, r_m, lamb_f_m):
 
     mu_dc = 60*24*3*10**-4
     r_t = 0.1
+    r_m = 5.702**10**-3
     b_d = 0.001
+    lamb_f_m = 5.702*10**-3
 
     gamma_D = 0.01
     gamma_F = 0.3
@@ -244,23 +245,21 @@ problem = {
 }
 
 problem = {
-    'num_vars': 3,
+    'num_vars': 2,
     'names': [
         'mu_m',
-        'r_m',
-        'lamb_f_m'
+        'd_mic'
     ],
     'bounds': [
         [lowerBound*mu_m_mean, upperBound*mu_m_mean],
-        [lowerBound*r_m_mean, upperBound*r_m_mean],
-        [lowerBound*lamb_f_m_mean, upperBound*lamb_f_m_mean]
+        [lowerBound*d_mic_mean, upperBound*d_mic_mean]        
     ]
 }
 
 def RunSA():
     print("Running Model")
     open("./sensitivity_analysis/SAalloutput.txt", "w").close()
-    numSamples = 100
+    numSamples = 256
     calcSecondOrder=False
     sample = saltelli.sample(problem, numSamples, calc_second_order=calcSecondOrder)
     Y = np.empty([sample.shape[0]])
@@ -277,7 +276,7 @@ def RunSA():
     # evaluate the model for eah point in the input sample
     for i in range(len(Y)):
         x = sample[i]
-        Y[i] = model(x[0], x[1], x[2])#, x[3], x[4], x[5], x[6], x[7], x[8], x[9], x[10], x[11], x[2], x[13], x[14], x[15], x[16], x[17], x[18], x[19], x[20], x[21], x[22], x[23], x[24], x[25], x[26], x[27], x[28], x[29], x[30], x[31], x[32], x[33])
+        Y[i] = model(x[0], x[1])#, x[2])#, x[3], x[4], x[5], x[6], x[7], x[8], x[9], x[10], x[11], x[2], x[13], x[14], x[15], x[16], x[17], x[18], x[19], x[20], x[21], x[22], x[23], x[24], x[25], x[26], x[27], x[28], x[29], x[30], x[31], x[32], x[33])
 
     output_file = np.zeros(numOutPuts)
     i = 0
