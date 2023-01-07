@@ -105,7 +105,7 @@ def model (mu_m, r_m, lamb_f_m):
         "\n"+str(b_Th)+"\n"+str(b_Tc)+"\n"+str(b_rho)+"\n"+str(b_rho_b)+"\n"+str(b_rho_p)+"\n"+str(rho_Th)+
         "\n"+str(rho_Tc)+"\n"+str(rho_B)+"\n"+str(rho_P)+"\n"+str(rho_F))
     #Executar codigo em C
-    os.system("./mainOMP 1 1")#Executa o modelo C
+    os.system("./mainOMP 2 1")#Executa o modelo C
     #Ler resultado em C
     outPut = 0
     with open("./sensitivity_analysis/SAoutput.txt", 'r') as f:
