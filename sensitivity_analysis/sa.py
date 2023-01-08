@@ -259,7 +259,7 @@ problem = {
 def RunSA():
     print("Running Model")
     open("./sensitivity_analysis/SAalloutput.txt", "w").close()
-    numSamples = 256
+    numSamples = 128
     calcSecondOrder=False
     sample = saltelli.sample(problem, numSamples, calc_second_order=calcSecondOrder)
     Y = np.empty([sample.shape[0]])
@@ -297,10 +297,12 @@ def RunSA():
     # firstorder indices
     print("First-order or main effect indices")
     print(sensitivity['S1'])
+    print(sensitivity['S1_conf'])
 
     # higher-order indices
     print("Higher-order or total (interactions) indices")
     print(sensitivity['ST'])
+    print(sensitivity['ST_conf'])
 
     printResult(sensitivity['S1'], 'First Order', 'firstOrder')
     printResult(sensitivity['ST'], 'Total Order', 'totalOrder')
