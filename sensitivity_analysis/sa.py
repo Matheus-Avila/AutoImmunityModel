@@ -158,7 +158,7 @@ rho_F_mean = 5.1*10**-2
 multiplyTerm = .1
 upperBound = 1 + multiplyTerm
 lowerBound = 1 - multiplyTerm
-
+'''
 problem = {
     'num_vars': 34,
     'names': [ 
@@ -243,7 +243,7 @@ problem = {
         [lowerBound*rho_F_mean, upperBound*rho_F_mean]
     ]
 }
-
+'''
 problem = {
     'num_vars': 2,
     'names': [
