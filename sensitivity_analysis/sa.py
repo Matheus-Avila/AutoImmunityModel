@@ -259,7 +259,7 @@ problem = {
 def RunSA():
     print("Running Model")
     open("./sensitivity_analysis/SAalloutput.txt", "w").close()
-    numSamples = 256
+    numSamples = 512
     calcSecondOrder=False
     sample = saltelli.sample(problem, numSamples, calc_second_order=calcSecondOrder)
     Y = np.empty([sample.shape[0]])
