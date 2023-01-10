@@ -53,7 +53,7 @@ plt.xlabel("Time (days)")
 plt.ylabel("Concentration (Cells/$mm^2$)")
 plt.savefig('./result/t_cito_linfonodo.png', dpi = 300)
 plt.clf()
-
+print("bbbb")
 plt.plot(t,TL_h_vetor, "-r")
 plt.title("Lymph node - T $CD4^+$")
 plt.xlabel("Time (days)")

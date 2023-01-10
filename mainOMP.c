@@ -63,8 +63,10 @@ structParameters ParametersInitialize(){
 int main(int argc, char* argv[]){
     printf("Comecei o main\n");
     int tot_thr = strtol(argv[1], NULL, 10);
+    float ht = 0.0002, hx = 0.5;
+    int numFigs = 28, numPointsLN = 1000, time = 28, space = 20;
     structParameters parameters = ParametersInitialize();
-    structModel model = ModelInitialize(parameters, tot_thr);
+    structModel model = ModelInitialize(parameters, tot_thr, ht, hx, time, space, numFigs, numPointsLN);
     printf("Inicializacao feita!!\n\n");
     float start = omp_get_wtime();
     RunModel(&model);
