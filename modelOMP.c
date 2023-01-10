@@ -7,7 +7,6 @@
 #include <unistd.h>
 #include <omp.h>
 
-
 void InitialConditionTissueMicroglia(structModel* model){
     for(int k = 0; k < model->xSize*model->xSize; k++){
         int i = (int)k/model->xSize;
@@ -560,7 +559,8 @@ void RunModel(structModel *model){
         stepKMinus += 1;
         stepKMinus = stepKMinus%2;
     }
-    printf("Computation Done!!\nSaving results...\n\n");
+    printf("Computation Done!!\n");
+    printf("Saving results...\n\n");
     WriteLymphNodeFiles(*model, model->dendriticLymphNodeSavedPoints, model->tHelperLymphNodeSavedPoints, model->tCytotoxicLymphNodeSavedPoints, model->bCellLymphNodeSavedPoints, model->plasmaCellLymphNodeSavedPoints, model->antibodyLymphNodeSavedPoints);
     PlotResults(*model);
 }
