@@ -560,7 +560,40 @@ void RunModel(structModel *model){
         stepKMinus = stepKMinus%2;
     }
     printf("Computation Done!!\n");
+
+    for(int index=0;index<BUFFER;++index){
+        free(model->microglia[index]);
+        free(model->oligodendrocyte[index]);
+        free(model->tCytotoxic[index]);
+        free(model->antibody[index]);
+        free(model->conventionalDc[index]);
+        free(model->activatedDc[index]);
+    }
+
+    free(model->microglia);
+    free(model->oligodendrocyte);
+    free(model->tCytotoxic);
+    free(model->antibody);
+    free(model->conventionalDc);
+    free(model->activatedDc);
+    free(model->thetaPV);
+    free(model->thetaBV);
+
+    free(model->dendriticLymphNode);
+    free(model->tCytotoxicLymphNode);
+    free(model->tHelperLymphNode);
+    free(model->antibodyLymphNode);
+    free(model->bCellLymphNode);
+    free(model->plasmaCellLymphNode);
     printf("Saving results...\n\n");
     WriteLymphNodeFiles(*model, model->dendriticLymphNodeSavedPoints, model->tHelperLymphNodeSavedPoints, model->tCytotoxicLymphNodeSavedPoints, model->bCellLymphNodeSavedPoints, model->plasmaCellLymphNodeSavedPoints, model->antibodyLymphNodeSavedPoints);
+    
+    free(model->dendriticLymphNodeSavedPoints);
+    free(model->tCytotoxicLymphNodeSavedPoints);
+    free(model->tHelperLymphNodeSavedPoints);
+    free(model->antibodyLymphNodeSavedPoints);
+    free(model->bCellLymphNodeSavedPoints);
+    free(model->plasmaCellLymphNodeSavedPoints);
+
     PlotResults(*model);
 }
