@@ -159,26 +159,6 @@ float fFunc(float valuePopulation, float avgPopulation){
     return valuePopulation*valuePopulation/(float)(valuePopulation + avgPopulation);
 }
 
-void DefineBVPV(structModel *model){
-    int randomVal;
-    for(int k = 0; k < model->xSize*model->xSize; k++){
-        int i = (int)k/model->xSize;
-        int j = k%model->xSize;
-        randomVal = rand() % 100;
-        if(randomVal <10){
-            model->parametersModel.V_BV++;
-            model->parametersModel.V_PV++;
-            model->thetaBV[k] = 1;
-            if(j != model->xSize-1)
-                model->thetaPV[k+1] = 1;
-            else
-                model->thetaPV[k-model->xSize+1] = 1;
-        }
-    }
-    printf("bv = %d, pv = %d \n", model->parametersModel.V_BV, model->parametersModel.V_PV);
-    WriteBVPV(model, model->thetaBV, model->thetaPV);
-}
-
 void WriteBVPV(structModel *model, float *thetaBV, float *thetaPV){
     FILE *fileBV;
     fileBV = fopen("./result/bv.txt", "w");
@@ -206,6 +186,28 @@ void WriteBVPV(structModel *model, float *thetaBV, float *thetaPV){
     strcat(command, buffer);
     // system(command);
 }
+
+void DefineBVPV(structModel *model){
+    int randomVal;
+    for(int k = 0; k < model->xSize*model->xSize; k++){
+        int i = (int)k/model->xSize;
+        int j = k%model->xSize;
+        randomVal = rand() % 100;
+        if(randomVal <10){
+            model->parametersModel.V_BV++;
+            model->parametersModel.V_PV++;
+            model->thetaBV[k] = 1;
+            if(j != model->xSize-1)
+                model->thetaPV[k+1] = 1;
+            else
+                model->thetaPV[k-model->xSize+1] = 1;
+        }
+    }
+    printf("bv = %d, pv = %d \n", model->parametersModel.V_BV, model->parametersModel.V_PV);
+    WriteBVPV(model, model->thetaBV, model->thetaPV);
+}
+
+
 
 structModel ModelInitialize(structParameters params, float ht, float hx, float time, float space, int numFigs, int numPointsLN){
     structModel model;
@@ -363,6 +365,42 @@ void RunModel(structModel *model){
     //Save IC
     WriteFiles(*model, model->oligodendrocyte[0], model->microglia[0], model->tCytotoxic[0], model->antibody[0], model->conventionalDc[0], model->activatedDc[0], 0);
     
+    float *devActivatedDCLymphNode, *devAntibodyLymphNode, *devTCytotoxicLymphNode, *devMicrogliaKMinus, *devMicrogliaKPlus, *devTCytotoxicKMinus, *devTCytotoxicKPlus, *devAntibodyKMinus, *devAntibodyKPlus, *devConventionalDCKMinus, *devConventionalDCKPlus, *devActivatedDCKMinus, *devActivatedDCKPlus, *devOligodendrocytesDCKMinus, *devOligodendrocytesDCKPlus;
+    
+    cudaMalloc((void**)&devOligodendrocytesDCKMinus, model->xSize*model->xSize*sizeof(float));
+    cudaMalloc((void**)&devOligodendrocytesDCKPlus, model->xSize*model->xSize*sizeof(float));
+
+    cudaMalloc((void**)&devMicrogliaKMinus, model->xSize*model->xSize*sizeof(float));
+    cudaMalloc((void**)&devMicrogliaKPlus, model->xSize*model->xSize*sizeof(float));
+    
+    cudaMalloc((void**)&devTCytotoxicKMinus, model->xSize*model->xSize*sizeof(float));
+    cudaMalloc((void**)&devTCytotoxicKPlus, model->xSize*model->xSize*sizeof(float));
+    
+    cudaMalloc((void**)&devAntibodyKMinus, model->xSize*model->xSize*sizeof(float));
+    cudaMalloc((void**)&devAntibodyKPlus, model->xSize*model->xSize*sizeof(float));
+    
+    cudaMalloc((void**)&devConventionalDCKMinus, model->xSize*model->xSize*sizeof(float));
+    cudaMalloc((void**)&devConventionalDCKPlus, model->xSize*model->xSize*sizeof(float));
+    
+    cudaMalloc((void**)&devActivatedDCKMinus, model->xSize*model->xSize*sizeof(float));
+    cudaMalloc((void**)&devActivatedDCKPlus, model->xSize*model->xSize*sizeof(float));
+    
+    cudaMemcpy(devOligodendrocytesDCKMinus, &model->oligodendrocyte[0], model->xSize*model->xSize*sizeof(float), cudaMemcpyHostToDevice);
+    cudaMemcpy(devMicrogliaKMinus, &model->microglia[0], model->xSize*model->xSize*sizeof(float), cudaMemcpyHostToDevice);
+    cudaMemcpy(devTCytotoxicKMinus, &model->tCytotoxic[0], model->xSize*model->xSize*sizeof(float), cudaMemcpyHostToDevice);
+    cudaMemcpy(devAntibodyKMinus, &model->antibody[0], model->xSize*model->xSize*sizeof(float), cudaMemcpyHostToDevice);
+    cudaMemcpy(devConventionalDCKMinus, &model->conventionalDc[0], model->xSize*model->xSize*sizeof(float), cudaMemcpyHostToDevice);
+    cudaMemcpy(devActivatedDCKMinus, &model->activatedDc[0], model->xSize*model->xSize*sizeof(float), cudaMemcpyHostToDevice);
+    
+    structParameters* devParams;
+    //se der errado passar parametro por parametro (tentar com memoria de constantes)
+    cudaMalloc((void**)&devParams, sizeof(structParameters));
+    cudaMemcpy(devParams, &model->parametersModel, sizeof(structParameters), cudaMemcpyHostToDevice);
+
+    cudaMalloc((void**)&devActivatedDCLymphNode, sizeof(float));
+    cudaMalloc((void**)&devAntibodyLymphNode, sizeof(float));
+    cudaMalloc((void**)&devTCytotoxicLymphNode, sizeof(float));
+
     int stepKMinus = 0, stepKPlus;
 
     float upperNeumannBC = 0.0, lowerNeumannBC = 0.0, leftNeumannBC = 0.0, rightNeumannBC = 0.0;
@@ -384,7 +422,13 @@ void RunModel(structModel *model){
         auxAdcPV = 0.0, auxAntibodyBV = 0.0, auxTCytotoxicBV = 0.0;
         // solve lymphnode
         SolverLymphNode(model, kTime);
+
+        //copiar LN pra GPU
+        cudaMemcpy(devActivatedDCLymphNode, &model->dendriticLymphNode[stepKPlus], sizeof(float), cudaMemcpyHostToDevice);
+        cudaMemcpy(devAntibodyLymphNode, &model->antibodyLymphNode[stepKPlus], sizeof(float), cudaMemcpyHostToDevice);
+        cudaMemcpy(devTCytotoxicLymphNode, &model->tCytotoxicLymphNode[stepKPlus], sizeof(float), cudaMemcpyHostToDevice);        
         stepKPlus = kTime%2;
+        
         for(int kPos = 0; kPos < model->xSize*model->xSize; kPos++){
             int line = (int)kPos/model->xSize;
             int column = kPos%model->xSize;
@@ -534,7 +578,8 @@ void RunModel(structModel *model){
         stepKMinus += 1;
         stepKMinus = stepKMinus%2;
     }
-    printf("Computation Done!!\nSaving results...\n\n");
-    WriteLymphNodeFiles(*model, model->dendriticLymphNodeSavedPoints, model->tHelperLymphNodeSavedPoints, model->tCytotoxicLymphNodeSavedPoints, model->bCellLymphNodeSavedPoints, model->plasmaCellLymphNodeSavedPoints, model->antibodyLymphNodeSavedPoints);
-    PlotResults(*model);
+    printf("Computation Done!!\n");
+    // printf("Saving results...\n\n");
+    // WriteLymphNodeFiles(*model, model->dendriticLymphNodeSavedPoints, model->tHelperLymphNodeSavedPoints, model->tCytotoxicLymphNodeSavedPoints, model->bCellLymphNodeSavedPoints, model->plasmaCellLymphNodeSavedPoints, model->antibodyLymphNodeSavedPoints);
+    // PlotResults(*model);
 }
