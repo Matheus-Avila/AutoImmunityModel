@@ -241,38 +241,46 @@ structModel ModelInitialize(structParameters params, int totThr, float ht, float
     model.intervalFigures = (int)model.tSize/numFigs;
     
     model.totalThreads = totThr;
-    model.microglia = (float**)malloc(BUFFER * sizeof(float*));
-    model.oligodendrocyte = (float**)malloc(BUFFER * sizeof(float*));
-    model.tCytotoxic = (float**)malloc(BUFFER * sizeof(float*));
-    model.antibody = (float**)malloc(BUFFER * sizeof(float*));
-    model.conventionalDc = (float**)malloc(BUFFER * sizeof(float*));
-    model.activatedDc = (float**)malloc(BUFFER * sizeof(float*));
+    model.microglia = (float**)calloc(BUFFER, sizeof(float*));
+    model.oligodendrocyte = (float**)calloc(BUFFER, sizeof(float*));
+    model.tCytotoxic = (float**)calloc(BUFFER, sizeof(float*));
+    model.antibody = (float**)calloc(BUFFER, sizeof(float*));
+    model.conventionalDc = (float**)calloc(BUFFER, sizeof(float*));
+    model.activatedDc = (float**)calloc(BUFFER, sizeof(float*));
+
     for (int index=0;index<BUFFER;++index){
-        model.microglia[index] = (float*)malloc(model.xSize*model.xSize * sizeof(float));
-        model.oligodendrocyte[index] = (float*)malloc(model.xSize*model.xSize * sizeof(float));
-        model.tCytotoxic[index] = (float*)malloc(model.xSize*model.xSize * sizeof(float));
-        model.antibody[index] = (float*)malloc(model.xSize*model.xSize * sizeof(float));
-        model.conventionalDc[index] = (float*)malloc(model.xSize*model.xSize * sizeof(float));
-        model.activatedDc[index] = (float*)malloc(model.xSize*model.xSize * sizeof(float));
+        model.microglia[index] = (float*)calloc(model.xSize*model.xSize, sizeof(float));
+        model.oligodendrocyte[index] = (float*)calloc(model.xSize*model.xSize, sizeof(float));
+        model.tCytotoxic[index] = (float*)calloc(model.xSize*model.xSize, sizeof(float));
+        model.antibody[index] = (float*)calloc(model.xSize*model.xSize, sizeof(float));
+        model.conventionalDc[index] = (float*)calloc(model.xSize*model.xSize, sizeof(float));
+        model.activatedDc[index] = (float*)calloc(model.xSize*model.xSize, sizeof(float));
+    }
+    for(int i = 0; i < model.xSize*model.xSize; i++){
+        if(model.activatedDc[0][i] != 0)
+            printf("%d : %f\n", i, model.activatedDc[0][i]);
     }
     //definir BV e PV
-    model.thetaPV = (float*)malloc(model.xSize*model.xSize * sizeof(float));
-    model.thetaBV = (float*)malloc(model.xSize*model.xSize * sizeof(float));
+    model.thetaPV = (float*)calloc(model.xSize*model.xSize, sizeof(float));
+    model.thetaBV = (float*)calloc(model.xSize*model.xSize, sizeof(float));
     DefineBVPV(&model);
     //definir lymph node
-    model.dendriticLymphNodeSavedPoints = (float*)malloc(model.numPointsLN * sizeof(float));
-    model.tCytotoxicLymphNodeSavedPoints = (float*)malloc(model.numPointsLN * sizeof(float));
-    model.tHelperLymphNodeSavedPoints = (float*)malloc(model.numPointsLN * sizeof(float));
-    model.antibodyLymphNodeSavedPoints = (float*)malloc(model.numPointsLN * sizeof(float));
-    model.bCellLymphNodeSavedPoints = (float*)malloc(model.numPointsLN * sizeof(float));
-    model.plasmaCellLymphNodeSavedPoints = (float*)malloc(model.numPointsLN * sizeof(float));
+    model.dendriticLymphNodeSavedPoints = (float*)calloc(model.numPointsLN, sizeof(float));
+    model.tCytotoxicLymphNodeSavedPoints = (float*)calloc(model.numPointsLN, sizeof(float));
+    model.tHelperLymphNodeSavedPoints = (float*)calloc(model.numPointsLN, sizeof(float));
+    model.antibodyLymphNodeSavedPoints = (float*)calloc(model.numPointsLN, sizeof(float));
+    model.bCellLymphNodeSavedPoints = (float*)calloc(model.numPointsLN, sizeof(float));
+    model.plasmaCellLymphNodeSavedPoints = (float*)calloc(model.numPointsLN, sizeof(float));
 
-    model.dendriticLymphNode = (float*)malloc(2 * sizeof(float));
-    model.tCytotoxicLymphNode = (float*)malloc(2 * sizeof(float));
-    model.tHelperLymphNode = (float*)malloc(2 * sizeof(float));
-    model.antibodyLymphNode = (float*)malloc(2 * sizeof(float));
-    model.bCellLymphNode = (float*)malloc(2 * sizeof(float));
-    model.plasmaCellLymphNode = (float*)malloc(2 * sizeof(float));    
+    model.dendriticLymphNode = (float*)calloc(2, sizeof(float));
+    model.tCytotoxicLymphNode = (float*)calloc(2, sizeof(float));
+    model.tHelperLymphNode = (float*)calloc(2, sizeof(float));
+    model.antibodyLymphNode = (float*)calloc(2, sizeof(float));
+    model.bCellLymphNode = (float*)calloc(2, sizeof(float));
+    model.plasmaCellLymphNode = (float*)calloc(2, sizeof(float));    
+    printf("%d\n", sizeof(model.dendriticLymphNode)/sizeof(model.dendriticLymphNode[0]));
+    printf("%f-%f\n", model.dendriticLymphNode[0], model.dendriticLymphNode[1]);
+
 
     float dendriticLN = 0.0, thelperLN = 0.0, tcytotoxicLN = 0.0, bcellLN = 0.0, plasmacellLN = 0.0, antibodyLN = 0.0;
     InitialConditionLymphNode(&model, dendriticLN, thelperLN, tcytotoxicLN, bcellLN, plasmacellLN, antibodyLN);
@@ -281,7 +289,7 @@ structModel ModelInitialize(structParameters params, int totThr, float ht, float
 }
 
 float* EquationsLymphNode(structModel model, float* populationLN, int stepPos){
-    float* result =(float *)malloc(sizeof(float)*6);
+    float* result =(float *)calloc(6,sizeof(float));
     
     float dcLN = populationLN[0];
     float tCytoLN = populationLN[1];
