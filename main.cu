@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
-#include <omp.h>
 
 structParameters ParametersInitialize(){
     structParameters params;
@@ -61,16 +60,10 @@ structParameters ParametersInitialize(){
 
 
 int main(){
-    printf("Comecei o main\n");
-    fflush(stdout);
     float ht = 0.0002, hx = 0.5;
     int numFigs = 28, numPointsLN = 1000, time = 28, space = 20;
     structParameters parameters = ParametersInitialize();
     structModel model = ModelInitialize(parameters, ht, hx, time, space, numFigs, numPointsLN);
-    printf("Inicializacao feita!!\n\n");
-    float start = omp_get_wtime();
     RunModel(&model);
-    float end = omp_get_wtime();
-    printf("Work took %f seconds\n", end - start);
     return 0;
 }
