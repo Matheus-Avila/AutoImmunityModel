@@ -73,6 +73,7 @@ int main(int argc, char* argv[]){
     int lenght = 20;
     structParameters parameters = ParametersInitialize();
     structModel model = ModelInitialize(parameters, my_rank, comm_sz, hx, lenght);
+    
     RunModel(&model);
     MPI_Finalize();
     return 0;

@@ -96,12 +96,12 @@ typedef struct structModel
     float antibodyTissueVessels;
     float tCytotoxicTissueVessels;
     
-    float microglia[BUFFER][(int)(LENGTH/HX)][(int)(LENGTH/HX)];
-    float oligodendrocyte[BUFFER][(int)(LENGTH/HX)][(int)(LENGTH/HX)];
-    float conventionalDc[BUFFER][(int)(LENGTH/HX)][(int)(LENGTH/HX)];
-    float activatedDc[BUFFER][(int)(LENGTH/HX)][(int)(LENGTH/HX)];
-    float antibody[BUFFER][(int)(LENGTH/HX)][(int)(LENGTH/HX)];
-    float tCytotoxic[BUFFER][(int)(LENGTH/HX)][(int)(LENGTH/HX)];
+    float **microglia;
+    float **oligodendrocyte;
+    float **conventionalDc;
+    float **activatedDc;
+    float **antibody;
+    float **tCytotoxic;
 
     float dendriticLymphNode[BUFFER];
     float tHelperLymphNode[BUFFER];
