@@ -559,6 +559,12 @@ void RunModel(structModel *model){
         stepKMinus += 1;
         stepKMinus = stepKMinus%2;
     }
+    for(int i = 0; i < model->xSize; i++) {
+        for(int j = 0; j < model->xSize; j++) {
+            printf("%f ", model->oligodendrocyte[0][i * model->xSize + j]);
+        }
+        printf("\n");
+    }
     printf("Computation Done!!\n");
 
     for(int index=0;index<BUFFER;++index){
