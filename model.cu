@@ -5,17 +5,21 @@
 #include <stdlib.h>
 #include <string.h>
 
-void InitialConditionTissueMicroglia(structModel* model){
-    for(int k = 0; k < model->xSize*model->xSize; k++){
-        int i = (int)k/model->xSize;
-        int j = k%model->xSize;
-        if(pow((i-(int)(model->xSize/2)),2) + pow((j-(int)(model->xSize/2)),2) < 5){
-            model->microglia[0][k] = (float)model->parametersModel.avgMic/3;
+void InitialConditionTissueMicroglia(structModel *model)
+{
+    for (int k = 0; k < model->xSize * model->xSize; k++)
+    {
+        int i = (int)k / model->xSize;
+        int j = k % model->xSize;
+        if (pow((i - (int)(model->xSize / 2)), 2) + pow((j - (int)(model->xSize / 2)), 2) < 5)
+        {
+            model->microglia[0][k] = (float)model->parametersModel.avgMic / 3;
         }
     }
 }
 
-void InitialConditionLymphNode(structModel* model, float dendriticLN, float thelperLN, float tcytotoxicLN, float bcellLN, float plasmacellLN, float antibodyLN){
+void InitialConditionLymphNode(structModel *model, float dendriticLN, float thelperLN, float tcytotoxicLN, float bcellLN, float plasmacellLN, float antibodyLN)
+{
     model->dendriticLymphNode[0] = dendriticLN;
     model->tHelperLymphNode[0] = thelperLN;
     model->tCytotoxicLymphNode[0] = tcytotoxicLN;
@@ -24,37 +28,44 @@ void InitialConditionLymphNode(structModel* model, float dendriticLN, float thel
     model->antibodyLymphNode[0] = antibodyLN;
 }
 
-int VerifyCFL(structParameters parametersModel, float ht, float hx){
+int VerifyCFL(structParameters parametersModel, float ht, float hx)
+{
 
     return 0;
 }
 
-void WritePopulation(structModel model, float *population, char* fileName, char* bufferTime){
+void WritePopulation(structModel model, float *population, char *fileName, char *bufferTime)
+{
     FILE *file;
     file = fopen(fileName, "w");
     int k = 0;
-    while (k < model.xSize*model.xSize){
+    while (k < model.xSize * model.xSize)
+    {
         int i = k;
-        while (i < k + model.xSize){
+        while (i < k + model.xSize)
+        {
             fprintf(file, "%f ", population[i]);
             i++;
         }
-        fprintf(file,"\n");
-        k+=model.xSize;
+        fprintf(file, "\n");
+        k += model.xSize;
     }
     fclose(file);
 }
 
-void WritePopulationLymphNode(structModel model, float *population, char* fileName){
+void WritePopulationLymphNode(structModel model, float *population, char *fileName)
+{
     FILE *file;
     file = fopen(fileName, "w");
-    for(int i=0;i<model.numPointsLN;i++){
+    for (int i = 0; i < model.numPointsLN; i++)
+    {
         fprintf(file, "%f\n", population[i]);
     }
     fclose(file);
 }
 
-void WriteLymphNodeFiles(structModel model, float *dendritic, float *tHelper, float *tCytotoxic, float *bCell, float *plasmaCell, float *antibody){
+void WriteLymphNodeFiles(structModel model, float *dendritic, float *tHelper, float *tCytotoxic, float *bCell, float *plasmaCell, float *antibody)
+{
     WritePopulationLymphNode(model, dendritic, "./result/dendritic.txt");
     WritePopulationLymphNode(model, tHelper, "./result/tHelper.txt");
     WritePopulationLymphNode(model, tCytotoxic, "./result/tCyto.txt");
@@ -68,17 +79,18 @@ void WriteLymphNodeFiles(structModel model, float *dendritic, float *tHelper, fl
     snprintf(buffer, sizeof(buffer), "%d", model.tFinal);
     strcat(command, buffer);
     strcat(command, " ");
-    snprintf(buffer, sizeof(buffer), "%f", (model.tSize/model.numPointsLN)*model.ht);
+    snprintf(buffer, sizeof(buffer), "%f", (model.tSize / model.numPointsLN) * model.ht);
     strcat(command, buffer);
     system(command);
 }
 
-void WriteFiles(structModel model, float *oligodendrocyte, float *microglia, float *tCytotoxic, float *antibody, float *conventionalDC, float  *activatedDC, float time){
+void WriteFiles(structModel model, float *oligodendrocyte, float *microglia, float *tCytotoxic, float *antibody, float *conventionalDC, float *activatedDC, float time)
+{
     char buffer[10];
     float day = time * model.ht;
-    
+
     snprintf(buffer, sizeof(buffer), "%.1f", day);
-    
+
     char pathOligodendrocytes[50] = "./result/matrix/oligo";
     strcat(pathOligodendrocytes, buffer);
     strcat(pathOligodendrocytes, ".txt");
@@ -108,9 +120,10 @@ void WriteFiles(structModel model, float *oligodendrocyte, float *microglia, flo
     strcat(pathActivatedDC, buffer);
     strcat(pathActivatedDC, ".txt");
     WritePopulation(model, activatedDC, pathActivatedDC, buffer);
-}   
+}
 
-void PlotResults(structModel model){
+void PlotResults(structModel model)
+{
     char buffer[10];
     char command[70] = {};
     strcat(command, "python3 plotMatrices.py ");
@@ -128,59 +141,71 @@ void PlotResults(structModel model){
     system(command);
 }
 
-__device__ void AdvectionTerm(float populationPoint, float avgValue, float* result){
-    *result = populationPoint/(populationPoint + avgValue);
+__device__ void AdvectionTerm(float populationPoint, float avgValue, float *result)
+{
+    *result = populationPoint / (populationPoint + avgValue);
 }
 
-__device__ void UpDownWind(float frontPoint, float rearPoint, float avgValue, float* result){
+__device__ void UpDownWind(float frontPoint, float rearPoint, float avgValue, float *result)
+{
     float resultF;
     AdvectionTerm(frontPoint, avgValue, result);
     AdvectionTerm(rearPoint, avgValue, &resultF);
     *result = *result - resultF;
 }
 
-__device__ void CalculateChemottaxis(float hx, float frontJPoint, float rearJPoint, float frontIPoint, float rearIPoint, float ijPoint,\
- float avgValue, float gradientOdcI, float gradientOdcJ, float* result){
+__device__ void CalculateChemottaxis(float hx, float frontJPoint, float rearJPoint, float frontIPoint, float rearIPoint, float ijPoint,
+                                     float avgValue, float gradientOdcI, float gradientOdcJ, float *result)
+{
     float gradientPopulationI, gradientPopulationJ;
-    if(gradientOdcI<0){
+    if (gradientOdcI < 0)
+    {
         UpDownWind(frontIPoint, ijPoint, avgValue, &gradientPopulationI);
-        gradientPopulationI = gradientPopulationI/(float)hx;
+        gradientPopulationI = gradientPopulationI / (float)hx;
     }
-    else{
+    else
+    {
         UpDownWind(ijPoint, rearIPoint, avgValue, &gradientPopulationI);
-        gradientPopulationI = gradientPopulationI/(float)hx;
+        gradientPopulationI = gradientPopulationI / (float)hx;
     }
-    if(gradientOdcJ<0){
+    if (gradientOdcJ < 0)
+    {
         UpDownWind(frontJPoint, ijPoint, avgValue, &gradientPopulationJ);
-        gradientPopulationJ = gradientPopulationJ/(float)hx;
+        gradientPopulationJ = gradientPopulationJ / (float)hx;
     }
-    else{
+    else
+    {
         UpDownWind(ijPoint, rearJPoint, avgValue, &gradientPopulationJ);
-        gradientPopulationJ = gradientPopulationJ/(float)hx;
+        gradientPopulationJ = gradientPopulationJ / (float)hx;
     }
 
-    *result = gradientOdcI*gradientPopulationI + gradientOdcJ*gradientPopulationJ;
+    *result = gradientOdcI * gradientPopulationI + gradientOdcJ * gradientPopulationJ;
 }
 
-__device__ void CalculateDiffusion(float hx, float frontJPoint, float rearJPoint, float frontIPoint, float rearIPoint, float ijPoint, float* result){
-    *result = (float)(frontIPoint + frontJPoint - 4*ijPoint + rearIPoint + rearJPoint)/(float)(hx*hx);
+__device__ void CalculateDiffusion(float hx, float frontJPoint, float rearJPoint, float frontIPoint, float rearIPoint, float ijPoint, float *result)
+{
+    *result = (float)(frontIPoint + frontJPoint - 4 * ijPoint + rearIPoint + rearJPoint) / (float)(hx * hx);
 }
 
-__device__ void fFunc(float valuePopulation, float avgPopulation, float *result){
-    *result = valuePopulation*valuePopulation/(float)(valuePopulation + avgPopulation);
+__device__ void fFunc(float valuePopulation, float avgPopulation, float *result)
+{
+    *result = valuePopulation * valuePopulation / (float)(valuePopulation + avgPopulation);
 }
 
-void WriteBVPV(structModel *model, float *thetaBV, float *thetaPV){
+void WriteBVPV(structModel *model, float *thetaBV, float *thetaPV)
+{
     FILE *fileBV;
     fileBV = fopen("./result/bv.txt", "w");
     FILE *filePV;
     filePV = fopen("./result/pv.txt", "w");
-    for(int k = 0; k < model->xSize*model->xSize; k++){
+    for (int k = 0; k < model->xSize * model->xSize; k++)
+    {
         fprintf(fileBV, "%f ", thetaBV[k]);
-        fprintf(filePV, "%f ", thetaPV[k]);    
-        if(k%model->xSize == 0 && k != 0){
-            fprintf(fileBV,"\n");
-            fprintf(filePV,"\n");
+        fprintf(filePV, "%f ", thetaPV[k]);
+        if (k % model->xSize == 0 && k != 0)
+        {
+            fprintf(fileBV, "\n");
+            fprintf(filePV, "\n");
         }
     }
     fclose(fileBV);
@@ -196,31 +221,33 @@ void WriteBVPV(structModel *model, float *thetaBV, float *thetaPV){
     // system(command);
 }
 
-void DefineBVPV(structModel *model){
+void DefineBVPV(structModel *model)
+{
     int randomVal;
-    for(int k = 0; k < model->xSize*model->xSize; k++){
-        int j = k%model->xSize;
+    for (int k = 0; k < model->xSize * model->xSize; k++)
+    {
+        int j = k % model->xSize;
         randomVal = rand() % 100;
-        if(randomVal <10){
+        if (randomVal < 10)
+        {
             model->parametersModel.V_BV++;
             model->parametersModel.V_PV++;
             model->thetaBV[k] = 1;
-            if(j != model->xSize-1)
-                model->thetaPV[k+1] = 1;
+            if (j != model->xSize - 1)
+                model->thetaPV[k + 1] = 1;
             else
-                model->thetaPV[k-model->xSize+1] = 1;
+                model->thetaPV[k - model->xSize + 1] = 1;
         }
     }
     WriteBVPV(model, model->thetaBV, model->thetaPV);
 }
 
-
-
-structModel ModelInitialize(structParameters params, float ht, float hx, float time, float space, int numFigs, int numPointsLN){
+structModel ModelInitialize(structParameters params, float ht, float hx, float time, float space, int numFigs, int numPointsLN)
+{
     structModel model;
     srand(2);
 
-    //Pegar os valores pelos parametros
+    // Pegar os valores pelos parametros
     model.parametersModel = params;
     model.numFigs = numFigs;
     model.numPointsLN = numPointsLN;
@@ -228,52 +255,54 @@ structModel ModelInitialize(structParameters params, float ht, float hx, float t
     model.hx = hx;
     model.tFinal = time;
     model.xFinal = space;
-    model.tSize = (int)(time/ht);
-    model.xSize = (int)(space/hx);
-    model.intervalFigures = (int)model.tSize/numFigs;
+    model.tSize = (int)(time / ht);
+    model.xSize = (int)(space / hx);
+    model.intervalFigures = (int)model.tSize / numFigs;
 
-    //inicializar dinamicamente todos os vetores do tecido
-    model.microglia = (float**)calloc(BUFFER, sizeof(float*));
-    model.oligodendrocyte = (float**)calloc(BUFFER, sizeof(float*));
-    model.tCytotoxic = (float**)calloc(BUFFER, sizeof(float*));
-    model.antibody = (float**)calloc(BUFFER, sizeof(float*));
-    model.conventionalDc = (float**)calloc(BUFFER, sizeof(float*));
-    model.activatedDc = (float**)calloc(BUFFER, sizeof(float*));
-    for (int index=0;index<BUFFER;++index){
-        model.microglia[index] = (float*)calloc(model.xSize*model.xSize, sizeof(float));
-        model.oligodendrocyte[index] = (float*)calloc(model.xSize*model.xSize, sizeof(float));
-        model.tCytotoxic[index] = (float*)calloc(model.xSize*model.xSize, sizeof(float));
-        model.antibody[index] = (float*)calloc(model.xSize*model.xSize, sizeof(float));
-        model.conventionalDc[index] = (float*)calloc(model.xSize*model.xSize, sizeof(float));
-        model.activatedDc[index] = (float*)calloc(model.xSize*model.xSize, sizeof(float));
+    // inicializar dinamicamente todos os vetores do tecido
+    model.microglia = (float **)calloc(BUFFER, sizeof(float *));
+    model.oligodendrocyte = (float **)calloc(BUFFER, sizeof(float *));
+    model.tCytotoxic = (float **)calloc(BUFFER, sizeof(float *));
+    model.antibody = (float **)calloc(BUFFER, sizeof(float *));
+    model.conventionalDc = (float **)calloc(BUFFER, sizeof(float *));
+    model.activatedDc = (float **)calloc(BUFFER, sizeof(float *));
+    for (int index = 0; index < BUFFER; ++index)
+    {
+        model.microglia[index] = (float *)calloc(model.xSize * model.xSize, sizeof(float));
+        model.oligodendrocyte[index] = (float *)calloc(model.xSize * model.xSize, sizeof(float));
+        model.tCytotoxic[index] = (float *)calloc(model.xSize * model.xSize, sizeof(float));
+        model.antibody[index] = (float *)calloc(model.xSize * model.xSize, sizeof(float));
+        model.conventionalDc[index] = (float *)calloc(model.xSize * model.xSize, sizeof(float));
+        model.activatedDc[index] = (float *)calloc(model.xSize * model.xSize, sizeof(float));
     }
-    //definir BV e PV
-    model.thetaPV = (float*)calloc(model.xSize*model.xSize, sizeof(float));
-    model.thetaBV = (float*)calloc(model.xSize*model.xSize, sizeof(float));
+    // definir BV e PV
+    model.thetaPV = (float *)calloc(model.xSize * model.xSize, sizeof(float));
+    model.thetaBV = (float *)calloc(model.xSize * model.xSize, sizeof(float));
     DefineBVPV(&model);
-    //definir lymph node
-    model.dendriticLymphNodeSavedPoints = (float*)calloc(model.numPointsLN, sizeof(float));
-    model.tCytotoxicLymphNodeSavedPoints = (float*)calloc(model.numPointsLN, sizeof(float));
-    model.tHelperLymphNodeSavedPoints = (float*)calloc(model.numPointsLN, sizeof(float));
-    model.antibodyLymphNodeSavedPoints = (float*)calloc(model.numPointsLN, sizeof(float));
-    model.bCellLymphNodeSavedPoints = (float*)calloc(model.numPointsLN, sizeof(float));
-    model.plasmaCellLymphNodeSavedPoints = (float*)calloc(model.numPointsLN, sizeof(float));
+    // definir lymph node
+    model.dendriticLymphNodeSavedPoints = (float *)calloc(model.numPointsLN, sizeof(float));
+    model.tCytotoxicLymphNodeSavedPoints = (float *)calloc(model.numPointsLN, sizeof(float));
+    model.tHelperLymphNodeSavedPoints = (float *)calloc(model.numPointsLN, sizeof(float));
+    model.antibodyLymphNodeSavedPoints = (float *)calloc(model.numPointsLN, sizeof(float));
+    model.bCellLymphNodeSavedPoints = (float *)calloc(model.numPointsLN, sizeof(float));
+    model.plasmaCellLymphNodeSavedPoints = (float *)calloc(model.numPointsLN, sizeof(float));
 
-    model.dendriticLymphNode = (float*)calloc(2, sizeof(float));
-    model.tCytotoxicLymphNode = (float*)calloc(2, sizeof(float));
-    model.tHelperLymphNode = (float*)calloc(2, sizeof(float));
-    model.antibodyLymphNode = (float*)calloc(2, sizeof(float));
-    model.bCellLymphNode = (float*)calloc(2, sizeof(float));
-    model.plasmaCellLymphNode = (float*)calloc(2, sizeof(float));   
+    model.dendriticLymphNode = (float *)calloc(2, sizeof(float));
+    model.tCytotoxicLymphNode = (float *)calloc(2, sizeof(float));
+    model.tHelperLymphNode = (float *)calloc(2, sizeof(float));
+    model.antibodyLymphNode = (float *)calloc(2, sizeof(float));
+    model.bCellLymphNode = (float *)calloc(2, sizeof(float));
+    model.plasmaCellLymphNode = (float *)calloc(2, sizeof(float));
     float dendriticLN = 0.0, thelperLN = 0.0, tcytotoxicLN = 0.0, bcellLN = 0.0, plasmacellLN = 0.0, antibodyLN = 0.0;
     InitialConditionLymphNode(&model, dendriticLN, thelperLN, tcytotoxicLN, bcellLN, plasmacellLN, antibodyLN);
     InitialConditionTissueMicroglia(&model);
     return model;
 }
 
-float* EquationsLymphNode(structModel model, float* populationLN, int stepPos){
-    float* result =(float *)malloc(sizeof(float)*6);
-    
+float *EquationsLymphNode(structModel model, float *populationLN, int stepPos)
+{
+    float *result = (float *)malloc(sizeof(float) * 6);
+
     float dcLN = populationLN[0];
     float tCytoLN = populationLN[1];
     float tHelperLN = populationLN[2];
@@ -281,70 +310,72 @@ float* EquationsLymphNode(structModel model, float* populationLN, int stepPos){
     float plasmaCellLN = populationLN[4];
     float antibodyLN = populationLN[5];
 
-    //Describe equations
+    // Describe equations
 
-    //Dendritic cell
-    float activatedDcMigration = model.parametersModel.gammaD * (model.activatedDCTissueVessels - dcLN) * (float)(model.parametersModel.V_PV/model.parametersModel.V_LN);
+    // Dendritic cell
+    float activatedDcMigration = model.parametersModel.gammaD * (model.activatedDCTissueVessels - dcLN) * (float)(model.parametersModel.V_PV / model.parametersModel.V_LN);
     float activatedDcClearance = model.parametersModel.cDl * dcLN;
     result[0] = activatedDcMigration - activatedDcClearance;
 
-    //T Cytotoxic
-    float tCytoActivation = model.parametersModel.bTCytotoxic * (model.parametersModel.rhoTCytotoxic*tCytoLN*dcLN - tCytoLN*dcLN);
+    // T Cytotoxic
+    float tCytoActivation = model.parametersModel.bTCytotoxic * (model.parametersModel.rhoTCytotoxic * tCytoLN * dcLN - tCytoLN * dcLN);
     float tCytoHomeostasis = model.parametersModel.alphaTCytotoxic * (model.parametersModel.estableTCytotoxic - tCytoLN);
-    float tCytoMigration = model.parametersModel.gammaT * (tCytoLN - model.tCytotoxicTissueVessels) * (float)(model.parametersModel.V_BV/model.parametersModel.V_LN);
+    float tCytoMigration = model.parametersModel.gammaT * (tCytoLN - model.tCytotoxicTissueVessels) * (float)(model.parametersModel.V_BV / model.parametersModel.V_LN);
     result[1] = tCytoActivation + tCytoHomeostasis - tCytoMigration;
 
-    //T Helper
+    // T Helper
     float tHelperActivation = model.parametersModel.bTHelper * (model.parametersModel.rhoTHelper * tHelperLN * dcLN - tHelperLN * dcLN);
     float tHelperHomeostasis = model.parametersModel.alphaTHelper * (model.parametersModel.estableTHelper - tHelperLN);
     float tHelperDispendure = model.parametersModel.bRho * dcLN * tHelperLN * bCellLN;
     result[2] = tHelperActivation + tHelperHomeostasis - tHelperDispendure;
 
-    //B Cell
+    // B Cell
     float bCellActivation = model.parametersModel.bRhoB * (model.parametersModel.rhoB * tHelperLN * dcLN - tHelperLN * dcLN * bCellLN);
     float bcellHomeostasis = model.parametersModel.alphaB * (model.parametersModel.estableB - bCellLN);
     result[3] = bcellHomeostasis + bCellActivation;
 
-    //Plasma Cells
+    // Plasma Cells
     float plasmaActivation = model.parametersModel.bRhoP * (model.parametersModel.rhoP * tHelperLN * dcLN * bCellLN);
     float plasmaHomeostasis = model.parametersModel.alphaP * (model.parametersModel.estableP - plasmaCellLN);
     result[4] = plasmaHomeostasis + plasmaActivation;
 
-    //Antibody
+    // Antibody
     float antibodyProduction = model.parametersModel.rhoAntibody * plasmaCellLN;
     float antibodyDecayment = model.parametersModel.cF * antibodyLN;
-    float antibodyMigration = model.parametersModel.gammaAntibody * (antibodyLN - model.antibodyTissueVessels) * (float)(model.parametersModel.V_BV/model.parametersModel.V_LN);
+    float antibodyMigration = model.parametersModel.gammaAntibody * (antibodyLN - model.antibodyTissueVessels) * (float)(model.parametersModel.V_BV / model.parametersModel.V_LN);
     result[5] = antibodyProduction - antibodyMigration - antibodyDecayment;
 
     return result;
 }
 
-void SolverLymphNode(structModel *model, int stepPos){
+void SolverLymphNode(structModel *model, int stepPos)
+{
     float populationLN[6];
-    int stepKMinus = (stepPos-1)%2;
-    int stepKPlus = (stepPos)%2;
+    int stepKMinus = (stepPos - 1) % 2;
+    int stepKPlus = (stepPos) % 2;
     populationLN[0] = model->dendriticLymphNode[stepKMinus];
     populationLN[1] = model->tCytotoxicLymphNode[stepKMinus];
     populationLN[2] = model->tHelperLymphNode[stepKMinus];
     populationLN[3] = model->bCellLymphNode[stepKMinus];
     populationLN[4] = model->plasmaCellLymphNode[stepKMinus];
     populationLN[5] = model->antibodyLymphNode[stepKMinus];
-    
-    float* solutionLN;
+
+    float *solutionLN;
     solutionLN = EquationsLymphNode(*model, populationLN, stepPos);
-    
-    //Execute Euler 
-    model->dendriticLymphNode[stepKPlus] = model->dendriticLymphNode[stepKMinus] + model->ht*solutionLN[0];
-    model->tCytotoxicLymphNode[stepKPlus] = model->tCytotoxicLymphNode[stepKMinus] + model->ht*solutionLN[1];
-    model->tHelperLymphNode[stepKPlus] = model->tHelperLymphNode[stepKMinus] + model->ht*solutionLN[2];
-    model->bCellLymphNode[stepKPlus] = model->bCellLymphNode[stepKMinus] + model->ht*solutionLN[3];
-    model->plasmaCellLymphNode[stepKPlus] = model->plasmaCellLymphNode[stepKMinus] + model->ht*solutionLN[4];
-    model->antibodyLymphNode[stepKPlus] = model->antibodyLymphNode[stepKMinus] + model->ht*solutionLN[5];
+
+    // Execute Euler
+    model->dendriticLymphNode[stepKPlus] = model->dendriticLymphNode[stepKMinus] + model->ht * solutionLN[0];
+    model->tCytotoxicLymphNode[stepKPlus] = model->tCytotoxicLymphNode[stepKMinus] + model->ht * solutionLN[1];
+    model->tHelperLymphNode[stepKPlus] = model->tHelperLymphNode[stepKMinus] + model->ht * solutionLN[2];
+    model->bCellLymphNode[stepKPlus] = model->bCellLymphNode[stepKMinus] + model->ht * solutionLN[3];
+    model->plasmaCellLymphNode[stepKPlus] = model->plasmaCellLymphNode[stepKMinus] + model->ht * solutionLN[4];
+    model->antibodyLymphNode[stepKPlus] = model->antibodyLymphNode[stepKMinus] + model->ht * solutionLN[5];
     free(solutionLN);
 
-    int intervalPoints = (int)(model->tSize/model->numPointsLN);
-    if(stepPos%intervalPoints){
-        int posSave = stepPos/intervalPoints;
+    int intervalPoints = (int)(model->tSize / model->numPointsLN);
+    if (stepPos % intervalPoints)
+    {
+        int posSave = stepPos / intervalPoints;
         model->dendriticLymphNodeSavedPoints[posSave] = model->dendriticLymphNode[stepKPlus];
         model->tCytotoxicLymphNodeSavedPoints[posSave] = model->tCytotoxicLymphNode[stepKPlus];
         model->tHelperLymphNodeSavedPoints[posSave] = model->tHelperLymphNode[stepKPlus];
@@ -354,163 +385,169 @@ void SolverLymphNode(structModel *model, int stepPos){
     }
 }
 
-__constant__ float upperNeumannBC, lowerNeumannBC, leftNeumannBC, rightNeumannBC, constHx, constHt;
-__constant__ int constXSize;
+__device__ __constant__ float upperNeumannBC, lowerNeumannBC, leftNeumannBC, rightNeumannBC, constHx, constHt;
+__device__ __constant__ int constXSize;
 const int threadsPerBlock = 256;
 const int numBlocks = 128;
 
-__global__ void kernelPDE(structParameters* devParams, int kTime, float* tCytoSumVessel, float* activatedDCSumVessel, float* antibodySumVessel, float *devActivatedDCLymphNode, float *devAntibodyLymphNode, float *devTCytotoxicLymphNode, float *devThetaPV, float *devThetaBV, float *devMicrogliaKMinus, float *devMicrogliaKPlus, float *devTCytotoxicKMinus, float *devTCytotoxicKPlus, float *devAntibodyKMinus, float *devAntibodyKPlus, float *devConventionalDCKMinus, float *devConventionalDCKPlus, float *devActivatedDCKMinus, float *devActivatedDCKPlus, float *devOligodendrocyteKMinus, float *devOligodendrocyteKPlus){
-    int thrIdx = blockIdx.x*blockDim.x + threadIdx.x;
+__global__ void kernelPDE(structParameters *devParams, int kTime, float *tCytoSumVessel, float *activatedDCSumVessel, float *antibodySumVessel, float *devActivatedDCLymphNode, float *devAntibodyLymphNode, float *devTCytotoxicLymphNode, float *devThetaPV, float *devThetaBV, float *devMicrogliaKMinus, float *devMicrogliaKPlus, float *devTCytotoxicKMinus, float *devTCytotoxicKPlus, float *devAntibodyKMinus, float *devAntibodyKPlus, float *devConventionalDCKMinus, float *devConventionalDCKPlus, float *devActivatedDCKMinus, float *devActivatedDCKPlus, float *devOligodendrocyteKMinus, float *devOligodendrocyteKPlus)
+{
+    int thrIdx = blockIdx.x * blockDim.x + threadIdx.x;
     int vesselIdx = threadIdx.x;
-    int line = (int)thrIdx/constXSize;
-    int column = thrIdx%constXSize;
+    int line = (int)thrIdx / constXSize;
+    int column = thrIdx % constXSize;
 
     __shared__ float tCytoSumVesselBlock[threadsPerBlock];
     __shared__ float conventionalDCSumVesselBlock[threadsPerBlock];
     __shared__ float antibodySumVesselBlock[threadsPerBlock];
-    for(int i = 0; i < threadsPerBlock; i++){
+    for (int i = 0; i < threadsPerBlock; i++)
+    {
         tCytoSumVesselBlock[i] = 0;
         conventionalDCSumVesselBlock[i] = 0;
         antibodySumVesselBlock[i] = 0;
-
     }
-    while(thrIdx < constXSize*constXSize){
-        line = (int)thrIdx/constXSize;
-        column = thrIdx%constXSize;
+    while (thrIdx < constXSize * constXSize)
+    {
+        line = (int)thrIdx / constXSize;
+        column = thrIdx % constXSize;
 
-        //Define gradient ODCs
-        float valIPlus = (line != constXSize-1)? devOligodendrocyteKMinus[thrIdx + constXSize]: devOligodendrocyteKMinus[thrIdx];
-        float valJPlus = (column != constXSize-1)? devOligodendrocyteKMinus[thrIdx + 1]: devOligodendrocyteKMinus[thrIdx];
-        float valIMinus = (line != 0)? devOligodendrocyteKMinus[thrIdx - constXSize]: devOligodendrocyteKMinus[thrIdx];
-        float valJMinus = (column != 0)? devOligodendrocyteKMinus[thrIdx - 1]: devOligodendrocyteKMinus[thrIdx];
-        
-        float gradientOdcI = (float)(valIPlus - valIMinus)/(float)(2*constHx);
-        float gradientOdcJ = (float)(valJPlus - valJMinus)/(float)(2*constHx);
+        // Define gradient ODCs
+        float valIPlus = (line != constXSize - 1) ? devOligodendrocyteKMinus[thrIdx + constXSize] : devOligodendrocyteKMinus[thrIdx];
+        float valJPlus = (column != constXSize - 1) ? devOligodendrocyteKMinus[thrIdx + 1] : devOligodendrocyteKMinus[thrIdx];
+        float valIMinus = (line != 0) ? devOligodendrocyteKMinus[thrIdx - constXSize] : devOligodendrocyteKMinus[thrIdx];
+        float valJMinus = (column != 0) ? devOligodendrocyteKMinus[thrIdx - 1] : devOligodendrocyteKMinus[thrIdx];
 
-        //Diffusion and Chemotaxis Mic
+        float gradientOdcI = (float)(valIPlus - valIMinus) / (float)(2 * constHx);
+        float gradientOdcJ = (float)(valJPlus - valJMinus) / (float)(2 * constHx);
 
-        valIPlus  = (line != constXSize-1)? devMicrogliaKMinus[thrIdx + constXSize]: devMicrogliaKMinus[thrIdx] - (float)(2*constHx*lowerNeumannBC);
-        valJPlus  = (column != constXSize-1)? devMicrogliaKMinus[thrIdx + 1]: devMicrogliaKMinus[thrIdx] - (float)(2*constHx*rightNeumannBC);
-        valIMinus = (line != 0)? devMicrogliaKMinus[thrIdx - constXSize]: devMicrogliaKMinus[thrIdx] - (float)(2*constHx*upperNeumannBC);
-        valJMinus = (column != 0)? devMicrogliaKMinus[thrIdx - 1]: devMicrogliaKMinus[thrIdx] - (float)(2*constHx*leftNeumannBC);
-        
-        float microgliaDiffusion;
+        // Diffusion and Chemotaxis Mic
+
+        valIPlus = (line != constXSize - 1) ? devMicrogliaKMinus[thrIdx + constXSize] : devMicrogliaKMinus[thrIdx] - (float)(2 * constHx * lowerNeumannBC);
+        valJPlus = (column != constXSize - 1) ? devMicrogliaKMinus[thrIdx + 1] : devMicrogliaKMinus[thrIdx] - (float)(2 * constHx * rightNeumannBC);
+        valIMinus = (line != 0) ? devMicrogliaKMinus[thrIdx - constXSize] : devMicrogliaKMinus[thrIdx] - (float)(2 * constHx * upperNeumannBC);
+        valJMinus = (column != 0) ? devMicrogliaKMinus[thrIdx - 1] : devMicrogliaKMinus[thrIdx] - (float)(2 * constHx * leftNeumannBC);
+
+        float microgliaDiffusion = 0;
         CalculateDiffusion(constHx, valJPlus, valJMinus, valIPlus, valIMinus, devMicrogliaKMinus[thrIdx], &microgliaDiffusion);
-        float microgliaChemotaxis;
-        CalculateChemottaxis(constHx, valJPlus, valJMinus, valIPlus, valIMinus, devMicrogliaKMinus[thrIdx],\
-        devParams->avgMic, gradientOdcI, gradientOdcJ, &microgliaChemotaxis);
+        float microgliaChemotaxis = 0;
+        CalculateChemottaxis(constHx, valJPlus, valJMinus, valIPlus, valIMinus, devMicrogliaKMinus[thrIdx],
+                             devParams->avgMic, gradientOdcI, gradientOdcJ, &microgliaChemotaxis);
         microgliaChemotaxis *= devParams->chi;
         microgliaDiffusion *= devParams->micDiffusion;
-        //Diffusion and Chemotaxis CDC
+        // Diffusion and Chemotaxis CDC
 
-        valIPlus  = (line != constXSize-1)?devConventionalDCKMinus[thrIdx + constXSize]:devConventionalDCKMinus[thrIdx] - (float)(2*constHx*lowerNeumannBC);
-        valJPlus  = (column != constXSize-1)?devConventionalDCKMinus[thrIdx + 1]:devConventionalDCKMinus[thrIdx] - (float)(2*constHx*rightNeumannBC);
-        valIMinus = (line != 0)?devConventionalDCKMinus[thrIdx - constXSize]:devConventionalDCKMinus[thrIdx] - (float)(2*constHx*upperNeumannBC);
-        valJMinus = (column != 0)?devConventionalDCKMinus[thrIdx - 1]:devConventionalDCKMinus[thrIdx] - (float)(2*constHx*leftNeumannBC);
+        valIPlus = (line != constXSize - 1) ? devConventionalDCKMinus[thrIdx + constXSize] : devConventionalDCKMinus[thrIdx] - (float)(2 * constHx * lowerNeumannBC);
+        valJPlus = (column != constXSize - 1) ? devConventionalDCKMinus[thrIdx + 1] : devConventionalDCKMinus[thrIdx] - (float)(2 * constHx * rightNeumannBC);
+        valIMinus = (line != 0) ? devConventionalDCKMinus[thrIdx - constXSize] : devConventionalDCKMinus[thrIdx] - (float)(2 * constHx * upperNeumannBC);
+        valJMinus = (column != 0) ? devConventionalDCKMinus[thrIdx - 1] : devConventionalDCKMinus[thrIdx] - (float)(2 * constHx * leftNeumannBC);
 
-        float conventionalDcDiffusion;
-        CalculateDiffusion(constHx, valJPlus, valJMinus, valIPlus, valIMinus,devConventionalDCKMinus[thrIdx], &conventionalDcDiffusion);
-        float conventionalDcChemotaxis;
-        CalculateChemottaxis(constHx, valJPlus, valJMinus, valIPlus, valIMinus,devConventionalDCKMinus[thrIdx],\
-        devParams->avgDc, gradientOdcI, gradientOdcJ, &conventionalDcChemotaxis);
+        float conventionalDcDiffusion = 0;
+        CalculateDiffusion(constHx, valJPlus, valJMinus, valIPlus, valIMinus, devConventionalDCKMinus[thrIdx], &conventionalDcDiffusion);
+        float conventionalDcChemotaxis = 0;
+        CalculateChemottaxis(constHx, valJPlus, valJMinus, valIPlus, valIMinus, devConventionalDCKMinus[thrIdx],
+                             devParams->avgDc, gradientOdcI, gradientOdcJ, &conventionalDcChemotaxis);
         conventionalDcChemotaxis *= devParams->chi;
         conventionalDcDiffusion *= devParams->cDcDiffusion;
 
-        //Difussion and Chemotaxis CD8T
+        // Difussion and Chemotaxis CD8T
 
-        valIPlus  = (line != constXSize-1)? devTCytotoxicKMinus[thrIdx + constXSize]: devTCytotoxicKMinus[thrIdx] - (float)(2*constHx*lowerNeumannBC);
-        valJPlus  = (column != constXSize-1)? devTCytotoxicKMinus[thrIdx + 1]: devTCytotoxicKMinus[thrIdx] - (float)(2*constHx*rightNeumannBC);
-        valIMinus = (line != 0)? devTCytotoxicKMinus[thrIdx - constXSize]: devTCytotoxicKMinus[thrIdx] - (float)(2*constHx*upperNeumannBC);
-        valJMinus = (column != 0)? devTCytotoxicKMinus[thrIdx - 1]: devTCytotoxicKMinus[thrIdx] - (float)(2*constHx*leftNeumannBC);
+        valIPlus = (line != constXSize - 1) ? devTCytotoxicKMinus[thrIdx + constXSize] : devTCytotoxicKMinus[thrIdx] - (float)(2 * constHx * lowerNeumannBC);
+        valJPlus = (column != constXSize - 1) ? devTCytotoxicKMinus[thrIdx + 1] : devTCytotoxicKMinus[thrIdx] - (float)(2 * constHx * rightNeumannBC);
+        valIMinus = (line != 0) ? devTCytotoxicKMinus[thrIdx - constXSize] : devTCytotoxicKMinus[thrIdx] - (float)(2 * constHx * upperNeumannBC);
+        valJMinus = (column != 0) ? devTCytotoxicKMinus[thrIdx - 1] : devTCytotoxicKMinus[thrIdx] - (float)(2 * constHx * leftNeumannBC);
 
-        float tCytotoxicDiffusion;
+        float tCytotoxicDiffusion = 0;
         CalculateDiffusion(constHx, valJPlus, valJMinus, valIPlus, valIMinus, devTCytotoxicKMinus[thrIdx], &tCytotoxicDiffusion);
-        float tCytotoxicChemotaxis;
-        CalculateChemottaxis(constHx, valJPlus, valJMinus, valIPlus, valIMinus, devTCytotoxicKMinus[thrIdx],\
-        devParams->avgT, gradientOdcI, gradientOdcJ, &tCytotoxicChemotaxis);
+        float tCytotoxicChemotaxis = 0;
+        CalculateChemottaxis(constHx, valJPlus, valJMinus, valIPlus, valIMinus, devTCytotoxicKMinus[thrIdx],
+                             devParams->avgT, gradientOdcI, gradientOdcJ, &tCytotoxicChemotaxis);
         tCytotoxicChemotaxis *= devParams->chi;
         tCytotoxicDiffusion *= devParams->tCytoDiffusion;
 
-        //Difussion ADC
+        // Difussion ADC
 
-        valIPlus  = (line != constXSize-1)? devActivatedDCKMinus[thrIdx + constXSize]: devActivatedDCKMinus[thrIdx] - (float)(2*constHx*lowerNeumannBC);
-        valJPlus  = (column != constXSize-1)? devActivatedDCKMinus[thrIdx + 1]: devActivatedDCKMinus[thrIdx] - (float)(2*constHx*rightNeumannBC);
-        valIMinus = (line != 0)? devActivatedDCKMinus[thrIdx - constXSize]: devActivatedDCKMinus[thrIdx] - (float)(2*constHx*upperNeumannBC);
-        valJMinus = (column != 0)? devActivatedDCKMinus[thrIdx - 1]: devActivatedDCKMinus[thrIdx] - (float)(2*constHx*leftNeumannBC);
+        valIPlus = (line != constXSize - 1) ? devActivatedDCKMinus[thrIdx + constXSize] : devActivatedDCKMinus[thrIdx] - (float)(2 * constHx * lowerNeumannBC);
+        valJPlus = (column != constXSize - 1) ? devActivatedDCKMinus[thrIdx + 1] : devActivatedDCKMinus[thrIdx] - (float)(2 * constHx * rightNeumannBC);
+        valIMinus = (line != 0) ? devActivatedDCKMinus[thrIdx - constXSize] : devActivatedDCKMinus[thrIdx] - (float)(2 * constHx * upperNeumannBC);
+        valJMinus = (column != 0) ? devActivatedDCKMinus[thrIdx - 1] : devActivatedDCKMinus[thrIdx] - (float)(2 * constHx * leftNeumannBC);
 
-        float activatedDCDiffusion;
+        float activatedDCDiffusion = 0;
         CalculateDiffusion(constHx, valJPlus, valJMinus, valIPlus, valIMinus, devActivatedDCKMinus[thrIdx], &activatedDCDiffusion);
         activatedDCDiffusion *= devParams->aDcDiffusion;
 
-        //Difussion Antibody
+        // Difussion Antibody
 
-        valIPlus  = (line != constXSize-1)? devAntibodyKMinus[thrIdx + constXSize]: devAntibodyKMinus[thrIdx] - (float)(2*constHx*lowerNeumannBC);
-        valJPlus  = (column != constXSize-1)? devAntibodyKMinus[thrIdx + 1]: devAntibodyKMinus[thrIdx] - (float)(2*constHx*rightNeumannBC);
-        valIMinus = (line != 0)? devAntibodyKMinus[thrIdx - constXSize]: devAntibodyKMinus[thrIdx] - (float)(2*constHx*upperNeumannBC);
-        valJMinus = (column != 0)? devAntibodyKMinus[thrIdx - 1]: devAntibodyKMinus[thrIdx] - (float)(2*constHx*leftNeumannBC);
+        valIPlus = (line != constXSize - 1) ? devAntibodyKMinus[thrIdx + constXSize] : devAntibodyKMinus[thrIdx] - (float)(2 * constHx * lowerNeumannBC);
+        valJPlus = (column != constXSize - 1) ? devAntibodyKMinus[thrIdx + 1] : devAntibodyKMinus[thrIdx] - (float)(2 * constHx * rightNeumannBC);
+        valIMinus = (line != 0) ? devAntibodyKMinus[thrIdx - constXSize] : devAntibodyKMinus[thrIdx] - (float)(2 * constHx * upperNeumannBC);
+        valJMinus = (column != 0) ? devAntibodyKMinus[thrIdx - 1] : devAntibodyKMinus[thrIdx] - (float)(2 * constHx * leftNeumannBC);
 
-        float antibodyDiffusion;
+        float antibodyDiffusion = 0;
         CalculateDiffusion(constHx, valJPlus, valJMinus, valIPlus, valIMinus, devAntibodyKMinus[thrIdx], &antibodyDiffusion);
         antibodyDiffusion *= devParams->antibodyDiffusion;
 
         //*******************************************Solving Tissue equations*****************************************************
 
-        //Microglia update
-        float microgliaReaction = devParams->muMic*devMicrogliaKMinus[thrIdx]*(devParams->avgMic - devMicrogliaKMinus[thrIdx]);
-        float microgliaClearance = devParams->cMic*devMicrogliaKMinus[thrIdx];
+        // Microglia update
+        float microgliaReaction = devParams->muMic * devMicrogliaKMinus[thrIdx] * (devParams->avgMic - devMicrogliaKMinus[thrIdx]);
+        float microgliaClearance = devParams->cMic * devMicrogliaKMinus[thrIdx];
 
-        devMicrogliaKPlus[thrIdx] = devMicrogliaKMinus[thrIdx] + \
-        constHt*(microgliaDiffusion - microgliaChemotaxis + microgliaReaction - microgliaClearance);
+        devMicrogliaKPlus[thrIdx] = devMicrogliaKMinus[thrIdx] +
+                                    constHt * (microgliaDiffusion - microgliaChemotaxis + microgliaReaction - microgliaClearance);
 
-        //Conventional DC update
-        float conventionalDcReaction = devParams->muCDc*devOligodendrocyteKMinus[thrIdx]*(devParams->avgDc - devConventionalDCKMinus[thrIdx]);
-        float conventionalDcActivation = devParams->bD*devConventionalDCKMinus[thrIdx]*devOligodendrocyteKMinus[thrIdx];
-        float conventionalDcClearance = devParams->cCDc*devConventionalDCKMinus[thrIdx];
+        // Conventional DC update
+        float conventionalDcReaction = devParams->muCDc * devOligodendrocyteKMinus[thrIdx] * (devParams->avgDc - devConventionalDCKMinus[thrIdx]);
+        float conventionalDcActivation = devParams->bD * devConventionalDCKMinus[thrIdx] * devOligodendrocyteKMinus[thrIdx];
+        float conventionalDcClearance = devParams->cCDc * devConventionalDCKMinus[thrIdx];
 
-        devConventionalDCKPlus[thrIdx] = devConventionalDCKMinus[thrIdx] + \
-        constHt*(conventionalDcDiffusion - conventionalDcChemotaxis - conventionalDcClearance + conventionalDcReaction - conventionalDcActivation);
+        devConventionalDCKPlus[thrIdx] = devConventionalDCKMinus[thrIdx] +
+                                         constHt * (conventionalDcDiffusion - conventionalDcChemotaxis - conventionalDcClearance + conventionalDcReaction - conventionalDcActivation);
 
-        //Activated DC update
-        float activatedDcClearance = devParams->cADc*devActivatedDCKMinus[thrIdx];
-        float activatedDcMigration = devThetaPV[thrIdx]*devParams->gammaD*(*devActivatedDCLymphNode - devActivatedDCKMinus[thrIdx]);
-        
-        devActivatedDCKPlus[thrIdx] = devActivatedDCKMinus[thrIdx] + constHt*(activatedDCDiffusion + conventionalDcActivation + activatedDcMigration - activatedDcClearance);
+        // Activated DC update
+        float activatedDcClearance = devParams->cADc * devActivatedDCKMinus[thrIdx];
+        float activatedDcMigration = devThetaPV[thrIdx] * devParams->gammaD * (*devActivatedDCLymphNode - devActivatedDCKMinus[thrIdx]);
 
-        //CD8 T update
-        float tCytotoxicMigration = devThetaBV[thrIdx]*devParams->gammaT*(*devTCytotoxicLymphNode - devTCytotoxicKMinus[thrIdx]);
-        
-        devTCytotoxicKPlus[thrIdx] = devTCytotoxicKMinus[thrIdx] + constHt*(tCytotoxicDiffusion - tCytotoxicChemotaxis + tCytotoxicMigration);
+        devActivatedDCKPlus[thrIdx] = devActivatedDCKMinus[thrIdx] + constHt * (activatedDCDiffusion + conventionalDcActivation + activatedDcMigration - activatedDcClearance);
 
-        //Antibody update
-        float result;
-        fFunc(devMicrogliaKMinus[thrIdx], devParams->avgMic, &result);
-        float odcAntibodyMicrogliaFagocitosis = devParams->lambAntMic*devAntibodyKMinus[thrIdx]*(devParams->avgOdc - devOligodendrocyteKMinus[thrIdx])*result;
-        float antibodyMigration = devThetaBV[thrIdx]*devParams->gammaAntibody*(*devAntibodyLymphNode - devAntibodyKMinus[thrIdx]);
-        
-        devAntibodyKPlus[thrIdx] = devAntibodyKMinus[thrIdx] + constHt*(antibodyDiffusion + antibodyMigration - odcAntibodyMicrogliaFagocitosis);
+        // CD8 T update
+        float tCytotoxicMigration = devThetaBV[thrIdx] * devParams->gammaT * (*devTCytotoxicLymphNode - devTCytotoxicKMinus[thrIdx]);
 
-        //Oligodendrocytes update
-        float result1;
+        devTCytotoxicKPlus[thrIdx] = devTCytotoxicKMinus[thrIdx] + constHt * (tCytotoxicDiffusion - tCytotoxicChemotaxis + tCytotoxicMigration);
+
+        // Antibody update
+        float resultFFuncMic = 0;
+        fFunc(devMicrogliaKMinus[thrIdx], devParams->avgMic, &resultFFuncMic);
+        float odcAntibodyMicrogliaFagocitosis = devParams->lambAntMic * devAntibodyKMinus[thrIdx] * (devParams->avgOdc - devOligodendrocyteKMinus[thrIdx]) * resultFFuncMic;
+        float antibodyMigration = devThetaBV[thrIdx] * devParams->gammaAntibody * (*devAntibodyLymphNode - devAntibodyKMinus[thrIdx]);
+
+        devAntibodyKPlus[thrIdx] = devAntibodyKMinus[thrIdx] + constHt * (antibodyDiffusion + antibodyMigration - odcAntibodyMicrogliaFagocitosis);
+
+        // Oligodendrocytes update
+        float result = 0, result1 = 0;
         fFunc(devMicrogliaKMinus[thrIdx], devParams->avgMic, &result);
         fFunc(devTCytotoxicKMinus[thrIdx], devParams->avgT, &result1);
-        float odcMicrogliaFagocitosis = devParams->rM*result*(devParams->avgOdc - devOligodendrocyteKMinus[thrIdx]);
-        float odcTCytotoxicApoptosis = devParams->rT*result1*(devParams->avgOdc - devOligodendrocyteKMinus[thrIdx]);
+        float odcMicrogliaFagocitosis = devParams->rM * result * (devParams->avgOdc - devOligodendrocyteKMinus[thrIdx]);
+        float odcTCytotoxicApoptosis = devParams->rT * result1 * (devParams->avgOdc - devOligodendrocyteKMinus[thrIdx]);
 
-        devOligodendrocyteKPlus[thrIdx] = devOligodendrocyteKMinus[thrIdx] + constHt*(odcAntibodyMicrogliaFagocitosis + odcMicrogliaFagocitosis + odcTCytotoxicApoptosis);
+        devOligodendrocyteKPlus[thrIdx] = devOligodendrocyteKMinus[thrIdx] + constHt * (odcAntibodyMicrogliaFagocitosis + odcMicrogliaFagocitosis + odcTCytotoxicApoptosis);
 
-        if(devThetaBV[thrIdx] == 1){
+        if (devThetaBV[thrIdx] == 1)
+        {
             tCytoSumVesselBlock[vesselIdx] += devTCytotoxicKPlus[thrIdx];
             antibodySumVesselBlock[vesselIdx] += devAntibodyKPlus[thrIdx];
         }
-        if(devThetaPV[thrIdx] == 1){
+        if (devThetaPV[thrIdx] == 1)
+        {
             conventionalDCSumVesselBlock[vesselIdx] += devActivatedDCKPlus[thrIdx];
         }
-        thrIdx += gridDim.x*blockDim.x;
+        thrIdx += gridDim.x * blockDim.x;
     }
     __syncthreads();
     int i = blockDim.x / 2;
-    while (i != 0) {
-        if (vesselIdx < i){
+    while (i != 0)
+    {
+        if (vesselIdx < i)
+        {
             tCytoSumVesselBlock[vesselIdx] += tCytoSumVesselBlock[vesselIdx + i];
             conventionalDCSumVesselBlock[vesselIdx] += conventionalDCSumVesselBlock[vesselIdx + i];
             antibodySumVesselBlock[vesselIdx] += antibodySumVesselBlock[vesselIdx + i];
@@ -518,75 +555,76 @@ __global__ void kernelPDE(structParameters* devParams, int kTime, float* tCytoSu
         __syncthreads();
         i /= 2;
     }
-    if (vesselIdx == 0){
+    if (vesselIdx == 0)
+    {
         tCytoSumVessel[blockIdx.x] = tCytoSumVesselBlock[0];
         activatedDCSumVessel[blockIdx.x] = conventionalDCSumVesselBlock[0];
         antibodySumVessel[blockIdx.x] = antibodySumVesselBlock[0];
     }
-    if(threadIdx.x == 0 && blockIdx.x == 0 && kTime == 28/0.0002)
+    if (threadIdx.x == 0 && blockIdx.x == 0 && kTime == 28 / 0.0002)
         printf("GPU\n DC Tissue = %f\n DC LN = %f\n", activatedDCSumVessel[blockIdx.x], *devActivatedDCLymphNode);
-
 }
 
-void RunModel(structModel *model){
-    //Save IC
+void RunModel(structModel *model)
+{
+    // Save IC
     WriteFiles(*model, model->oligodendrocyte[0], model->microglia[0], model->tCytotoxic[0], model->antibody[0], model->conventionalDc[0], model->activatedDc[0], 0);
-    
+
     float *activatedDCVessel, *tCytotoxicVessel, *antibodyVessel;
 
     float *devThetaPV, *devThetaBV, *devActivatedDCVessel, *devTCytotoxicVessel, *devAntibodyVessel, *devActivatedDCLymphNode, *devAntibodyLymphNode, *devTCytotoxicLymphNode, *devMicrogliaKMinus, *devMicrogliaKPlus, *devTCytotoxicKMinus, *devTCytotoxicKPlus, *devAntibodyKMinus, *devAntibodyKPlus, *devConventionalDCKMinus, *devConventionalDCKPlus, *devActivatedDCKMinus, *devActivatedDCKPlus, *devOligodendrocytesDCKMinus, *devOligodendrocytesDCKPlus;
-    
-    cudaMalloc((void**)&devThetaPV, model->xSize*model->xSize*sizeof(float));
-    cudaMalloc((void**)&devThetaBV, model->xSize*model->xSize*sizeof(float));
 
-    cudaMalloc((void**)&devOligodendrocytesDCKMinus, model->xSize*model->xSize*sizeof(float));
-    cudaMalloc((void**)&devOligodendrocytesDCKPlus, model->xSize*model->xSize*sizeof(float));
+    cudaMalloc((void **)&devThetaPV, model->xSize * model->xSize * sizeof(float));
+    cudaMalloc((void **)&devThetaBV, model->xSize * model->xSize * sizeof(float));
 
-    cudaMalloc((void**)&devMicrogliaKMinus, model->xSize*model->xSize*sizeof(float));
-    cudaMalloc((void**)&devMicrogliaKPlus, model->xSize*model->xSize*sizeof(float));
-    
-    cudaMalloc((void**)&devTCytotoxicKMinus, model->xSize*model->xSize*sizeof(float));
-    cudaMalloc((void**)&devTCytotoxicKPlus, model->xSize*model->xSize*sizeof(float));
-    
-    cudaMalloc((void**)&devAntibodyKMinus, model->xSize*model->xSize*sizeof(float));
-    cudaMalloc((void**)&devAntibodyKPlus, model->xSize*model->xSize*sizeof(float));
-    
-    cudaMalloc((void**)&devConventionalDCKMinus, model->xSize*model->xSize*sizeof(float));
-    cudaMalloc((void**)&devConventionalDCKPlus, model->xSize*model->xSize*sizeof(float));
-    
-    cudaMalloc((void**)&devActivatedDCKMinus, model->xSize*model->xSize*sizeof(float));
-    cudaMalloc((void**)&devActivatedDCKPlus, model->xSize*model->xSize*sizeof(float));
+    cudaMalloc((void **)&devOligodendrocytesDCKMinus, model->xSize * model->xSize * sizeof(float));
+    cudaMalloc((void **)&devOligodendrocytesDCKPlus, model->xSize * model->xSize * sizeof(float));
 
-    cudaMemcpy(devThetaBV, model->thetaBV, model->xSize*model->xSize*sizeof(float), cudaMemcpyHostToDevice);
-    cudaMemcpy(devThetaPV, model->thetaPV, model->xSize*model->xSize*sizeof(float), cudaMemcpyHostToDevice);
+    cudaMalloc((void **)&devMicrogliaKMinus, model->xSize * model->xSize * sizeof(float));
+    cudaMalloc((void **)&devMicrogliaKPlus, model->xSize * model->xSize * sizeof(float));
 
-    cudaMemcpy(devOligodendrocytesDCKMinus, model->oligodendrocyte[0], model->xSize*model->xSize*sizeof(float), cudaMemcpyHostToDevice);
-    cudaMemcpy(devMicrogliaKMinus, model->microglia[0], model->xSize*model->xSize*sizeof(float), cudaMemcpyHostToDevice);
-    cudaMemcpy(devTCytotoxicKMinus, model->tCytotoxic[0], model->xSize*model->xSize*sizeof(float), cudaMemcpyHostToDevice);
-    cudaMemcpy(devAntibodyKMinus, model->antibody[0], model->xSize*model->xSize*sizeof(float), cudaMemcpyHostToDevice);
-    cudaMemcpy(devConventionalDCKMinus, model->conventionalDc[0], model->xSize*model->xSize*sizeof(float), cudaMemcpyHostToDevice);
-    cudaMemcpy(devActivatedDCKMinus, model->activatedDc[0], model->xSize*model->xSize*sizeof(float), cudaMemcpyHostToDevice);
-    
-    structParameters* devParams;
-    
-    //se der errado passar parametro por parametro (tentar com memoria de constantes)
-    cudaMalloc((void**)&devParams, sizeof(structParameters));
+    cudaMalloc((void **)&devTCytotoxicKMinus, model->xSize * model->xSize * sizeof(float));
+    cudaMalloc((void **)&devTCytotoxicKPlus, model->xSize * model->xSize * sizeof(float));
+
+    cudaMalloc((void **)&devAntibodyKMinus, model->xSize * model->xSize * sizeof(float));
+    cudaMalloc((void **)&devAntibodyKPlus, model->xSize * model->xSize * sizeof(float));
+
+    cudaMalloc((void **)&devConventionalDCKMinus, model->xSize * model->xSize * sizeof(float));
+    cudaMalloc((void **)&devConventionalDCKPlus, model->xSize * model->xSize * sizeof(float));
+
+    cudaMalloc((void **)&devActivatedDCKMinus, model->xSize * model->xSize * sizeof(float));
+    cudaMalloc((void **)&devActivatedDCKPlus, model->xSize * model->xSize * sizeof(float));
+
+    cudaMemcpy(devThetaBV, model->thetaBV, model->xSize * model->xSize * sizeof(float), cudaMemcpyHostToDevice);
+    cudaMemcpy(devThetaPV, model->thetaPV, model->xSize * model->xSize * sizeof(float), cudaMemcpyHostToDevice);
+
+    cudaMemcpy(devOligodendrocytesDCKMinus, model->oligodendrocyte[0], model->xSize * model->xSize * sizeof(float), cudaMemcpyHostToDevice);
+    cudaMemcpy(devMicrogliaKMinus, model->microglia[0], model->xSize * model->xSize * sizeof(float), cudaMemcpyHostToDevice);
+    cudaMemcpy(devTCytotoxicKMinus, model->tCytotoxic[0], model->xSize * model->xSize * sizeof(float), cudaMemcpyHostToDevice);
+    cudaMemcpy(devAntibodyKMinus, model->antibody[0], model->xSize * model->xSize * sizeof(float), cudaMemcpyHostToDevice);
+    cudaMemcpy(devConventionalDCKMinus, model->conventionalDc[0], model->xSize * model->xSize * sizeof(float), cudaMemcpyHostToDevice);
+    cudaMemcpy(devActivatedDCKMinus, model->activatedDc[0], model->xSize * model->xSize * sizeof(float), cudaMemcpyHostToDevice);
+
+    structParameters *devParams;
+
+    // se der errado passar parametro por parametro (tentar com memoria de constantes)
+    cudaMalloc((void **)&devParams, sizeof(structParameters));
     cudaMemcpy(devParams, &model->parametersModel, sizeof(structParameters), cudaMemcpyHostToDevice);
 
-    cudaMalloc((void**)&devActivatedDCLymphNode, sizeof(float));
-    cudaMalloc((void**)&devAntibodyLymphNode, sizeof(float));
-    cudaMalloc((void**)&devTCytotoxicLymphNode, sizeof(float));
+    cudaMalloc((void **)&devActivatedDCLymphNode, sizeof(float));
+    cudaMalloc((void **)&devAntibodyLymphNode, sizeof(float));
+    cudaMalloc((void **)&devTCytotoxicLymphNode, sizeof(float));
 
-    cudaMalloc((void**)&devActivatedDCVessel, numBlocks*sizeof(float));
-    cudaMalloc((void**)&devAntibodyVessel, numBlocks*sizeof(float));
-    cudaMalloc((void**)&devTCytotoxicVessel, numBlocks*sizeof(float));
-    //Inicializar os constant com os valores
+    cudaMalloc((void **)&devActivatedDCVessel, numBlocks * sizeof(float));
+    cudaMalloc((void **)&devAntibodyVessel, numBlocks * sizeof(float));
+    cudaMalloc((void **)&devTCytotoxicVessel, numBlocks * sizeof(float));
+    // Inicializar os constant com os valores
     int stepKMinus = 0, stepKPlus;
-    
+
     float auxAdcPV = 0.0, auxAntibodyBV = 0.0, auxTCytotoxicBV = 0.0;
 
     float bc = 0.0;
-    
+
     cudaMemcpyToSymbol(upperNeumannBC, &bc, sizeof(float));
     cudaMemcpyToSymbol(lowerNeumannBC, &bc, sizeof(float));
     cudaMemcpyToSymbol(leftNeumannBC, &bc, sizeof(float));
@@ -595,62 +633,74 @@ void RunModel(structModel *model){
     cudaMemcpyToSymbol(constHx, &model->hx, sizeof(float));
     cudaMemcpyToSymbol(constXSize, &model->xSize, sizeof(float));
 
-    for(int kTime = 1; kTime <= model->tSize; kTime++){
+    int devKTime;
+    cudaMalloc((void **)&devKTime, sizeof(int));
+
+    for (int kTime = 1; kTime <= model->tSize; kTime++)
+    {
         auxAdcPV = 0.0, auxAntibodyBV = 0.0, auxTCytotoxicBV = 0.0;
         // solve lymphnode
         SolverLymphNode(model, kTime);
-        stepKPlus = kTime%2;
-        //copiar LN pra GPU
+        stepKPlus = kTime % 2;
+        // copiar LN pra GPU
         cudaMemcpy(devActivatedDCLymphNode, &model->dendriticLymphNode[stepKPlus], sizeof(float), cudaMemcpyHostToDevice);
         cudaMemcpy(devAntibodyLymphNode, &model->antibodyLymphNode[stepKPlus], sizeof(float), cudaMemcpyHostToDevice);
-        cudaMemcpy(devTCytotoxicLymphNode, &model->tCytotoxicLymphNode[stepKPlus], sizeof(float), cudaMemcpyHostToDevice);        
+        cudaMemcpy(devTCytotoxicLymphNode, &model->tCytotoxicLymphNode[stepKPlus], sizeof(float), cudaMemcpyHostToDevice);
 
-        if(stepKPlus%2 == 1)
-            kernelPDE<<<numBlocks,threadsPerBlock>>>(devParams, kTime, devTCytotoxicVessel, devActivatedDCVessel, devAntibodyVessel, devActivatedDCLymphNode, devAntibodyLymphNode, devTCytotoxicLymphNode, devThetaPV, devThetaBV, devMicrogliaKMinus, devMicrogliaKPlus, devTCytotoxicKMinus, devTCytotoxicKPlus, devAntibodyKMinus, devAntibodyKPlus, devConventionalDCKMinus, devConventionalDCKPlus, devActivatedDCKMinus, devActivatedDCKPlus, devOligodendrocytesDCKMinus, devOligodendrocytesDCKPlus);
+        cudaMemcpy(&devKTime, &kTime, sizeof(int), cudaMemcpyHostToDevice);
+
+        if (stepKPlus % 2 == 1)
+            kernelPDE<<<numBlocks, threadsPerBlock>>>(devParams, devKTime, devTCytotoxicVessel, devActivatedDCVessel, devAntibodyVessel, devActivatedDCLymphNode, devAntibodyLymphNode, devTCytotoxicLymphNode, devThetaPV, devThetaBV, devMicrogliaKMinus, devMicrogliaKPlus, devTCytotoxicKMinus, devTCytotoxicKPlus, devAntibodyKMinus, devAntibodyKPlus, devConventionalDCKMinus, devConventionalDCKPlus, devActivatedDCKMinus, devActivatedDCKPlus, devOligodendrocytesDCKMinus, devOligodendrocytesDCKPlus);
         else
-            kernelPDE<<<numBlocks,threadsPerBlock>>>(devParams, kTime, devTCytotoxicVessel, devActivatedDCVessel, devAntibodyVessel, devActivatedDCLymphNode, devAntibodyLymphNode, devTCytotoxicLymphNode, devThetaPV, devThetaBV, devMicrogliaKPlus, devMicrogliaKMinus, devTCytotoxicKPlus, devTCytotoxicKMinus, devAntibodyKPlus, devAntibodyKMinus, devConventionalDCKPlus, devConventionalDCKMinus, devActivatedDCKPlus, devActivatedDCKMinus, devOligodendrocytesDCKPlus, devOligodendrocytesDCKMinus);
-        
-        if(kTime%model->intervalFigures == 0 || kTime == model->tSize){
-            if(stepKPlus%2 == 1){
-                cudaMemcpy(model->oligodendrocyte[stepKPlus], devOligodendrocytesDCKPlus, model->xSize*model->xSize*sizeof(float), cudaMemcpyDeviceToHost);
-                cudaMemcpy(model->microglia[stepKPlus], devMicrogliaKPlus, model->xSize*model->xSize*sizeof(float), cudaMemcpyDeviceToHost);
-                cudaMemcpy(model->tCytotoxic[stepKPlus], devTCytotoxicKPlus, model->xSize*model->xSize*sizeof(float), cudaMemcpyDeviceToHost);
-                cudaMemcpy(model->antibody[stepKPlus], devAntibodyKPlus, model->xSize*model->xSize*sizeof(float), cudaMemcpyDeviceToHost);
-                cudaMemcpy(model->conventionalDc[stepKPlus], devConventionalDCKPlus, model->xSize*model->xSize*sizeof(float), cudaMemcpyDeviceToHost);
-                cudaMemcpy(model->activatedDc[stepKPlus], devActivatedDCKPlus, model->xSize*model->xSize*sizeof(float), cudaMemcpyDeviceToHost);
+            kernelPDE<<<numBlocks, threadsPerBlock>>>(devParams, devKTime, devTCytotoxicVessel, devActivatedDCVessel, devAntibodyVessel, devActivatedDCLymphNode, devAntibodyLymphNode, devTCytotoxicLymphNode, devThetaPV, devThetaBV, devMicrogliaKPlus, devMicrogliaKMinus, devTCytotoxicKPlus, devTCytotoxicKMinus, devAntibodyKPlus, devAntibodyKMinus, devConventionalDCKPlus, devConventionalDCKMinus, devActivatedDCKPlus, devActivatedDCKMinus, devOligodendrocytesDCKPlus, devOligodendrocytesDCKMinus);
 
-            }else{
-                cudaMemcpy(model->oligodendrocyte[stepKPlus], devOligodendrocytesDCKMinus, model->xSize*model->xSize*sizeof(float), cudaMemcpyDeviceToHost);
-                cudaMemcpy(model->microglia[stepKPlus], devMicrogliaKMinus, model->xSize*model->xSize*sizeof(float), cudaMemcpyDeviceToHost);
-                cudaMemcpy(model->tCytotoxic[stepKPlus], devTCytotoxicKMinus, model->xSize*model->xSize*sizeof(float), cudaMemcpyDeviceToHost);
-                cudaMemcpy(model->antibody[stepKPlus], devAntibodyKMinus, model->xSize*model->xSize*sizeof(float), cudaMemcpyDeviceToHost);
-                cudaMemcpy(model->conventionalDc[stepKPlus], devConventionalDCKMinus, model->xSize*model->xSize*sizeof(float), cudaMemcpyDeviceToHost);
-                cudaMemcpy(model->activatedDc[stepKPlus], devActivatedDCKMinus, model->xSize*model->xSize*sizeof(float), cudaMemcpyDeviceToHost);
+        if (kTime % model->intervalFigures == 0 || kTime == model->tSize)
+        {
+            if (stepKPlus % 2 == 1)
+            {
+                cudaMemcpy(model->oligodendrocyte[stepKPlus], devOligodendrocytesDCKPlus, model->xSize * model->xSize * sizeof(float), cudaMemcpyDeviceToHost);
+                cudaMemcpy(model->microglia[stepKPlus], devMicrogliaKPlus, model->xSize * model->xSize * sizeof(float), cudaMemcpyDeviceToHost);
+                cudaMemcpy(model->tCytotoxic[stepKPlus], devTCytotoxicKPlus, model->xSize * model->xSize * sizeof(float), cudaMemcpyDeviceToHost);
+                cudaMemcpy(model->antibody[stepKPlus], devAntibodyKPlus, model->xSize * model->xSize * sizeof(float), cudaMemcpyDeviceToHost);
+                cudaMemcpy(model->conventionalDc[stepKPlus], devConventionalDCKPlus, model->xSize * model->xSize * sizeof(float), cudaMemcpyDeviceToHost);
+                cudaMemcpy(model->activatedDc[stepKPlus], devActivatedDCKPlus, model->xSize * model->xSize * sizeof(float), cudaMemcpyDeviceToHost);
             }
-            
+            else
+            {
+                cudaMemcpy(model->oligodendrocyte[stepKPlus], devOligodendrocytesDCKMinus, model->xSize * model->xSize * sizeof(float), cudaMemcpyDeviceToHost);
+                cudaMemcpy(model->microglia[stepKPlus], devMicrogliaKMinus, model->xSize * model->xSize * sizeof(float), cudaMemcpyDeviceToHost);
+                cudaMemcpy(model->tCytotoxic[stepKPlus], devTCytotoxicKMinus, model->xSize * model->xSize * sizeof(float), cudaMemcpyDeviceToHost);
+                cudaMemcpy(model->antibody[stepKPlus], devAntibodyKMinus, model->xSize * model->xSize * sizeof(float), cudaMemcpyDeviceToHost);
+                cudaMemcpy(model->conventionalDc[stepKPlus], devConventionalDCKMinus, model->xSize * model->xSize * sizeof(float), cudaMemcpyDeviceToHost);
+                cudaMemcpy(model->activatedDc[stepKPlus], devActivatedDCKMinus, model->xSize * model->xSize * sizeof(float), cudaMemcpyDeviceToHost);
+            }
+
             WriteFiles(*model, model->oligodendrocyte[stepKPlus], model->microglia[stepKPlus], model->tCytotoxic[stepKPlus], model->antibody[stepKPlus], model->conventionalDc[stepKPlus], model->activatedDc[stepKPlus], kTime);
         }
-        //Copia do device para o host as integrais do tecido
-        activatedDCVessel = (float*)calloc(numBlocks, sizeof(float));
-        antibodyVessel = (float*)calloc(numBlocks, sizeof(float));
-        tCytotoxicVessel = (float*)calloc(numBlocks, sizeof(float));
-        
-        cudaMemcpy(activatedDCVessel, devActivatedDCVessel, numBlocks*sizeof(float), cudaMemcpyDeviceToHost);
-        cudaMemcpy(antibodyVessel, devAntibodyVessel, numBlocks*sizeof(float), cudaMemcpyDeviceToHost);
-        cudaMemcpy(tCytotoxicVessel, devTCytotoxicVessel, numBlocks*sizeof(float), cudaMemcpyDeviceToHost);
-        if(kTime == 28/0.0002)
+        // Copia do device para o host as integrais do tecido
+        activatedDCVessel = (float *)calloc(numBlocks, sizeof(float));
+        antibodyVessel = (float *)calloc(numBlocks, sizeof(float));
+        tCytotoxicVessel = (float *)calloc(numBlocks, sizeof(float));
+
+        cudaMemcpy(activatedDCVessel, devActivatedDCVessel, numBlocks * sizeof(float), cudaMemcpyDeviceToHost);
+        cudaMemcpy(antibodyVessel, devAntibodyVessel, numBlocks * sizeof(float), cudaMemcpyDeviceToHost);
+        cudaMemcpy(tCytotoxicVessel, devTCytotoxicVessel, numBlocks * sizeof(float), cudaMemcpyDeviceToHost);
+        if (kTime == model->tSize)
             printf("CPU\n DC Tissue = %f\n DC LN = %f \n", activatedDCVessel[0], model->dendriticLymphNode[stepKPlus]);
-        for(int pos = 0; pos < numBlocks; pos++){
+        for (int pos = 0; pos < numBlocks; pos++)
+        {
             auxAdcPV += activatedDCVessel[pos];
             auxAntibodyBV += antibodyVessel[pos];
             auxTCytotoxicBV += tCytotoxicVessel[pos];
         }
-        model->activatedDCTissueVessels = auxAdcPV/model->parametersModel.V_PV;
-        model->antibodyTissueVessels = auxAntibodyBV/model->parametersModel.V_BV;
-        model->tCytotoxicTissueVessels = auxTCytotoxicBV/model->parametersModel.V_BV;
+        model->activatedDCTissueVessels = auxAdcPV / model->parametersModel.V_PV;
+        model->antibodyTissueVessels = auxAntibodyBV / model->parametersModel.V_BV;
+        model->tCytotoxicTissueVessels = auxTCytotoxicBV / model->parametersModel.V_BV;
+        if (kTime == model->tSize)
+            printf("Tempo final T CD8 Vessel %f - DC LN %f\n", model->tCytotoxicTissueVessels, model->dendriticLymphNode[stepKPlus]);
 
         stepKMinus += 1;
-        stepKMinus = stepKMinus%2;
+        stepKMinus = stepKMinus % 2;
     }
     printf("Computation Done!!\n");
     printf("Saving results...\n\n");
