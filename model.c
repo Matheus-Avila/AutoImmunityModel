@@ -238,6 +238,11 @@ structModel ModelInitialize(structParameters params, float ht, float hx, float t
         model.conventionalDc[index] = (float*)malloc(model.xSize*model.xSize * sizeof(float));
         model.activatedDc[index] = (float*)malloc(model.xSize*model.xSize * sizeof(float));
     }
+
+    model.activatedDCTissueVessels = 0;
+    model.tCytotoxicTissueVessels = 0;
+    model.antibodyTissueVessels = 0;
+
     //definir BV e PV
     model.thetaPV = (float*)malloc(model.xSize*model.xSize * sizeof(float));
     model.thetaBV = (float*)malloc(model.xSize*model.xSize * sizeof(float));
