@@ -20,12 +20,12 @@ Execute: mpiexec main -n [ProcNum]
 
 # cuda
 
-Estable parallel version of the code in CUDA. 
+Estable parallel version of the code in CUDA. CUDA version GPU Solving Tissue and CPU solving Lymph node
 Compile: nvcc -O3 -o main main.c model.c
 
-# deviceInitialize
+# Stream
 
-CUDA version GPU Solving Tissue and CPU solving Lymph node
+CUDA version GPU Solving Tissue and CPU solving Lymph node. Assync copies.
 
 # blockGroup
 
