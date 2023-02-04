@@ -474,8 +474,6 @@ __global__ void kernelPDE(structParameters *devParams, int kTime, float *tCytoSu
                              devParams->avgMic, gradientOdcI, gradientOdcJ, &microgliaChemotaxis);
         microgliaChemotaxis *= devParams->chi;
         microgliaDiffusion *= devParams->micDiffusion;
-        if(microgliaDiffusion != 0)
-            printf("Tempo %d bloco %d micdif %f", kTime, blockIdx.x, microgliaDiffusion);
         // Diffusion and Chemotaxis CDC
 
         valIPlus = (line != constXSize - 1) ? devConventionalDCKMinus[thrIdx + constXSize] : devConventionalDCKMinus[thrIdx] - (float)(2 * constHx * lowerNeumannBC);
@@ -605,6 +603,43 @@ __global__ void kernelPDE(structParameters *devParams, int kTime, float *tCytoSu
     }
     if (threadIdx.x == 0 && blockIdx.x == 0 && kTime == 28 / 0.0002)
         printf("GPU\n DC Tissue = %f\n DC LN = %f\n", activatedDCSumVessel[blockIdx.x], *devActivatedDCLymphNode);
+}
+
+void DeleteModel(structModel *model){
+    printf("Deleting model..\n");
+    for (int index = 0; index < BUFFER; index++)
+    {
+        free(model->microglia[index]);
+        free(model->oligodendrocyte[index]);
+        free(model->tCytotoxic[index]);
+        free(model->antibody[index]);
+        free(model->conventionalDc[index]);
+        free(model->activatedDc[index]);
+    }
+    free(model->microglia);
+    free(model->oligodendrocyte);
+    free(model->tCytotoxic);
+    free(model->antibody);
+    free(model->conventionalDc);
+    free(model->activatedDc);
+
+    free(model->thetaPV);
+    free(model->thetaBV);
+    // definir lymph node
+    free(model->dendriticLymphNodeSavedPoints);
+    free(model->tCytotoxicLymphNodeSavedPoints);
+    free(model->tHelperLymphNodeSavedPoints);
+    free(model->antibodyLymphNodeSavedPoints);
+    free(model->bCellLymphNodeSavedPoints);
+    free(model->plasmaCellLymphNodeSavedPoints);
+
+    free(model->dendriticLymphNode);
+    free(model->tCytotoxicLymphNode);
+    free(model->tHelperLymphNode);
+    free(model->antibodyLymphNode);
+    free(model->bCellLymphNode);
+    free(model->plasmaCellLymphNode);
+    printf("Deleting done!\n");
 }
 
 void RunModel(structModel *model)
@@ -739,6 +774,10 @@ void RunModel(structModel *model)
         model->activatedDCTissueVessels = auxAdcPV / model->parametersModel.V_PV;
         model->antibodyTissueVessels = auxAntibodyBV / model->parametersModel.V_BV;
         model->tCytotoxicTissueVessels = auxTCytotoxicBV / model->parametersModel.V_BV;
+
+        free(activatedDCVessel);
+        free(antibodyVessel);
+        free(tCytotoxicVessel);
         if (kTime == model->tSize)
             printf("Tempo final T CD8 Vessel %f - DC LN %f\n", model->tCytotoxicTissueVessels, model->dendriticLymphNode[stepKPlus]);
 
@@ -749,4 +788,41 @@ void RunModel(structModel *model)
     printf("Saving results...\n\n");
     WriteLymphNodeFiles(*model, model->dendriticLymphNodeSavedPoints, model->tHelperLymphNodeSavedPoints, model->tCytotoxicLymphNodeSavedPoints, model->bCellLymphNodeSavedPoints, model->plasmaCellLymphNodeSavedPoints, model->antibodyLymphNodeSavedPoints);
     PlotResults(*model);
+    printf("Deleting cuda memory...\n");
+
+    cudaFree(devThetaPV);
+    cudaFree(devThetaBV);
+
+    cudaFree(devOligodendrocytesDCKMinus);
+    cudaFree(devOligodendrocytesDCKPlus);
+
+    cudaFree(devMicrogliaKMinus);
+    cudaFree(devMicrogliaKPlus);
+
+    cudaFree(devTCytotoxicKMinus);
+    cudaFree(devTCytotoxicKPlus);
+
+    cudaFree(devAntibodyKMinus);
+    cudaFree(devAntibodyKPlus);
+
+    cudaFree(devConventionalDCKMinus);
+    cudaFree(devConventionalDCKPlus);
+
+    cudaFree(devActivatedDCKMinus);
+    cudaFree(devActivatedDCKPlus);
+
+    cudaFree(devParams);
+
+    cudaFree(devActivatedDCLymphNode);
+    cudaFree(devAntibodyLymphNode);
+    cudaFree(devTCytotoxicLymphNode);
+
+    cudaFree(devActivatedDCVessel);
+    cudaFree(devAntibodyVessel);
+    cudaFree(devTCytotoxicVessel);
+
+    cudaFree(&devKTime);
+
+    printf("CUDA memory deleted!\n");
+    DeleteModel(model);
 }
