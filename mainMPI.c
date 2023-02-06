@@ -71,8 +71,10 @@ int main(int argc, char* argv[]){
     MPI_Comm_size(MPI_COMM_WORLD, &comm_sz);
     float hx = 0.5;
     int lenght = 20;
+    float ht = 0.0002;
+    int numPointsLN = 1000;
     structParameters parameters = ParametersInitialize();
-    structModel model = ModelInitialize(parameters, my_rank, comm_sz, hx, lenght);
+    structModel model = ModelInitialize(parameters, my_rank, comm_sz, hx, lenght, ht, numPointsLN);
     
     RunModel(&model);
     MPI_Finalize();

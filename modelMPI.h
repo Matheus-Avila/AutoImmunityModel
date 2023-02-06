@@ -72,6 +72,7 @@ typedef struct structModel
     int comm_sz;
     
     int numLines;
+    int numPointsLN;
     int startLine;
     int endLine;
 
@@ -79,6 +80,7 @@ typedef struct structModel
     float hx;
 
     int tFinal;
+    int tSize;
     int xFinal;
     int xSize;
     int intervaloFiguras;
@@ -138,7 +140,7 @@ float* EquationsLymphNode(structModel model, float* populationLN, int stepPos);
 
 void SolverLymphNode(structModel *model, int stepPos);
 
-structModel ModelInitialize(structParameters params, int my_rank, int comm_sz, float hx, int lenght);
+structModel ModelInitialize(structParameters params, int my_rank, int comm_sz, float hx, int lenght, float ht, int numPointsLN);
 
 void DefineBVPV(structModel *model);
 
@@ -148,7 +150,7 @@ void InitialConditionLymphNode(structModel* model, float dendriticLN, float thel
 
 void RunModel(structModel *model);
 
-void WritePopulation(float population[(int)(LENGTH/HX)][(int)(LENGTH/HX)], char* fileName, char* bufferTime);
+void WritePopulation(structModel model, float *population, char* fileName, char* bufferTime);
 
-void WriteFiles(structModel model, float oligodendrocyte[(int)(LENGTH/HX)][(int)(LENGTH/HX)], float microglia[(int)(LENGTH/HX)][(int)(LENGTH/HX)], float tCytotoxic[(int)(LENGTH/HX)][(int)(LENGTH/HX)], float antibody[(int)(LENGTH/HX)][(int)(LENGTH/HX)], float conventionalDC[(int)(LENGTH/HX)][(int)(LENGTH/HX)], float  activatedDC[(int)(LENGTH/HX)][(int)(LENGTH/HX)], float time);
+void WriteFiles(structModel model, float *oligodendrocyte, float *microglia, float *tCytotoxic, float *antibody, float *conventionalDC, float  *activatedDC, float time);
 #endif
