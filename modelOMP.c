@@ -253,12 +253,12 @@ structModel ModelInitialize(structParameters params, int totThr, float ht, float
     model.antibodyTissueVessels = 0;
 
     for (int index=0;index<BUFFER;++index){
-        model.microglia[index] = (float*)malloc(model.xSize*model.xSize * sizeof(float));
-        model.oligodendrocyte[index] = (float*)malloc(model.xSize*model.xSize * sizeof(float));
-        model.tCytotoxic[index] = (float*)malloc(model.xSize*model.xSize * sizeof(float));
-        model.antibody[index] = (float*)malloc(model.xSize*model.xSize * sizeof(float));
-        model.conventionalDc[index] = (float*)malloc(model.xSize*model.xSize * sizeof(float));
-        model.activatedDc[index] = (float*)malloc(model.xSize*model.xSize * sizeof(float));
+        model.microglia[index] = (float*)calloc(model.xSize*model.xSize, sizeof(float));
+        model.oligodendrocyte[index] = (float*)calloc(model.xSize*model.xSize, sizeof(float));
+        model.tCytotoxic[index] = (float*)calloc(model.xSize*model.xSize, sizeof(float));
+        model.conventionalDc[index] = (float*)calloc(model.xSize*model.xSize, sizeof(float));
+        model.activatedDc[index] = (float*)calloc(model.xSize*model.xSize, sizeof(float));
+        model.antibody[index] = (float*)calloc(model.xSize*model.xSize, sizeof(float));
     }
     //definir BV e PV
     model.thetaPV = (float*)malloc(model.xSize*model.xSize * sizeof(float));
