@@ -247,6 +247,11 @@ structModel ModelInitialize(structParameters params, int totThr, float ht, float
     model.antibody = (float**)malloc(BUFFER * sizeof(float*));
     model.conventionalDc = (float**)malloc(BUFFER * sizeof(float*));
     model.activatedDc = (float**)malloc(BUFFER * sizeof(float*));
+
+    model.activatedDCTissueVessels = 0;
+    model.tCytotoxicTissueVessels = 0;
+    model.antibodyTissueVessels = 0;
+
     for (int index=0;index<BUFFER;++index){
         model.microglia[index] = (float*)malloc(model.xSize*model.xSize * sizeof(float));
         model.oligodendrocyte[index] = (float*)malloc(model.xSize*model.xSize * sizeof(float));
@@ -558,12 +563,6 @@ void RunModel(structModel *model){
         model->activatedDCTissueVessels = auxAdcPV/model->parametersModel.V_PV;
         stepKMinus += 1;
         stepKMinus = stepKMinus%2;
-    }
-    for(int i = 0; i < model->xSize; i++) {
-        for(int j = 0; j < model->xSize; j++) {
-            printf("%f ", model->oligodendrocyte[0][i * model->xSize + j]);
-        }
-        printf("\n");
     }
     printf("Computation Done!!\n");
 
