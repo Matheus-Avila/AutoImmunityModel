@@ -59,11 +59,17 @@ structParameters ParametersInitialize(){
     return params;
 }
 
+void WriteTime(float ExecTime){
+    FILE *fileAllTime;
+    fileAllTime = fopen("./ExecsTimes.txt", "a");
+    fprintf(fileAllTime, "%f\n", ExecTime);
+    fclose(fileAllTime);
+}
 
 int main(int argc, char* argv[]){
     printf("Comecei o main\n");
     int tot_thr = strtol(argv[1], NULL, 10);
-    float ht = 0.000005, hx = 0.2;
+    float ht = 0.0002, hx = 0.5;
     int numFigs = 28, numPointsLN = 1000, time = 28, space = 20;
     structParameters parameters = ParametersInitialize();
     structModel model = ModelInitialize(parameters, tot_thr, ht, hx, time, space, numFigs, numPointsLN);
@@ -71,6 +77,7 @@ int main(int argc, char* argv[]){
     float start = omp_get_wtime();
     RunModel(&model);
     float end = omp_get_wtime();
+    WriteTime(end - start);
     printf("Work took %f seconds\n", end - start);
     return 0;
 }
