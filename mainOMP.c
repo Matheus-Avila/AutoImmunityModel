@@ -52,7 +52,7 @@ structParameters ParametersInitialize(){
     params.estableTCytotoxic = 40;
     params.estableB = 25;
     params.estableP = 2.5;
-    params.V_LN = 953;
+    params.V_LN = 160;
     params.V_BV = 0;
     params.V_PV = 0;
 
@@ -66,10 +66,16 @@ void WriteTime(float ExecTime){
     fclose(fileAllTime);
 }
 
+void clearPhgTxt(){
+    system("find ./result/ -name '*.png' -type f -delete");
+    system("find ./result/ -name '*.txt' -type f -delete");
+}
+
 int main(int argc, char* argv[]){
     printf("Comecei o main\n");
+    clearPhgTxt();
     int tot_thr = strtol(argv[1], NULL, 10);
-    float ht = 0.0002, hx = 0.5;
+    float ht = 0.000005, hx = 0.5;
     int numFigs = 28, numPointsLN = 1000, time = 28, space = 20;
     structParameters parameters = ParametersInitialize();
     structModel model = ModelInitialize(parameters, tot_thr, ht, hx, time, space, numFigs, numPointsLN);
