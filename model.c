@@ -532,8 +532,8 @@ void RunModel(structModel *model){
                 auxAdcPV += model->activatedDc[stepKPlus][kPos];
             }
         }
-        if(kTime%model->intervalFigures == 0 || kTime == model->tSize)
-            WriteFiles(*model, model->oligodendrocyte[stepKPlus], model->microglia[stepKPlus], model->tCytotoxic[stepKPlus], model->antibody[stepKPlus], model->conventionalDc[stepKPlus], model->activatedDc[stepKPlus], kTime);
+        // if(kTime%model->intervalFigures == 0 || kTime == model->tSize)
+        //     WriteFiles(*model, model->oligodendrocyte[stepKPlus], model->microglia[stepKPlus], model->tCytotoxic[stepKPlus], model->antibody[stepKPlus], model->conventionalDc[stepKPlus], model->activatedDc[stepKPlus], kTime);
         model->tCytotoxicTissueVessels = auxTCytotoxicBV/model->parametersModel.V_BV;
         model->antibodyTissueVessels = auxAntibodyBV/model->parametersModel.V_BV;
         model->activatedDCTissueVessels = auxAdcPV/model->parametersModel.V_PV;
@@ -541,6 +541,6 @@ void RunModel(structModel *model){
         stepKMinus = stepKMinus%2;
     }
     printf("Computation Done!!\nSaving results...\n\n");
-    WriteLymphNodeFiles(*model, model->dendriticLymphNodeSavedPoints, model->tHelperLymphNodeSavedPoints, model->tCytotoxicLymphNodeSavedPoints, model->bCellLymphNodeSavedPoints, model->plasmaCellLymphNodeSavedPoints, model->antibodyLymphNodeSavedPoints);
-    PlotResults(*model);
+    // WriteLymphNodeFiles(*model, model->dendriticLymphNodeSavedPoints, model->tHelperLymphNodeSavedPoints, model->tCytotoxicLymphNodeSavedPoints, model->bCellLymphNodeSavedPoints, model->plasmaCellLymphNodeSavedPoints, model->antibodyLymphNodeSavedPoints);
+    // PlotResults(*model);
 }

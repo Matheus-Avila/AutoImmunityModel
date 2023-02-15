@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+#include <time.h>
 
 structParameters ParametersInitialize(){
     structParameters params;
@@ -58,15 +59,33 @@ structParameters ParametersInitialize(){
     return params;
 }
 
+void WriteTime(float ExecTime){
+    FILE *fileAllTime;
+    fileAllTime = fopen("./ExecsTimes.txt", "a");
+    fprintf(fileAllTime, "%f\n", ExecTime);
+    fclose(fileAllTime);
+}
+
+void clearPhgTxt(){
+    system("find ./result/ -name '*.png' -type f -delete");
+    system("find ./result/ -name '*.txt' -type f -delete");
+}
 
 int main(){
     printf("Comecei o main\n");
-    fflush(stdout);
+    clock_t start, end;
+    float cpu_time_used;
+    clearPhgTxt();
+    // fflush(stdout);
     float ht = 0.0002, hx = 0.5;
     int numFigs = 28, numPointsLN = 1000, time = 28, space = 20;
     structParameters parameters = ParametersInitialize();
     structModel model = ModelInitialize(parameters, ht, hx, time, space, numFigs, numPointsLN);
     printf("Inicializacao feita!!\n\n");
+    start = clock();
     RunModel(&model);
+    end = clock();
+    cpu_time_used = ((float) (end - start)) / CLOCKS_PER_SEC;
+    WriteTime(cpu_time_used);
     return 0;
 }
