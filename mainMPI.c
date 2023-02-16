@@ -59,22 +59,27 @@ structParameters ParametersInitialize(){
     return params;
 }
 
+void clearPngTxt(){
+    system("find ./modelmpi/result/ -name '*.png' -type f -delete");
+    system("find ./modelmpi/result/ -name '*.txt' -type f -delete");
+}
+
 
 int main(int argc, char* argv[]){
 
-    int my_rank, comm_sz;
+    clearPngTxt();
 
+    int my_rank, comm_sz;
     MPI_Init(NULL, NULL);
 
     MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
 
     MPI_Comm_size(MPI_COMM_WORLD, &comm_sz);
-    float hx = 0.5;
-    int lenght = 20;
-    float ht = 0.0002;
-    int numPointsLN = 1000;
+    float ht = 0.000002, hx = 0.5;
+    int numFigs = 28, numPointsLN = 1000, time = 28, space = 20;
     structParameters parameters = ParametersInitialize();
-    structModel model = ModelInitialize(parameters, my_rank, comm_sz, hx, lenght, ht, numPointsLN);
+    structModel model = ModelInitialize(parameters, ht, hx, 
+    time, space, numFigs, numPointsLN, my_rank, comm_sz);
     
     RunModel(&model);
     MPI_Finalize();
