@@ -1,0 +1,2 @@
+Mean for MPI with 2 processes is: 10.0555138
+Mean for MPI with 4 processes is: 11.4980018

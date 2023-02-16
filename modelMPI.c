@@ -96,7 +96,7 @@ void WritePopulationLymphNode(structModel model, float *population, char* fileNa
 
 void WriteLymphNodeFiles(structModel model, float *dendritic, float *tHelper, float *tCytotoxic, float *bCell, float *plasmaCell, float *antibody){
     clock_t start = clock();
-    printf("Start to write Files\n");
+    //printf("Start to write Files\n");
     WritePopulationLymphNode(model, dendritic, "./modelmpi/result/dendritic.txt");
     WritePopulationLymphNode(model, tHelper, "./modelmpi/result/tHelper.txt");
     WritePopulationLymphNode(model, tCytotoxic, "./modelmpi/result/tCyto.txt");
@@ -114,7 +114,7 @@ void WriteLymphNodeFiles(structModel model, float *dendritic, float *tHelper, fl
     system(command);
     clock_t end = clock();
     double time_spent = (double)(end - start) / CLOCKS_PER_SEC;
-    printf("Write files took %lf seconds\n", time_spent);
+    //printf("Write files took %lf seconds\n", time_spent);
 }
 
 void WriteFiles(structModel model, float *oligodendrocyte, float *microglia, float *tCytotoxic, float *antibody, float *conventionalDC, float  *activatedDC, float time){
@@ -169,7 +169,7 @@ void WriteFiles(structModel model, float *oligodendrocyte, float *microglia, flo
 
 void PlotResults(structModel model){
     clock_t start = clock();
-    printf("Ploting results\n");
+    //printf("Ploting results\n");
     char buffer[10];
     char command[200] = {};
     strcat(command, "python3 plotMatrices.py ");
@@ -187,7 +187,7 @@ void PlotResults(structModel model){
     system(command);
     clock_t end = clock();
     double time_spent = (double)(end - start) / CLOCKS_PER_SEC;
-    printf("Plot results took %lf seconds\n", time_spent);
+    //printf("Plot results took %lf seconds\n", time_spent);
 }
 
 float AdvectionTerm(float populationPoint, float avgValue){
@@ -266,7 +266,7 @@ void DefineBVPV(structModel *model){
                 }
             }
         }
-        printf("BV: %d and PV: %d", model->parametersModel.V_BV, model->parametersModel.V_PV);
+        //printf("BV: %d and PV: %d", model->parametersModel.V_BV, model->parametersModel.V_PV);
         WriteBVPV(model, model->thetaBV, model->thetaPV);
     }
     // Para cada linha da matriz fazer broadcast
@@ -316,7 +316,7 @@ float hx, float time, float space, int numFigs, int numPointsLN, int my_rank, in
     model.numLines = model.spaceLen/comm_sz;
     model.startLine = my_rank*model.numLines;
     model.endLine = model.startLine + model.numLines-1;
-    printf("\nProcess %d num line: %d and start line: %d\n", my_rank, model.numLines, model.startLine);
+    //printf("\nProcess %d num line: %d and start line: %d\n", my_rank, model.numLines, model.startLine);
     if(my_rank == comm_sz - 1)
         model.endLine = xSize - 1;
     for (int index=0;index<BUFFER;++index){
@@ -560,7 +560,7 @@ void RunModel(structModel *model){
     activatedDcClearance = 0.0, activatedDcMigration = 0.0, antibodyMigration = 0.0;
 
     float microgliaKMinus = 0.0, conventionalDcKMinus = 0.0, activatedDcKMinus = 0.0, tCytotoxicKMinus = 0.0, antibodyKMinus = 0.0, oligodendrocyteKMinus = 0.0;
-    printf("Process %d spaceLen: %d\n\n", model->my_rank, model->spaceLen);
+    //printf("Process %d spaceLen: %d\n\n", model->my_rank, model->spaceLen);
     float auxAdcPV = 0.0, auxAntibodyBV = 0.0, auxTCytotoxicBV = 0.0, auxTT = 0.0, auxAT = 0.0, auxDC = 0.0;
     for(int kTime = 1; kTime <= model->timeLen; kTime++){
         auxAdcPV = 0.0, auxAntibodyBV = 0.0, auxTCytotoxicBV = 0.0, auxTT = 0.0, auxAT = 0.0, auxDC = 0.0;
@@ -763,7 +763,7 @@ void RunModel(structModel *model){
     if(model->my_rank == 0){
         double end = MPI_Wtime();
         double time_spent = (double)(end - start);
-        printf("Computation Done in %lf seconds!!\n", time_spent);
+        printf("\nComputation Done in %lf seconds!!\n", time_spent);
         WriteLymphNodeFiles(*model, model->dendriticLymphNodeSavedPoints, model->tHelperLymphNodeSavedPoints, model->tCytotoxicLymphNodeSavedPoints, model->bCellLymphNodeSavedPoints, model->plasmaCellLymphNodeSavedPoints, model->antibodyLymphNodeSavedPoints);
         PlotResults(*model);
     }
