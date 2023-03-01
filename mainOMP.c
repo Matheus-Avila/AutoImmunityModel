@@ -130,8 +130,13 @@ structParameters ParametersInitialize(){
     return params;
 }
 
+void clearPhgTxt(){
+    system("find ./result/ -name '*.png' -type f -delete");
+    system("find ./result/ -name '*.txt' -type f -delete");
+}
 
 int main(int argc, char* argv[]){
+    clearPhgTxt();
     int tot_thr = strtol(argv[1], NULL, 10);
     int calculateQoI = 0;
     calculateQoI = strtol(argv[2], NULL, 10);
@@ -140,7 +145,9 @@ int main(int argc, char* argv[]){
         parameters = ParametersInitialize();
     else
         parameters = ReadParameters();
-    structModel model = ModelInitialize(parameters, tot_thr, calculateQoI);
+    float ht = 0.0002, hx = 0.5;
+    int numFigs = 28, numPointsLN = 1000, time = 28, space = 20;
+    structModel model = ModelInitialize(parameters, tot_thr, ht, hx, time, space, numFigs, numPointsLN, calculateQoI);
     float start = omp_get_wtime();
     RunModel(&model);
     float end = omp_get_wtime();
