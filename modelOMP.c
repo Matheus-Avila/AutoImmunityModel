@@ -173,31 +173,32 @@ float fFunc(float valuePopulation, float avgPopulation){
     return valuePopulation*valuePopulation/(float)(valuePopulation + avgPopulation);
 }
 
-void DefineBVPV(structModel *model){
-    model->parametersModel.V_BV = model->xSize * model->xSize * .1;
-    model->parametersModel.V_PV = model->xSize * model->xSize * .1;
-    printf("bv = %f, pv = %f \n", model->parametersModel.V_BV, model->parametersModel.V_PV);
-    int randomPos;
-    for(int i = 0; i < model->parametersModel.V_PV; i++){
-        randomPos = rand() % model->xSize*model->xSize -1;
-        if(model->thetaBV[randomPos] == 0 && model->thetaPV[randomPos + 1] == 0){
-            model->thetaBV[randomPos] = 1;
-            model->thetaPV[randomPos + 1] = 1;
-        }
-        else{
-            i--;
-        }
-    }
-    WriteBVPV(model, model->thetaBV, model->thetaPV);
-}
-/*
+// void DefineBVPV(structModel *model){
+//     model->parametersModel.V_BV = model->xSize * model->xSize * .1;
+//     model->parametersModel.V_PV = model->xSize * model->xSize * .1;
+//     printf("bv = %f, pv = %f \n", model->parametersModel.V_BV, model->parametersModel.V_PV);
+//     int randomPos;
+//     for(int i = 0; i < model->parametersModel.V_PV; i++){
+//         randomPos = rand() % model->xSize*model->xSize -1;
+//         if(model->thetaBV[randomPos] == 0 && model->thetaPV[randomPos + 1] == 0){
+//             model->thetaBV[randomPos] = 1;
+//             model->thetaPV[randomPos + 1] = 1;
+//         }
+//         else{
+//             i--;
+//         }
+//     }
+//     WriteBVPV(model, model->thetaBV, model->thetaPV);
+// }
+
 void DefineBVPV(structModel *model){
     int randomVal;
+    do{
     for(int k = 0; k < model->xSize*model->xSize; k++){
         int i = (int)k/model->xSize;
         int j = k%model->xSize;
         randomVal = rand() % 100;
-        if(randomVal <10){
+        if(randomVal <10 && model->thetaBV[k] == 0){
             model->parametersModel.V_BV++;
             model->parametersModel.V_PV++;
             model->thetaBV[k] = 1;
@@ -206,7 +207,10 @@ void DefineBVPV(structModel *model){
             else
                 model->thetaPV[k-model->xSize+1] = 1;
         }
+        if(model->parametersModel.V_BV == model->xSize * model->xSize * .1)
+            break;
     }
+    }while(model->parametersModel.V_BV < model->xSize * model->xSize * .1);
     printf("bv = %f, pv = %f \n", model->parametersModel.V_BV, model->parametersModel.V_PV);
     
     model->parametersModel.V_BV = model->parametersModel.V_BV * model->hx * model->hx;
@@ -214,7 +218,7 @@ void DefineBVPV(structModel *model){
     
     printf("bv = %f, pv = %f \n", model->parametersModel.V_BV, model->parametersModel.V_PV);
     WriteBVPV(model, model->thetaBV, model->thetaPV);
-}*/
+}
 
 void WriteBVPV(structModel *model, float *thetaBV, float *thetaPV){
     FILE *fileBV;
