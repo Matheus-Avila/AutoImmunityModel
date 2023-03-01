@@ -57,7 +57,7 @@ typedef struct structParameters
     float estableP;
     float V_PV;
     float V_BV;
-    int V_LN;
+    float V_LN;
 }structParameters;
 
 typedef struct structModel

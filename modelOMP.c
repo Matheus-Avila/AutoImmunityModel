@@ -174,6 +174,24 @@ float fFunc(float valuePopulation, float avgPopulation){
 }
 
 void DefineBVPV(structModel *model){
+    model->parametersModel.V_BV = model->xSize * model->xSize * .1;
+    model->parametersModel.V_PV = model->xSize * model->xSize * .1;
+    printf("bv = %f, pv = %f \n", model->parametersModel.V_BV, model->parametersModel.V_PV);
+    int randomPos;
+    for(int i = 0; i < model->parametersModel.V_PV; i++){
+        randomPos = rand() % model->xSize*model->xSize -1;
+        if(model->thetaBV[randomPos] == 0 && model->thetaPV[randomPos + 1] == 0){
+            model->thetaBV[randomPos] = 1;
+            model->thetaPV[randomPos + 1] = 1;
+        }
+        else{
+            i--;
+        }
+    }
+    WriteBVPV(model, model->thetaBV, model->thetaPV);
+}
+/*
+void DefineBVPV(structModel *model){
     int randomVal;
     for(int k = 0; k < model->xSize*model->xSize; k++){
         int i = (int)k/model->xSize;
@@ -189,12 +207,14 @@ void DefineBVPV(structModel *model){
                 model->thetaPV[k-model->xSize+1] = 1;
         }
     }
+    printf("bv = %f, pv = %f \n", model->parametersModel.V_BV, model->parametersModel.V_PV);
+    
     model->parametersModel.V_BV = model->parametersModel.V_BV * model->hx * model->hx;
     model->parametersModel.V_PV = model->parametersModel.V_PV * model->hx * model->hx;
     
-    // printf("bv = %d, pv = %d \n", model->parametersModel.V_BV, model->parametersModel.V_PV);
+    printf("bv = %f, pv = %f \n", model->parametersModel.V_BV, model->parametersModel.V_PV);
     WriteBVPV(model, model->thetaBV, model->thetaPV);
-}
+}*/
 
 void WriteBVPV(structModel *model, float *thetaBV, float *thetaPV){
     FILE *fileBV;
@@ -266,8 +286,8 @@ structModel ModelInitialize(structParameters params, int totThr, float ht, float
         model.antibody[index] = (float*)calloc(model.xSize*model.xSize, sizeof(float));
     }
     //definir BV e PV
-    model.thetaPV = (float*)malloc(model.xSize*model.xSize * sizeof(float));
-    model.thetaBV = (float*)malloc(model.xSize*model.xSize * sizeof(float));
+    model.thetaPV = (float*)calloc(model.xSize*model.xSize, sizeof(float));
+    model.thetaBV = (float*)calloc(model.xSize*model.xSize, sizeof(float));
     DefineBVPV(&model);
     //definir lymph node
     model.dendriticLymphNodeSavedPoints = (float*)malloc(model.numPointsLN * sizeof(float));
@@ -544,9 +564,9 @@ void RunModel(structModel *model){
         }
         if((kTime%model->intervalFigures == 0 || kTime == model->tSize) && !model->calculateQoI)
             WriteFiles(*model, model->oligodendrocyte[stepKPlus], model->microglia[stepKPlus], model->tCytotoxic[stepKPlus], model->antibody[stepKPlus], model->conventionalDc[stepKPlus], model->activatedDc[stepKPlus], kTime);
-        model->tCytotoxicTissueVessels = auxTCytotoxicBV/model->parametersModel.V_BV;
-        model->antibodyTissueVessels = auxAntibodyBV/model->parametersModel.V_BV;
-        model->activatedDCTissueVessels = auxAdcPV/model->parametersModel.V_PV;
+        model->tCytotoxicTissueVessels = auxTCytotoxicBV * model->hx * model->hx / model->parametersModel.V_BV;
+        model->antibodyTissueVessels = auxAntibodyBV * model->hx * model->hx / model->parametersModel.V_BV;
+        model->activatedDCTissueVessels = auxAdcPV * model->hx * model->hx / model->parametersModel.V_PV;
         stepKMinus += 1;
         stepKMinus = stepKMinus%2;
     }
