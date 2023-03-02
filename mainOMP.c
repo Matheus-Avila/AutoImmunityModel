@@ -145,8 +145,8 @@ int main(int argc, char* argv[]){
         parameters = ParametersInitialize();
     else
         parameters = ReadParameters();
-    float ht = 0.0002, hx = 0.5;
-    int numFigs = 28, numPointsLN = 1000, time = 28, space = 20;
+    float ht = 0.000005, hx = 0.2;
+    int numFigs = 7, numPointsLN = 1000, time = 14, space = 20;
     structModel model = ModelInitialize(parameters, tot_thr, ht, hx, time, space, numFigs, numPointsLN, calculateQoI);
     float start = omp_get_wtime();
     RunModel(&model);

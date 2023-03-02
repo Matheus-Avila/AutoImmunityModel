@@ -11,7 +11,7 @@ void InitialConditionTissueMicroglia(structModel* model){
     for(int k = 0; k < model->xSize*model->xSize; k++){
         int i = (int)k/model->xSize;
         int j = k%model->xSize;
-        if(pow((i-(int)(model->xSize/2)),2) + pow((j-(int)(model->xSize/2)),2) < 5){
+        if(pow((i-(int)(model->xSize/2)),2) + pow((j-(int)(model->xSize/2)),2) < 5 / (model->hx * model->hx)){
             model->microglia[0][k] = (float)model->parametersModel.avgMic/3;
         }
     }
@@ -173,48 +173,6 @@ float fFunc(float valuePopulation, float avgPopulation){
     return valuePopulation*valuePopulation/(float)(valuePopulation + avgPopulation);
 }
 
-// void DefineBVPV(structModel *model){
-//     model->parametersModel.V_BV = model->xSize * model->xSize * .1;
-//     model->parametersModel.V_PV = model->xSize * model->xSize * .1;
-//     printf("bv = %f, pv = %f \n", model->parametersModel.V_BV, model->parametersModel.V_PV);
-//     int randomPos;
-//     for(int i = 0; i < model->parametersModel.V_PV; i++){
-//         randomPos = rand() % model->xSize*model->xSize -1;
-//         if(model->thetaBV[randomPos] == 0 && model->thetaPV[randomPos + 1] == 0){
-//             model->thetaBV[randomPos] = 1;
-//             model->thetaPV[randomPos + 1] = 1;
-//         }
-//         else{
-//             i--;
-//         }
-//     }
-//     WriteBVPV(model, model->thetaBV, model->thetaPV);
-// }
-
-void DefineBVPV(structModel *model){
-    int randomVal;
-    do{
-    for(int k = 0; k < model->xSize*model->xSize; k++){
-        int i = (int)k/model->xSize;
-        int j = k%model->xSize;
-        randomVal = rand() % 100;
-        if(randomVal <10 && model->thetaBV[k] == 0){
-            model->parametersModel.V_BV++;
-            model->parametersModel.V_PV++;
-            model->thetaBV[k] = 1;
-            if(j != model->xSize-1)
-                model->thetaPV[k+1] = 1;
-            else
-                model->thetaPV[k-model->xSize+1] = 1;
-        }
-        if(model->parametersModel.V_BV == model->xSize * model->xSize * .1)
-            break;
-    }
-    }while(model->parametersModel.V_BV < model->xSize * model->xSize * .1);
-    printf("bv = %d, pv = %d \n", model->parametersModel.V_BV, model->parametersModel.V_PV);
-    
-    WriteBVPV(model, model->thetaBV, model->thetaPV);
-}
 
 void WriteBVPV(structModel *model, float *thetaBV, float *thetaPV){
     FILE *fileBV;
@@ -243,6 +201,32 @@ void WriteBVPV(structModel *model, float *thetaBV, float *thetaPV){
     strcat(command, buffer);
     // system(command);
 }
+
+void DefineBVPV(structModel *model){
+    int randomVal;
+    do{
+    for(int k = 0; k < model->xSize*model->xSize; k++){
+        int i = (int)k/model->xSize;
+        int j = k%model->xSize;
+        randomVal = rand() % 100;
+        if(randomVal <10 && model->thetaBV[k] == 0){
+            model->parametersModel.V_BV++;
+            model->parametersModel.V_PV++;
+            model->thetaBV[k] = 1;
+            if(j != model->xSize-1)
+                model->thetaPV[k+1] = 1;
+            else
+                model->thetaPV[k-model->xSize+1] = 1;
+        }
+        if(model->parametersModel.V_BV == model->xSize * model->xSize * .1)
+            break;
+    }
+    }while(model->parametersModel.V_BV < model->xSize * model->xSize * .1);
+    printf("bv = %d, pv = %d \n", model->parametersModel.V_BV, model->parametersModel.V_PV);
+    
+    WriteBVPV(model, model->thetaBV, model->thetaPV);
+}
+
 
 structModel ModelInitialize(structParameters params, int totThr, float ht, float hx, float time, float space, int numFigs, int numPointsLN, int calculateQoI){
     structModel model;
@@ -323,14 +307,14 @@ float* EquationsLymphNode(structModel model, float* populationLN, int stepPos){
     //Describe equations
 
     //Dendritic cell
-    float activatedDcMigration = model.parametersModel.gammaD * (model.activatedDCTissueVessels - dcLN) * (float)(model.parametersModel.V_PV * model.hx * model.hx / model.parametersModel.V_LN);
+    float activatedDcMigration = model.parametersModel.gammaD * (model.activatedDCTissueVessels - dcLN) * model.hx * model.hx * (float)(model.parametersModel.V_PV / model.parametersModel.V_LN);
     float activatedDcClearance = model.parametersModel.cDl * dcLN;
     result[0] = activatedDcMigration - activatedDcClearance;
 
     //T Cytotoxic
     float tCytoActivation = model.parametersModel.bTCytotoxic * (model.parametersModel.rhoTCytotoxic*tCytoLN*dcLN - tCytoLN*dcLN);
     float tCytoHomeostasis = model.parametersModel.alphaTCytotoxic * (model.parametersModel.estableTCytotoxic - tCytoLN);
-    float tCytoMigration = model.parametersModel.gammaT * (tCytoLN - model.tCytotoxicTissueVessels) * (float)(model.parametersModel.V_BV * model.hx * model.hx / model.parametersModel.V_LN);
+    float tCytoMigration = model.parametersModel.gammaT * (tCytoLN - model.tCytotoxicTissueVessels) * model.hx * model.hx * (float)(model.parametersModel.V_BV / model.parametersModel.V_LN);
     result[1] = tCytoActivation + tCytoHomeostasis - tCytoMigration;
 
     //T Helper
@@ -352,7 +336,7 @@ float* EquationsLymphNode(structModel model, float* populationLN, int stepPos){
     //Antibody
     float antibodyProduction = model.parametersModel.rhoAntibody * plasmaCellLN;
     float antibodyDecayment = model.parametersModel.cF * antibodyLN;
-    float antibodyMigration = model.parametersModel.gammaAntibody * (antibodyLN - model.antibodyTissueVessels) * (float)(model.parametersModel.V_BV * model.hx * model.hx / model.parametersModel.V_LN);
+    float antibodyMigration = model.parametersModel.gammaAntibody * (antibodyLN - model.antibodyTissueVessels) * model.hx * model.hx * (float)(model.parametersModel.V_BV / model.parametersModel.V_LN);
     result[5] = antibodyProduction - antibodyMigration;
 
     return result;
@@ -564,9 +548,12 @@ void RunModel(structModel *model){
         }
         if((kTime%model->intervalFigures == 0 || kTime == model->tSize) && !model->calculateQoI)
             WriteFiles(*model, model->oligodendrocyte[stepKPlus], model->microglia[stepKPlus], model->tCytotoxic[stepKPlus], model->antibody[stepKPlus], model->conventionalDc[stepKPlus], model->activatedDc[stepKPlus], kTime);
-        model->tCytotoxicTissueVessels = auxTCytotoxicBV * model->hx * model->hx / model->parametersModel.V_BV;
-        model->antibodyTissueVessels = auxAntibodyBV * model->hx * model->hx / model->parametersModel.V_BV;
-        model->activatedDCTissueVessels = auxAdcPV * model->hx * model->hx / model->parametersModel.V_PV;
+        
+        model->tCytotoxicTissueVessels = auxTCytotoxicBV * model->hx * model->hx / (model->parametersModel.V_BV  * model->hx * model->hx);
+        model->antibodyTissueVessels = auxAntibodyBV * model->hx * model->hx / (model->parametersModel.V_BV  * model->hx * model->hx);
+        model->activatedDCTissueVessels = auxAdcPV * model->hx * model->hx / (model->parametersModel.V_PV  * model->hx * model->hx);
+        if(kTime == model->tSize/4)
+            printf("dc Tecido : %f\n", auxTCytotoxicBV);
         stepKMinus += 1;
         stepKMinus = stepKMinus%2;
     }
