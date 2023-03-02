@@ -5,7 +5,7 @@ import numpy as np
 kp = open('times.txt', 'w')
 
 commands = [
-   2, 4
+   2, 4, 6
 ]
 
 def processResult(result: str):
@@ -34,6 +34,10 @@ def main():
         for k in results:
             sum += k
         mean = sum / 10
-        to_write = "Mean for MPI with {} processes is: {}\n".format(command, mean)
+        stdd = 0
+        for k in results:
+            stdd += pow((k - mean), 2)
+        stdd = stdd / 10
+        to_write = "Mean for MPI with {} processes is: {} and stdd: {}\n".format(command, mean, stdd)
         kp.write(to_write)
 main()
