@@ -55,6 +55,7 @@ def printResult(indexes, title, fileName):
 
 def model(d_mic, d_anti, d_dc, d_da, d_t_cit, chi, mu_dc, mu_m, r_m, r_t, lamb_f_m, b_d, gamma_D, gamma_F, gamma_T,
  cMic, cCDc, cADc, cDl, cF, alpha_T_h, alpha_T_c, alpha_B, alpha_P, b_Th, b_Tc, b_rho, b_rho_b, b_rho_p, rho_Th, rho_Tc, rho_B, rho_P, rho_F):
+# def model(mu_m, d_mic):
     #Escrever parametros em um txt
     with open('./sensitivity_analysis/SA_parameters.txt', 'w') as filep:
         filep.write(str(chi)+"\n"+str(d_mic)+"\n"+str(d_dc)+"\n"+str(d_da)+"\n"+str(d_t_cit)+"\n"+str(d_anti)+
@@ -226,11 +227,22 @@ def RunSA():
     else:
         numOutPuts = numSamples*(len(sample[0]) + 2)
     
-    inputFile = open("sample.txt", "w")
-    for samp in sample:
-        inputFile.write(str(samp) + "\n")
-    inputFile.close()
+    # inputFile = open("sample.txt", "w")
+    # for samp in sample:
+    #     for param in range(len(samp)):
+    #         inputFile.write(str(samp[param]) + "\n")
+    # inputFile.close()
 
+    numParams = problem["num_vars"]
+    with open("sample.txt", "r") as file:
+        for i in range(numOutPuts):
+            for j in range(numParams):
+                sample[i][j] = file.readline()
+
+    startPos = 0.35
+    startPos = int(numOutPuts * startPos)
+    sample = sample[startPos:]
+    
     # evaluate the model for eah point in the input sample
     for i in range(len(Y)):
         x = sample[i]

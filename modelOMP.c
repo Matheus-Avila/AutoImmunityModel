@@ -204,12 +204,11 @@ void WriteBVPV(structModel *model, float *thetaBV, float *thetaPV){
 
 void DefineBVPV(structModel *model){
     int randomVal;
-    do{
     for(int k = 0; k < model->xSize*model->xSize; k++){
         int i = (int)k/model->xSize;
         int j = k%model->xSize;
         randomVal = rand() % 100;
-        if(randomVal <10 && model->thetaBV[k] == 0){
+        if(randomVal <10){
             model->parametersModel.V_BV++;
             model->parametersModel.V_PV++;
             model->thetaBV[k] = 1;
@@ -218,12 +217,7 @@ void DefineBVPV(structModel *model){
             else
                 model->thetaPV[k-model->xSize+1] = 1;
         }
-        if(model->parametersModel.V_BV == model->xSize * model->xSize * .1)
-            break;
     }
-    }while(model->parametersModel.V_BV < model->xSize * model->xSize * .1);
-    printf("bv = %d, pv = %d \n", model->parametersModel.V_BV, model->parametersModel.V_PV);
-    
     WriteBVPV(model, model->thetaBV, model->thetaPV);
 }
 
@@ -552,12 +546,10 @@ void RunModel(structModel *model){
         model->tCytotoxicTissueVessels = auxTCytotoxicBV * model->hx * model->hx / (model->parametersModel.V_BV  * model->hx * model->hx);
         model->antibodyTissueVessels = auxAntibodyBV * model->hx * model->hx / (model->parametersModel.V_BV  * model->hx * model->hx);
         model->activatedDCTissueVessels = auxAdcPV * model->hx * model->hx / (model->parametersModel.V_PV  * model->hx * model->hx);
-        if(kTime == model->tSize/4)
-            printf("dc Tecido : %f\n", auxTCytotoxicBV);
+        
         stepKMinus += 1;
         stepKMinus = stepKMinus%2;
     }
-    printf("Computation Done!!\n");
 
     for(int index=0;index<BUFFER;++index){
         free(model->microglia[index]);
@@ -583,14 +575,12 @@ void RunModel(structModel *model){
     free(model->antibodyLymphNode);
     free(model->bCellLymphNode);
     free(model->plasmaCellLymphNode);
-    printf("Saving results...\n\n");
     if(!model->calculateQoI){
         WriteLymphNodeFiles(*model, model->dendriticLymphNodeSavedPoints, model->tHelperLymphNodeSavedPoints, model->tCytotoxicLymphNodeSavedPoints, model->bCellLymphNodeSavedPoints, model->plasmaCellLymphNodeSavedPoints, model->antibodyLymphNodeSavedPoints);
         PlotResults(*model);
     }
     else
         WriteQoI(qoI);
-    // WriteLymphNodeFiles(*model, model->dendriticLymphNodeSavedPoints, model->tHelperLymphNodeSavedPoints, model->tCytotoxicLymphNodeSavedPoints, model->bCellLymphNodeSavedPoints, model->plasmaCellLymphNodeSavedPoints, model->antibodyLymphNodeSavedPoints);
     
     free(model->dendriticLymphNodeSavedPoints);
     free(model->tCytotoxicLymphNodeSavedPoints);
