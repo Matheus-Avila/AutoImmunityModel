@@ -6,47 +6,6 @@ from SALib.analyze import sobol
 
 
 def printResult(indexes, title, fileName):
-    '''
-    labels = ["$d_{mic}$",
-    "$d_anti$",
-    "$d_dc$",
-    "$d_da$",
-    "$d_t_cit$",
-    "$\chi$",
-
-    "$mu_dc$",
-    "$mu_m$",
-    "$r_m$",
-    "$r_t$",
-    "$lamb_f_m$",
-    "$b_d$",
-
-    "$gamma_D$",
-    "$gamma_F$",
-    "$gamma_T$",
-    
-    "$cMic$",
-    "$cCDc$",
-    "$cADc$",
-    "$cDl$",
-    "$cF$",
-    
-    "$alpha_T_h$",
-    "$alpha_T_c$",
-    "$alpha_B$",
-    "$alpha_P$",
-
-    "$b_T$",
-    "$b_Tc$",
-    "$b_rho$",
-    "$b_rho_b$",
-    "$b_rho_p$",
-    "$rho_T$",
-    "$rho_Tc$",
-    "$rho_B$",
-    "$rho_P$",
-    "$rho_F$"]'''
-
     
     labels = ["$d_{mic}$",
     "$d_{a}$",
@@ -223,11 +182,11 @@ problem = {
         [lowerBound*gamma_F_mean, upperBound*gamma_F_mean],
         [lowerBound*gamma_T_mean, upperBound*gamma_T_mean],
 
-        [.9*cMic_mean, upperBound*cMic_mean],
-        [.9*cCDc_mean, upperBound*cCDc_mean],
-        [.9*cADc_mean, upperBound*cADc_mean],
-        [.9*cDl_mean, upperBound*cDl_mean],
-        [.9*cF_mean, upperBound*cF_mean],
+        [lowerBound*cMic_mean, upperBound*cMic_mean],
+        [lowerBound*cCDc_mean, upperBound*cCDc_mean],
+        [lowerBound*cADc_mean, upperBound*cADc_mean],
+        [lowerBound*cDl_mean, upperBound*cDl_mean],
+        [lowerBound*cF_mean, upperBound*cF_mean],
 
         [lowerBound*alpha_T_h_mean, upperBound*alpha_T_h_mean],
         [lowerBound*alpha_T_c_mean, upperBound*alpha_T_c_mean],
@@ -319,10 +278,12 @@ def RunSA():
 
     printResult(sensitivity['S1'], 'First Order', 'firstOrder')
     printResult(sensitivity['ST'], 'Total Order', 'totalOrder')
-    # count = 0
-    # for line in sensitivity['S2']:
-    #     printResult(line, 'Second Order', 'secondOrder'+str(count))
-    #     count = count + 1
+    count = 0
+    for line in sensitivity['S2']:
+        print(problem["names"][count])
+        print(line)
+        printResult(line, 'Second Order', 'secondOrder'+str(count))
+        count = count + 1
 
     return sensitivity
 
