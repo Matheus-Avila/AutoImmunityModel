@@ -1,8 +1,12 @@
 import numpy as np
+import matplotlib
 import matplotlib.pyplot as plt
 import os
 from SALib.sample import saltelli
 from SALib.analyze import sobol
+import math
+import pandas as pd
+import seaborn as sns
 
 
 def printResult(indexes, title, fileName):
@@ -50,6 +54,7 @@ def printResult(indexes, title, fileName):
     # plt.bar(labels, indexes, color ='maroon')
     plt.title(title)
     plt.barh(labels, indexes, color ='maroon')
+    plt.xlabel("Sobol's indices")
     # plt.show()
     plt.savefig("./sensitivity_analysis/"+ fileName +".png", dpi = 900)
     plt.clf()
@@ -217,6 +222,70 @@ problem = {
     ]
 }
 '''
+
+def printHeatMap(population, title, fileName):
+    df = pd.DataFrame(population)
+    matrix = df.corr().round(2)
+    label = ["$d_{mic}$", "$d_{a}$", "$d_{dc}$", "$d_{da}$", "$d_{t}$", "$\chi$", "$\mu_{dc}$", "$\mu_m$", "$r_m$", "$r_t$", "$\lambda_{fm}$", "$b_d$", "$\gamma_D$", "$\gamma_F$", "$\gamma_T$", "$c_M$", "$c_{DC}$", "$c_{DA}$", "$c_{DL}$", "$c_F$", "$\\alpha_{Th}$", "$\\alpha_{Tc}$", "$\\alpha_B$", "$\\alpha_P$", "$b_{Th}$", "$b_{Tc}$", "$b_{\\rho}$", "$b_{\\rho_b}$", "$b_{\\rho_p}$", "$\\rho_T$", "$\\rho_{TC}$", "$\\rho_B$", "$\\rho_P$", "$\\rho_F$"]
+    sns.heatmap(matrix, xticklabels = label, yticklabels = label, annot=False, vmax=1, vmin=0, center=0.5, linewidths=.2, cmap='vlag')
+    plt.title(title)
+    plt.savefig("./sensitivity_analysis/"+ fileName +".png", dpi = 900)
+    plt.clf()
+
+def printMesh(population, title, fileName):
+    x = np.linspace(0, 34, 34)
+    x_pts, y_pts = np.meshgrid(x, x)
+    for line in population:
+        for j in line:
+            if math.isnan(j):
+                j = 0
+    max_population = np.max(population)
+    if max_population == 0:
+        max_population += 1
+    levels = np.linspace(-max_population, max_population, 5)
+
+    cp = plt.contourf(x_pts, y_pts,population, levels=levels)
+    plt.title(title)
+    label = ["$d_{mic}$",
+    "$d_{a}$",
+    "$d_{dc}$",
+    "$d_{da}$",
+    "$d_{t}$",
+    "$\chi$",
+    "$\mu_{dc}$",
+    "$\mu_m$",
+    "$r_m$",
+    "$r_t$",
+    "$\lambda_{fm}$",
+    "$b_d$",
+    "$\gamma_D$",
+    "$\gamma_F$",
+    "$\gamma_T$",
+    "$c_M$",
+    "$c_{DC}$",
+    "$c_{DA}$",
+    "$c_{DL}$",
+    "$c_F$",
+    "$\\alpha_{Th}$",
+    "$\\alpha_{Tc}$",
+    "$\\alpha_B$",
+    "$\\alpha_P$",
+    "$b_{Th}$",
+    "$b_{Tc}$",
+    "$b_{\\rho}$",
+    "$b_{\\rho_b}$",
+    "$b_{\\rho_p}$",
+    "$\\rho_T$",
+    "$\\rho_{TC}$",
+    "$\\rho_B$",
+    "$\\rho_P$",
+    "$\\rho_F$"]
+    # plt.xticks([np.arange(0,33, step = 1)])
+    # plt.yticks([np.arange(0,33, step = 1)])
+    # plt.colorbar(cp, label="Concentration (cells/$mm^2$)")
+    plt.savefig("./sensitivity_analysis/"+ fileName +".png", dpi = 900)
+    plt.clf()
+
 def RunSA():
     print("Running Model")
     # open("./sensitivity_analysis/SAalloutput.txt", "w").close()
@@ -278,12 +347,26 @@ def RunSA():
 
     printResult(sensitivity['S1'], 'First Order', 'firstOrder')
     printResult(sensitivity['ST'], 'Total Order', 'totalOrder')
-    count = 0
-    for line in sensitivity['S2']:
-        print(problem["names"][count])
-        print(line)
-        printResult(line, 'Second Order', 'secondOrder'+str(count))
-        count = count + 1
+    for i in range(len(sensitivity["S2"][0])):
+        for j in range(len(sensitivity["S2"][0])):
+            if math.isnan(sensitivity["S2"][i][j]):
+                sensitivity["S2"][i][j] = 0
+
+    for i in range(len(sensitivity["S1"])):
+        if sensitivity["S1"][i] < 0:
+            sensitivity["S1"][i] = 0
+
+    # for line in sensitivity['S2']:
+    #     print(line)
+    printHeatMap(sensitivity["S2"], "Sobol's Indices Second Order", "heatmap")
+    # printMesh(sensitivity["S2"], 'Second Order' , 'secondOrder')
+
+    # count = 0
+    # for line in sensitivity['S2']:
+    #     print(problem["names"][count])
+    #     print(line)
+    #     printResult(line, 'Second Order ' +str(problem["names"][count]), 'secondOrder'+str(problem["names"][count]))
+    #     count = count + 1
 
     return sensitivity
 
