@@ -6,45 +6,88 @@ from SALib.analyze import sobol
 
 
 def printResult(indexes, title, fileName):
-    labels = ["d_mic",
-    "d_anti",
-    "d_dc",
-    "d_da",
-    "d_t_cit",
-    "chi",
+    '''
+    labels = ["$d_{mic}$",
+    "$d_anti$",
+    "$d_dc$",
+    "$d_da$",
+    "$d_t_cit$",
+    "$\chi$",
 
-    "mu_dc",
-    "mu_m",
-    "r_m",
-    "r_t",
-    "lamb_f_m",
-    "b_d",
+    "$mu_dc$",
+    "$mu_m$",
+    "$r_m$",
+    "$r_t$",
+    "$lamb_f_m$",
+    "$b_d$",
 
-    "gamma_D",
-    "gamma_F",
-    "gamma_T",
+    "$gamma_D$",
+    "$gamma_F$",
+    "$gamma_T$",
     
-    "cMic",
-    "cCDc",
-    "cADc",
-    "cDl",
-    "cF",
+    "$cMic$",
+    "$cCDc$",
+    "$cADc$",
+    "$cDl$",
+    "$cF$",
     
-    "alpha_T_h",
-    "alpha_T_c",
-    "alpha_B",
-    "alpha_P",
+    "$alpha_T_h$",
+    "$alpha_T_c$",
+    "$alpha_B$",
+    "$alpha_P$",
 
-    "b_T",
-    "b_Tc",
-    "b_rho",
-    "b_rho_b",
-    "b_rho_p",
-    "rho_T",
-    "rho_Tc",
-    "rho_B",
-    "rho_P",
-    "rho_F"]
+    "$b_T$",
+    "$b_Tc$",
+    "$b_rho$",
+    "$b_rho_b$",
+    "$b_rho_p$",
+    "$rho_T$",
+    "$rho_Tc$",
+    "$rho_B$",
+    "$rho_P$",
+    "$rho_F$"]'''
+
+    
+    labels = ["$d_{mic}$",
+    "$d_{a}$",
+    "$d_{dc}$",
+    "$d_{da}$",
+    "$d_{t}$",
+    "$\chi$",
+
+    "$\mu_{dc}$",
+    "$\mu_m$",
+    "$r_m$",
+    "$r_t$",
+    "$\lambda_{fm}$",
+    "$b_d$",
+
+    "$\gamma_D$",
+    "$\gamma_F$",
+    "$\gamma_T$",
+    
+    "$c_M$",
+    "$c_{DC}$",
+    "$c_{DA}$",
+    "$c_{DL}$",
+    "$c_F$",
+    
+    "$\\alpha_{Th}$",
+    "$\\alpha_{Tc}$",
+    "$\\alpha_B$",
+    "$\\alpha_P$",
+
+    "$b_{Th}$",
+    "$b_{Tc}$",
+    "$b_{\\rho}$",
+    "$b_{\\rho_b}$",
+    "$b_{\\rho_p}$",
+    "$\\rho_T$",
+    "$\\rho_{TC}$",
+    "$\\rho_B$",
+    "$\\rho_P$",
+    "$\\rho_F$"]
+    
     # plt.bar(labels, indexes, color ='maroon')
     plt.title(title)
     plt.barh(labels, indexes, color ='maroon')
@@ -217,7 +260,7 @@ problem = {
 '''
 def RunSA():
     print("Running Model")
-    open("./sensitivity_analysis/SAalloutput.txt", "w").close()
+    # open("./sensitivity_analysis/SAalloutput.txt", "w").close()
     numSamples = 2048
     calcSecondOrder=True
     sample = saltelli.sample(problem, numSamples, calc_second_order=calcSecondOrder)
@@ -239,14 +282,14 @@ def RunSA():
             for j in range(numParams):
                 sample[i][j] = file.readline()
 
-    startPos = 0.35
-    startPos = int(numOutPuts * startPos)
-    sample = sample[startPos:]
-    
+    # startPos = 0.975
+    # startPos = int(numOutPuts * startPos)
+    # sample = sample[startPos:]
+    # print(len(sample))
     # evaluate the model for eah point in the input sample
-    for i in range(len(Y)):
-        x = sample[i]
-        Y[i] = model(x[0], x[1], x[2], x[3], x[4], x[5], x[6], x[7], x[8], x[9], x[10], x[11], x[2], x[13], x[14], x[15], x[16], x[17], x[18], x[19], x[20], x[21], x[22], x[23], x[24], x[25], x[26], x[27], x[28], x[29], x[30], x[31], x[32], x[33])
+    # for i in range(len(Y)):
+    #     x = sample[i]
+    #     Y[i] = model(x[0], x[1], x[2], x[3], x[4], x[5], x[6], x[7], x[8], x[9], x[10], x[11], x[2], x[13], x[14], x[15], x[16], x[17], x[18], x[19], x[20], x[21], x[22], x[23], x[24], x[25], x[26], x[27], x[28], x[29], x[30], x[31], x[32], x[33])
 
     output_file = np.zeros(numOutPuts)
     i = 0
@@ -276,6 +319,11 @@ def RunSA():
 
     printResult(sensitivity['S1'], 'First Order', 'firstOrder')
     printResult(sensitivity['ST'], 'Total Order', 'totalOrder')
+    # count = 0
+    # for line in sensitivity['S2']:
+    #     printResult(line, 'Second Order', 'secondOrder'+str(count))
+    #     count = count + 1
+
     return sensitivity
 
 sensitivity = RunSA()
