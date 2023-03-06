@@ -8,52 +8,13 @@ import math
 import pandas as pd
 import seaborn as sns
 
+label = ["$D_{M}$", "$D_{A_t}$", "$D_{DC}$", "$D_{DA}$", "$D_{t}$", "$\chi$", "$\mu_{D}$", "$\mu_M$", "$r_M$", "$r_T$", "$\lambda_{A_t|M}$", "$\\beta_D$", "$\gamma_D$", "$\gamma_F$", "$\gamma_T$", "$c_M$", "$c_{DC}$", "$c_{DA}$", "$c_{D^L}$", "$c_{A^l}$", "$\\alpha_{Th}$", "$\\alpha_{Tc}$", "$\\alpha_B$", "$\\alpha_P$", "$b_{T}$", "$b_{T_c}$", "$b_{\\rho}$", "$b_{\\rho_b}$", "$b_{\\rho_p}$", "$\\rho_T$", "$\\rho_{TC}$", "$\\rho_B$", "$\\rho_P$", "$\\rho_{A^L}$"]
 
 def printResult(indexes, title, fileName):
     
-    labels = ["$d_{mic}$",
-    "$d_{a}$",
-    "$d_{dc}$",
-    "$d_{da}$",
-    "$d_{t}$",
-    "$\chi$",
-
-    "$\mu_{dc}$",
-    "$\mu_m$",
-    "$r_m$",
-    "$r_t$",
-    "$\lambda_{fm}$",
-    "$b_d$",
-
-    "$\gamma_D$",
-    "$\gamma_F$",
-    "$\gamma_T$",
-    
-    "$c_M$",
-    "$c_{DC}$",
-    "$c_{DA}$",
-    "$c_{DL}$",
-    "$c_F$",
-    
-    "$\\alpha_{Th}$",
-    "$\\alpha_{Tc}$",
-    "$\\alpha_B$",
-    "$\\alpha_P$",
-
-    "$b_{Th}$",
-    "$b_{Tc}$",
-    "$b_{\\rho}$",
-    "$b_{\\rho_b}$",
-    "$b_{\\rho_p}$",
-    "$\\rho_T$",
-    "$\\rho_{TC}$",
-    "$\\rho_B$",
-    "$\\rho_P$",
-    "$\\rho_F$"]
-    
     # plt.bar(labels, indexes, color ='maroon')
     plt.title(title)
-    plt.barh(labels, indexes, color ='maroon')
+    plt.barh(label, indexes, color ='maroon')
     plt.xlabel("Sobol's indices")
     # plt.show()
     plt.savefig("./sensitivity_analysis/"+ fileName +".png", dpi = 900)
@@ -225,9 +186,14 @@ problem = {
 
 def printHeatMap(population, title, fileName):
     df = pd.DataFrame(population)
-    matrix = df.corr().round(2)
-    label = ["$d_{mic}$", "$d_{a}$", "$d_{dc}$", "$d_{da}$", "$d_{t}$", "$\chi$", "$\mu_{dc}$", "$\mu_m$", "$r_m$", "$r_t$", "$\lambda_{fm}$", "$b_d$", "$\gamma_D$", "$\gamma_F$", "$\gamma_T$", "$c_M$", "$c_{DC}$", "$c_{DA}$", "$c_{DL}$", "$c_F$", "$\\alpha_{Th}$", "$\\alpha_{Tc}$", "$\\alpha_B$", "$\\alpha_P$", "$b_{Th}$", "$b_{Tc}$", "$b_{\\rho}$", "$b_{\\rho_b}$", "$b_{\\rho_p}$", "$\\rho_T$", "$\\rho_{TC}$", "$\\rho_B$", "$\\rho_P$", "$\\rho_F$"]
-    sns.heatmap(matrix, xticklabels = label, yticklabels = label, annot=False, vmax=1, vmin=0, center=0.5, linewidths=.2, cmap='vlag')
+    matrix = df
+    print(population[0])
+    max_val = 0
+    for i in range(len(population[0])):
+        for j in range(len(population[0])):
+            if population[i][j] > max_val:
+                max_val = population[i][j]    
+    sns.heatmap(matrix, xticklabels = label, yticklabels = label, annot=False, vmax=max_val, vmin=0, center=.5*max_val, linewidths=.2, cmap='crest')
     plt.title(title)
     plt.savefig("./sensitivity_analysis/"+ fileName +".png", dpi = 900)
     plt.clf()
@@ -347,10 +313,7 @@ def RunSA():
 
     printResult(sensitivity['S1'], 'First Order', 'firstOrder')
     printResult(sensitivity['ST'], 'Total Order', 'totalOrder')
-    for i in range(len(sensitivity["S2"][0])):
-        for j in range(len(sensitivity["S2"][0])):
-            if math.isnan(sensitivity["S2"][i][j]):
-                sensitivity["S2"][i][j] = 0
+    
 
     for i in range(len(sensitivity["S1"])):
         if sensitivity["S1"][i] < 0:
