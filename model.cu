@@ -5,15 +5,12 @@
 #include <stdlib.h>
 #include <string.h>
 
-void InitialConditionTissueMicroglia(structModel *model)
-{
-    for (int k = 0; k < model->xSize * model->xSize; k++)
-    {
-        int i = (int)k / model->xSize;
-        int j = k % model->xSize;
-        if (pow((i - (int)(model->xSize / 2)), 2) + pow((j - (int)(model->xSize / 2)), 2) < 5)
-        {
-            model->microglia[0][k] = (float)model->parametersModel.avgMic / 3;
+void InitialConditionTissueMicroglia(structModel* model){
+    for(int k = 0; k < model->xSize*model->xSize; k++){
+        int i = (int)k/model->xSize;
+        int j = k%model->xSize;
+        if(pow((i-(int)(model->xSize/2)),2) + pow((j-(int)(model->xSize/2)),2) < 5 / (model->hx * model->hx)){
+            model->microglia[0][k] = (float)model->parametersModel.avgMic/3;
         }
     }
 }
@@ -239,6 +236,8 @@ void DefineBVPV(structModel *model)
                 model->thetaPV[k - model->xSize + 1] = 1;
         }
     }
+    model->parametersModel.V_BV = model->parametersModel.V_BV * model->hx * model->hx;
+    model->parametersModel.V_PV = model->parametersModel.V_PV * model->hx * model->hx;
     WriteBVPV(model, model->thetaBV, model->thetaPV);
 }
 
@@ -763,24 +762,19 @@ void RunModel(structModel *model)
         cudaMemcpy(activatedDCVessel, devActivatedDCVessel, numBlocks * sizeof(float), cudaMemcpyDeviceToHost);
         cudaMemcpy(antibodyVessel, devAntibodyVessel, numBlocks * sizeof(float), cudaMemcpyDeviceToHost);
         cudaMemcpy(tCytotoxicVessel, devTCytotoxicVessel, numBlocks * sizeof(float), cudaMemcpyDeviceToHost);
-        if (kTime == model->tSize)
-            printf("CPU\n DC Tissue = %f\n DC LN = %f \n", activatedDCVessel[0], model->dendriticLymphNode[stepKPlus]);
         for (int pos = 0; pos < numBlocks; pos++)
         {
             auxAdcPV += activatedDCVessel[pos];
             auxAntibodyBV += antibodyVessel[pos];
             auxTCytotoxicBV += tCytotoxicVessel[pos];
         }
-        model->activatedDCTissueVessels = auxAdcPV / model->parametersModel.V_PV;
-        model->antibodyTissueVessels = auxAntibodyBV / model->parametersModel.V_BV;
-        model->tCytotoxicTissueVessels = auxTCytotoxicBV / model->parametersModel.V_BV;
+        model->tCytotoxicTissueVessels = auxTCytotoxicBV * model->hx * model->hx / model->parametersModel.V_BV;
+        model->antibodyTissueVessels = auxAntibodyBV * model->hx * model->hx / model->parametersModel.V_BV;
+        model->activatedDCTissueVessels = auxAdcPV * model->hx * model->hx / model->parametersModel.V_PV;
 
         free(activatedDCVessel);
         free(antibodyVessel);
         free(tCytotoxicVessel);
-        if (kTime == model->tSize)
-            printf("Tempo final T CD8 Vessel %f - DC LN %f\n", model->tCytotoxicTissueVessels, model->dendriticLymphNode[stepKPlus]);
-
         stepKMinus += 1;
         stepKMinus = stepKMinus % 2;
     }
