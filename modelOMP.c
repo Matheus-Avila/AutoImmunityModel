@@ -263,8 +263,8 @@ structModel ModelInitialize(structParameters params, int totThr, float ht, float
         model.antibody[index] = (float*)calloc(model.xSize*model.xSize, sizeof(float));
     }
     //definir BV e PV
-    model.thetaPV = (float*)malloc(model.xSize*model.xSize * sizeof(float));
-    model.thetaBV = (float*)malloc(model.xSize*model.xSize * sizeof(float));
+    model.thetaPV = (float*)calloc(model.xSize*model.xSize, sizeof(float));
+    model.thetaBV = (float*)calloc(model.xSize*model.xSize, sizeof(float));
     DefineBVPV(&model);
     //definir lymph node
     model.dendriticLymphNodeSavedPoints = (float*)malloc(model.numPointsLN * sizeof(float));
