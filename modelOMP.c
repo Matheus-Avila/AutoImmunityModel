@@ -413,13 +413,14 @@ void RunModel(structModel *model){
         model->tCytotoxicTissueVessels = auxTCytotoxicBV * model->hx * model->hx / model->parametersModel.V_BV;
         model->antibodyTissueVessels = auxAntibodyBV * model->hx * model->hx / model->parametersModel.V_BV;
         model->activatedDCTissueVessels = auxAdcPV * model->hx * model->hx / model->parametersModel.V_PV;
-        if(kTime == model->tSize-1)
-        printf("processo %d :: integral T CD8 = %f\n", tid, model->tCytotoxicTissueVessels);
+
+        if(kTime == model->tSize)
+            printf("processo %d :: integral DC = %f\n", tid, model->activatedDCTissueVessels);
         auxAdcPV = 0.0, auxAntibodyBV = 0.0, auxTCytotoxicBV = 0.0;
         if(tid == 0)
             SolverLymphNode(model, kTime);
         stepKPlus = kTime%2;
-        #pragma omp for
+        #pragma omp for 
         for(int kPos = 0; kPos < model->xSize*model->xSize; kPos++){
             line = (int)kPos/model->xSize;
             column = kPos%model->xSize;
@@ -567,6 +568,9 @@ void RunModel(structModel *model){
         stepKMinus += 1;
         stepKMinus = stepKMinus%2;
     }
+
+    printf("processo :: integral DC = %f\n", model->activatedDCTissueVessels);
+        
     printf("Computation Done!!\n");
 
     for(int index=0;index<BUFFER;++index){
