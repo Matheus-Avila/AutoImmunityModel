@@ -399,7 +399,7 @@ void RunModel(structModel *model){
     float auxAdcPV = 0.0, auxAntibodyBV = 0.0, auxTCytotoxicBV = 0.0;
 
     int kTime;
-    int tid ;
+    int tid;
     #pragma omp parallel num_threads(model->totalThreads) default(none) shared(model, lowerNeumannBC, rightNeumannBC, upperNeumannBC, leftNeumannBC)\
             private(tid, kTime, stepKMinus, stepKPlus, line, column, microgliaKMinus, conventionalDcKMinus,\
             activatedDcKMinus, tCytotoxicKMinus, antibodyKMinus, oligodendrocyteKMinus, valIPlus, valJPlus, valIMinus, valJMinus, gradientOdcI,\
@@ -409,11 +409,13 @@ void RunModel(structModel *model){
             reduction(+:auxTCytotoxicBV, auxAntibodyBV, auxAdcPV)
     for(kTime = 1; kTime <= model->tSize; kTime++){
         tid = omp_get_thread_num();
+        
         model->tCytotoxicTissueVessels = auxTCytotoxicBV * model->hx * model->hx / model->parametersModel.V_BV;
         model->antibodyTissueVessels = auxAntibodyBV * model->hx * model->hx / model->parametersModel.V_BV;
         model->activatedDCTissueVessels = auxAdcPV * model->hx * model->hx / model->parametersModel.V_PV;
+        if(kTime == model->tSize-1)
+        printf("processo %d :: integral T CD8 = %f\n", tid, model->tCytotoxicTissueVessels);
         auxAdcPV = 0.0, auxAntibodyBV = 0.0, auxTCytotoxicBV = 0.0;
-        
         if(tid == 0)
             SolverLymphNode(model, kTime);
         stepKPlus = kTime%2;
