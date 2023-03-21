@@ -400,13 +400,12 @@ void RunModel(structModel *model){
 
     int kTime;
     int tid;
-    #pragma omp parallel num_threads(model->totalThreads) default(none) shared(model, lowerNeumannBC, rightNeumannBC, upperNeumannBC, leftNeumannBC)\
+    #pragma omp parallel num_threads(model->totalThreads) default(none) shared(model, auxTCytotoxicBV, auxAntibodyBV, auxAdcPV, lowerNeumannBC, rightNeumannBC, upperNeumannBC, leftNeumannBC)\
             private(tid, kTime, stepKMinus, stepKPlus, line, column, microgliaKMinus, conventionalDcKMinus,\
             activatedDcKMinus, tCytotoxicKMinus, antibodyKMinus, oligodendrocyteKMinus, valIPlus, valJPlus, valIMinus, valJMinus, gradientOdcI,\
             gradientOdcJ, microgliaDiffusion, microgliaChemotaxis, conventionalDcDiffusion, conventionalDcChemotaxis, tCytotoxicDiffusion, tCytotoxicChemotaxis,\
             activatedDCDiffusion, antibodyDiffusion, microgliaReaction, microgliaClearance, conventionalDcReaction, conventionalDcActivation, conventionalDcClearance,\
-            activatedDcClearance, activatedDcMigration, tCytotoxicMigration, odcAntibodyMicrogliaFagocitosis, antibodyMigration, odcMicrogliaFagocitosis, odcTCytotoxicApoptosis)\
-            reduction(+:auxTCytotoxicBV, auxAntibodyBV, auxAdcPV)
+            activatedDcClearance, activatedDcMigration, tCytotoxicMigration, odcAntibodyMicrogliaFagocitosis, antibodyMigration, odcMicrogliaFagocitosis, odcTCytotoxicApoptosis)
     for(kTime = 1; kTime <= model->tSize; kTime++){
         tid = omp_get_thread_num();
         
@@ -415,12 +414,14 @@ void RunModel(structModel *model){
         model->activatedDCTissueVessels = auxAdcPV * model->hx * model->hx / model->parametersModel.V_PV;
 
         if(kTime == model->tSize)
-            printf("processo %d :: integral DC = %f\n", tid, model->activatedDCTissueVessels);
-        auxAdcPV = 0.0, auxAntibodyBV = 0.0, auxTCytotoxicBV = 0.0;
-        if(tid == 0)
+            printf("dentro do loop do tempo - antes de resolver tecido processo %d :: integral DC = %f\n", tid, model->activatedDCTissueVessels);
+            
+        if(tid == 0){
+            auxAdcPV = 0.0, auxAntibodyBV = 0.0, auxTCytotoxicBV = 0.0;
             SolverLymphNode(model, kTime);
+        }
         stepKPlus = kTime%2;
-        #pragma omp for 
+        #pragma omp for reduction(+:auxTCytotoxicBV, auxAntibodyBV, auxAdcPV)
         for(int kPos = 0; kPos < model->xSize*model->xSize; kPos++){
             line = (int)kPos/model->xSize;
             column = kPos%model->xSize;
@@ -567,9 +568,12 @@ void RunModel(structModel *model){
             WriteFiles(*model, model->oligodendrocyte[stepKPlus], model->microglia[stepKPlus], model->tCytotoxic[stepKPlus], model->antibody[stepKPlus], model->conventionalDc[stepKPlus], model->activatedDc[stepKPlus], kTime);
         stepKMinus += 1;
         stepKMinus = stepKMinus%2;
+
+        if(kTime == model->tSize)
+            printf("dentro do loop do tempo - após resolver tecido processo %d :: integral DC = %f\n", tid, model->activatedDCTissueVessels);
     }
 
-    printf("processo :: integral DC = %f\n", model->activatedDCTissueVessels);
+    printf("Fim do loop no tempo :: integral DC = %f\n", model->activatedDCTissueVessels);
         
     printf("Computation Done!!\n");
 
