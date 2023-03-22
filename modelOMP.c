@@ -330,7 +330,7 @@ float* EquationsLymphNode(structModel model, float* populationLN, int stepPos){
     float antibodyProduction = model.parametersModel.rhoAntibody * plasmaCellLN;
     float antibodyDecayment = model.parametersModel.cF * antibodyLN;
     float antibodyMigration = model.parametersModel.gammaAntibody * (antibodyLN - model.antibodyTissueVessels) * (float)(model.parametersModel.V_BV/model.parametersModel.V_LN);
-    result[5] = antibodyProduction - antibodyMigration;
+    result[5] = antibodyProduction - antibodyMigration - antibodyDecayment;
 
     return result;
 }
