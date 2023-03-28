@@ -32,10 +32,10 @@ def printMesh(time, population, type):
 
     cp = plt.contourf(x_pts, y_pts,population, levels=levels)
     plt.title(populationTitle[type], fontsize=20)
-    matplotlib.rc('xtick', labelsize=15) 
-    matplotlib.rc('ytick', labelsize=16)
-    plt.rc('axes', labelsize=16)
-    plt.rc('font', size=15)
+    matplotlib.rc('xtick', labelsize=12) 
+    matplotlib.rc('ytick', labelsize=13)
+    plt.rc('axes', labelsize=13)
+    plt.rc('font', size=12)
     plt.xlabel("Millimeters")
     plt.ylabel("Millimeters")
     if type == "ant":
@@ -53,6 +53,7 @@ dendritica_conv_atual = np.zeros(((int(L/h_x)), (int(L/h_x))))
 dendritica_ativ_atual = np.zeros(((int(L/h_x)), (int(L/h_x))))
 
 for t in timesPlots:
+    print(t)
     with open("./result/matrix/oligo"+str(t)+".txt", 'r') as f:
         lista = [line.split(' ')  for line in f]
         for line in range(len(lista[0])-1):
