@@ -563,6 +563,11 @@ void RunModel(structModel *model){
     free(model->antibodyLymphNode);
     free(model->bCellLymphNode);
     free(model->plasmaCellLymphNode);
+
+    printf("DC LN final = %f\n", model->dendriticLymphNodeSavedPoints[999]);
+    printf("TCD8 LN final = %f\n", model->tCytotoxicLymphNodeSavedPoints[999]);
+    printf("IGG LN final = %f\n", model->antibodyLymphNodeSavedPoints[999]);
+
     printf("Saving results...\n\n");
     WriteLymphNodeFiles(*model, model->dendriticLymphNodeSavedPoints, model->tHelperLymphNodeSavedPoints, model->tCytotoxicLymphNodeSavedPoints, model->bCellLymphNodeSavedPoints, model->plasmaCellLymphNodeSavedPoints, model->antibodyLymphNodeSavedPoints);
     
@@ -573,5 +578,5 @@ void RunModel(structModel *model){
     free(model->bCellLymphNodeSavedPoints);
     free(model->plasmaCellLymphNodeSavedPoints);
 
-    PlotResults(*model);
+    // PlotResults(*model);
 }
