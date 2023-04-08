@@ -11,7 +11,7 @@ void InitialConditionTissueMicroglia(structModel* model){
     for(int k = 0; k < model->xSize*model->xSize; k++){
         int i = (int)k/model->xSize;
         int j = k%model->xSize;
-        if(pow((i-(int)(model->xSize/2)),2) + pow((j-(int)(model->xSize/2)),2) < 3 / (model->hx * model->hx)){
+        if(pow((i-(int)(model->xSize/2)),2) + pow((j-(int)(model->xSize/2)),2) < 5 / (model->hx * model->hx)){
             model->microglia[0][k] = (float)model->parametersModel.avgMic/3;
         }
     }
@@ -564,10 +564,6 @@ void RunModel(structModel *model){
     free(model->bCellLymphNode);
     free(model->plasmaCellLymphNode);
 
-    printf("DC LN final = %f\n", model->dendriticLymphNodeSavedPoints[999]);
-    printf("TCD8 LN final = %f\n", model->tCytotoxicLymphNodeSavedPoints[999]);
-    printf("IGG LN final = %f\n", model->antibodyLymphNodeSavedPoints[999]);
-
     printf("Saving results...\n\n");
     WriteLymphNodeFiles(*model, model->dendriticLymphNodeSavedPoints, model->tHelperLymphNodeSavedPoints, model->tCytotoxicLymphNodeSavedPoints, model->bCellLymphNodeSavedPoints, model->plasmaCellLymphNodeSavedPoints, model->antibodyLymphNodeSavedPoints);
     
@@ -578,5 +574,5 @@ void RunModel(structModel *model){
     free(model->bCellLymphNodeSavedPoints);
     free(model->plasmaCellLymphNodeSavedPoints);
 
-    // PlotResults(*model);
+    PlotResults(*model);
 }
