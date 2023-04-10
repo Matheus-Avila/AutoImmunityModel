@@ -11,7 +11,7 @@ void InitialConditionTissueMicroglia(structModel* model){
     for(int k = 0; k < model->xSize*model->xSize; k++){
         int i = (int)k/model->xSize;
         int j = k%model->xSize;
-        if(pow((i-(int)(0.2*model->xSize)),2) + pow((j-(int)(0.2*model->xSize)),2) < 5 / (model->hx * model->hx)){
+        if(pow((i-(int)(model->xSize/2)),2) + pow((j-(int)(model->xSize/2)),2) < 5 / (model->hx * model->hx)){
             model->microglia[0][k] = (float)model->parametersModel.avgMic/3;
         }
     }
@@ -335,10 +335,10 @@ float* EquationsLymphNode(structModel model, float* populationLN, int stepPos){
     return result;
 }
 
-void SolverLymphNode(structModel *model, int stepPos){
+void SolverLymphNode(structModel *model, int stepPos, int numStepsLN){
     float populationLN[6];
-    int stepKMinus = stepPos%2;
-    int stepKPlus = (stepKMinus+1)%2;
+    int stepKPlus = (stepPos%(2*numStepsLN))/numStepsLN;
+    int stepKMinus = stepKPlus && 0;
     populationLN[0] = model->dendriticLymphNode[stepKMinus];
     populationLN[1] = model->tCytotoxicLymphNode[stepKMinus];
     populationLN[2] = model->tHelperLymphNode[stepKMinus];
@@ -374,7 +374,7 @@ void RunModel(structModel *model){
     //Save IC
     WriteFiles(*model, model->oligodendrocyte[0], model->microglia[0], model->tCytotoxic[0], model->antibody[0], model->conventionalDc[0], model->activatedDc[0], 0);
     
-    int stepKMinus = 0, stepKPlus, line, column;
+    int stepKMinus = 0, stepKPlus, line, column, stepKPlusLN = 0, numStepsLN = 4;
 
     float upperNeumannBC = 0.0, lowerNeumannBC = 0.0, leftNeumannBC = 0.0, rightNeumannBC = 0.0;
     
@@ -393,7 +393,7 @@ void RunModel(structModel *model){
 
     int kTime;
     int tid;
-    #pragma omp parallel num_threads(model->totalThreads) default(none) shared(model, auxTCytotoxicBV, auxAntibodyBV, auxAdcPV, lowerNeumannBC, rightNeumannBC, upperNeumannBC, leftNeumannBC)\
+    #pragma omp parallel num_threads(model->totalThreads) default(none) shared(model, stepKPlusLN, numStepsLN, auxTCytotoxicBV, auxAntibodyBV, auxAdcPV, lowerNeumannBC, rightNeumannBC, upperNeumannBC, leftNeumannBC)\
             private(tid, kTime, stepKMinus, stepKPlus, line, column, microgliaKMinus, conventionalDcKMinus,\
             activatedDcKMinus, tCytotoxicKMinus, antibodyKMinus, oligodendrocyteKMinus, valIPlus, valJPlus, valIMinus, valJMinus, gradientOdcI,\
             gradientOdcJ, microgliaDiffusion, microgliaChemotaxis, conventionalDcDiffusion, conventionalDcChemotaxis, tCytotoxicDiffusion, tCytotoxicChemotaxis,\
@@ -405,12 +405,18 @@ void RunModel(structModel *model){
         model->tCytotoxicTissueVessels = auxTCytotoxicBV * model->hx * model->hx / model->parametersModel.V_BV;
         model->antibodyTissueVessels = auxAntibodyBV * model->hx * model->hx / model->parametersModel.V_BV;
         model->activatedDCTissueVessels = auxAdcPV * model->hx * model->hx / model->parametersModel.V_PV;
-   
-        if(tid == 0){
-            auxAdcPV = 0.0, auxAntibodyBV = 0.0, auxTCytotoxicBV = 0.0;
-            SolverLymphNode(model, kTime);
-        }
+
+        stepKMinus = (kTime+1)%2;
         stepKPlus = kTime%2;
+        
+        // printf("processo %d :: kminus %d  - stepKPlusLN %d - numStepsLN %d\n", tid, stepKMinus, stepKPlusLN, numStepsLN);
+        if(kTime%numStepsLN == 0){
+            if(tid == 0){
+                auxAdcPV = 0.0, auxAntibodyBV = 0.0, auxTCytotoxicBV = 0.0;
+                SolverLymphNode(model, kTime, numStepsLN);
+                stepKPlusLN = (stepKPlusLN+1)%2;
+            }
+        }
         #pragma omp for reduction(+:auxTCytotoxicBV, auxAntibodyBV, auxAdcPV)
         for(int kPos = 0; kPos < model->xSize*model->xSize; kPos++){
             line = (int)kPos/model->xSize;
