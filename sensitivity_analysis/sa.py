@@ -9,12 +9,12 @@ import pandas as pd
 import seaborn as sns
 
 label = ["$D_{M}$", "$D_{A_t}$", "$D_{DC}$", "$D_{DA}$", "$D_{t}$", "$\chi$", "$\mu_{D}$", "$\mu_M$", "$r_M$", "$r_T$", "$\lambda_{A_t|M}$", "$\\beta_D$", "$\gamma_D$", "$\gamma_F$", "$\gamma_T$", "$c_M$", "$c_{DC}$", "$c_{DA}$", "$c_{D^L}$", "$c_{A^l}$", "$\\alpha_{Th}$", "$\\alpha_{Tc}$", "$\\alpha_B$", "$\\alpha_P$", "$b_{T}$", "$b_{T_c}$", "$b_{\\rho}$", "$b_{\\rho_b}$", "$b_{\\rho_p}$", "$\\rho_T$", "$\\rho_{TC}$", "$\\rho_B$", "$\\rho_P$", "$\\rho_{A^L}$"]
-
+labelMostRelevants = ["$D_{M}$", "$\chi$", "$\mu_M$", "$c_M$"]
 def printResult(indexes, title, fileName):
-    
+    indexes = [indexes[0], indexes[5], indexes[7], indexes[15]]
     # plt.bar(labels, indexes, color ='maroon')
     plt.title(title)
-    plt.barh(label, indexes, color ='maroon')
+    plt.barh(labelMostRelevants, indexes, color ='maroon')
     plt.xlabel("Sobol's indices")
     # plt.show()
     plt.savefig("./sensitivity_analysis/"+ fileName +".png", dpi = 900)
@@ -313,11 +313,6 @@ def RunSA():
 
     printResult(sensitivity['S1'], 'First Order', 'firstOrder')
     printResult(sensitivity['ST'], 'Total Order', 'totalOrder')
-    
-
-    for i in range(len(sensitivity["S1"])):
-        if sensitivity["S1"][i] < 0:
-            sensitivity["S1"][i] = 0
 
     # for line in sensitivity['S2']:
     #     print(line)
