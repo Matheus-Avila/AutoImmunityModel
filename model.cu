@@ -422,6 +422,43 @@ __device__ __constant__ int constXSize;
 const int threadsPerBlock = 256;
 const int numBlocks = 256;
 
+void SavingData(structModel model){
+    float totalMic = 0, totalODC = 0, totalCDC = 0, totalADC = 0, totalIGG = 0, totalCD8 = 0;
+    for(int kPos = 0; kPos < model.xSize*model.xSize; kPos++){
+        totalMic += model.microglia[0][kPos];
+        totalODC += model.oligodendrocyte[0][kPos];
+        totalCDC += model.conventionalDc[0][kPos];
+        totalADC += model.activatedDc[0][kPos];
+        totalCD8 += model.tCytotoxic[0][kPos];
+        totalIGG += model.antibody[0][kPos];
+    }
+    FILE *file;
+    file = fopen("dataExecution.txt", "w");
+    
+    fprintf(file, "Days = %d - Space = %d - ht = %f, hx = %f\n", model.tFinal, model.xFinal, model.ht, model.hx);
+    fprintf(file, "Lymph node populations\n");
+    fprintf(file, "DC = %f, TCD8 = %f, TCD4 = %f, B Cell = %f, Plasma cell = %f, IgG = %f\n", model.dendriticLymphNodeSavedPoints[model.numPointsLN-1], model.tCytotoxicLymphNodeSavedPoints[model.numPointsLN-1], model.tHelperLymphNodeSavedPoints[model.numPointsLN-1], model.bCellLymphNodeSavedPoints[model.numPointsLN-1], model.plasmaCellLymphNodeSavedPoints[model.numPointsLN-1], model.antibodyLymphNodeSavedPoints[model.numPointsLN-1]);
+    fprintf(file, "Tissue populations\n");
+    fprintf(file, "ODC = %f, Microglia = %f, ConventionalDC = %f, ActivatedDC = %f, TCD8 = %f, IgG = %f\n", totalODC, totalMic, totalCDC, totalADC, totalCD8, totalIGG);    
+    fprintf(file, "Parameters\n");
+    fprintf(file, "micDiffusion  = %f, antibodyDiffusion = %f, cDcDiffusion = %f, aDcDiffusion = %f, tCytoDiffusion = %f, chi = %f, muCDc = %f, muMic = %f, \
+    rM = %f, rT = %f, lambAntMic = %f, bD = %f, gammaD = %f, gammaAntibody = %f, gammaT = %f,  avgT = %f, avgDc = %f, avgMic = %f, avgOdc = %f,  cMic = %f, \
+    cCDc = %f, cADc = %f, cDl = %f, cF = %f, alphaTHelper = %f, alphaTCytotoxic = %f, alphaB = %f, alphaP = %f, bTHelper = %f, bTCytotoxic = %f, bRho = %f, \
+    bRhoB = %f, bRhoP = %f, rhoTHelper = %f, rhoTCytotoxic = %f, rhoB = %f, rhoP = %f, rhoAntibody = %f, estableTHelper = %f, estableTCytotoxic = %f, \
+    estableB = %f, estableP = %f, V_LN = %f, V_BV = %f, V_PV = %f\n",
+    model.parametersModel.micDiffusion, model.parametersModel.antibodyDiffusion, model.parametersModel.cDcDiffusion, model.parametersModel.aDcDiffusion, \
+    model.parametersModel.tCytoDiffusion, model.parametersModel.chi, model.parametersModel.muCDc, model.parametersModel.muMic, model.parametersModel.rM, \
+    model.parametersModel.rT, model.parametersModel.lambAntMic, model.parametersModel.bD, model.parametersModel.gammaD, model.parametersModel.gammaAntibody, \
+    model.parametersModel.gammaT,  model.parametersModel.avgT, model.parametersModel.avgDc, model.parametersModel.avgMic, model.parametersModel.avgOdc, \
+    model.parametersModel.cMic, model.parametersModel.cCDc, model.parametersModel.cADc, model.parametersModel.cDl, model.parametersModel.cF, \
+    model.parametersModel.alphaTHelper, model.parametersModel.alphaTCytotoxic, model.parametersModel.alphaB, model.parametersModel.alphaP, \
+    model.parametersModel.bTHelper, model.parametersModel.bTCytotoxic, model.parametersModel.bRho, model.parametersModel.bRhoB, model.parametersModel.bRhoP,\
+    model.parametersModel.rhoTHelper, model.parametersModel.rhoTCytotoxic, model.parametersModel.rhoB, model.parametersModel.rhoP,\
+    model.parametersModel.rhoAntibody, model.parametersModel.estableTHelper, model.parametersModel.estableTCytotoxic, model.parametersModel.estableB,\
+    model.parametersModel.estableP, model.parametersModel.V_LN, model.parametersModel.V_BV, model.parametersModel.V_PV);
+    fclose(file);
+}
+
 __global__ void kernelPDE(structParameters *devParams, int kTime, float *tCytoSumVessel, float *activatedDCSumVessel, float *antibodySumVessel, float *devActivatedDCLymphNode, float *devAntibodyLymphNode, float *devTCytotoxicLymphNode, float *devThetaPV, float *devThetaBV, float *devMicrogliaKMinus, float *devMicrogliaKPlus, float *devTCytotoxicKMinus, float *devTCytotoxicKPlus, float *devAntibodyKMinus, float *devAntibodyKPlus, float *devConventionalDCKMinus, float *devConventionalDCKPlus, float *devActivatedDCKMinus, float *devActivatedDCKPlus, float *devOligodendrocyteKMinus, float *devOligodendrocyteKPlus)
 {
     int thrIdx = blockIdx.x * blockDim.x + threadIdx.x;
@@ -771,6 +808,7 @@ void RunModel(structModel *model)
     }
     printf("Computation Done!!\n");
     printf("Saving results...\n\n");
+    SavingData(*model);
     WriteLymphNodeFiles(*model, model->dendriticLymphNodeSavedPoints, model->tHelperLymphNodeSavedPoints, model->tCytotoxicLymphNodeSavedPoints, model->bCellLymphNodeSavedPoints, model->plasmaCellLymphNodeSavedPoints, model->antibodyLymphNodeSavedPoints);
     PlotResults(*model);
     printf("Deleting cuda memory...\n");
