@@ -732,11 +732,11 @@ void RunModel(structModel *model){
                 // );
                 //MPI_Send(composed, model->xSize * model->numLines * 6, MPI_FLOAT, 0, 0, MPI_COMM_WORLD);
                 MPI_Send(&model->oligodendrocyte[stepKPlus][model->startLine * model->xSize], model->xSize * model->numLines, MPI_FLOAT, 0, 0, MPI_COMM_WORLD);
-                MPI_Send(&model->tCytotoxic[stepKPlus][model->startLine], model->xSize * model->numLines, MPI_FLOAT, 0, 1, MPI_COMM_WORLD);
-                MPI_Send(&model->microglia[stepKPlus][model->startLine], model->xSize * model->numLines, MPI_FLOAT, 0, 2, MPI_COMM_WORLD);
-                MPI_Send(&model->antibody[stepKPlus][model->startLine], model->xSize * model->numLines, MPI_FLOAT, 0, 3, MPI_COMM_WORLD);
-                MPI_Send(&model->conventionalDc[stepKPlus][model->startLine], model->xSize * model->numLines, MPI_FLOAT, 0, 4, MPI_COMM_WORLD);
-                MPI_Send(&model->activatedDc[stepKPlus][model->startLine], model->xSize * model->numLines, MPI_FLOAT, 0, 5, MPI_COMM_WORLD);
+                MPI_Send(&model->tCytotoxic[stepKPlus][model->startLine * model->xSize], model->xSize * model->numLines, MPI_FLOAT, 0, 1, MPI_COMM_WORLD);
+                MPI_Send(&model->microglia[stepKPlus][model->startLine * model->xSize], model->xSize * model->numLines, MPI_FLOAT, 0, 2, MPI_COMM_WORLD);
+                MPI_Send(&model->antibody[stepKPlus][model->startLine * model->xSize], model->xSize * model->numLines, MPI_FLOAT, 0, 3, MPI_COMM_WORLD);
+                MPI_Send(&model->conventionalDc[stepKPlus][model->startLine * model->xSize], model->xSize * model->numLines, MPI_FLOAT, 0, 4, MPI_COMM_WORLD);
+                MPI_Send(&model->activatedDc[stepKPlus][model->startLine * model->xSize], model->xSize * model->numLines, MPI_FLOAT, 0, 5, MPI_COMM_WORLD);
             }
             if(model->my_rank == 0)
                 WriteFiles(*model, model->oligodendrocyte[stepKPlus], model->microglia[stepKPlus], model->tCytotoxic[stepKPlus], model->antibody[stepKPlus], model->conventionalDc[stepKPlus], model->activatedDc[stepKPlus], kTime);
@@ -759,6 +759,7 @@ void RunModel(structModel *model){
     if(model->my_rank == 0){
         double end = MPI_Wtime();
         double time_spent = (double)(end - start);
+        printf("Lymph node last point: %f", model->tCytotoxicLymphNodeSavedPoints[999]);
         printf("\nComputation Done in %lf seconds!!\n", time_spent);
         WriteLymphNodeFiles(*model, model->dendriticLymphNodeSavedPoints, model->tHelperLymphNodeSavedPoints, model->tCytotoxicLymphNodeSavedPoints, model->bCellLymphNodeSavedPoints, model->plasmaCellLymphNodeSavedPoints, model->antibodyLymphNodeSavedPoints);
         PlotResults(*model);

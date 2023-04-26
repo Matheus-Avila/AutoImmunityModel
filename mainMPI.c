@@ -22,7 +22,7 @@ structParameters ParametersInitialize(){
     
     params.gammaD = 0.01;
     params.gammaAntibody = 0.3;
-    params.gammaT = 2;
+    params.gammaT = 4;
 
     params.avgT = 37;
     params.avgDc = 33;
