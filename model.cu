@@ -138,13 +138,11 @@ void PlotResults(structModel model)
     system(command);
 }
 
-__device__ void AdvectionTerm(float populationPoint, float avgValue, float *result)
-{
+__device__ void AdvectionTerm(float populationPoint, float avgValue, float *result){
     *result = populationPoint / (populationPoint + avgValue);
 }
 
-__device__ void UpDownWind(float frontPoint, float rearPoint, float avgValue, float *result)
-{
+__device__ void UpDownWind(float frontPoint, float rearPoint, float avgValue, float *result){
     float resultF;
     AdvectionTerm(frontPoint, avgValue, result);
     AdvectionTerm(rearPoint, avgValue, &resultF);
@@ -236,8 +234,8 @@ void DefineBVPV(structModel *model)
                 model->thetaPV[k - model->xSize + 1] = 1;
         }
     }
-    model->parametersModel.V_BV = 160;//model->parametersModel.V_BV * model->hx * model->hx;
-    model->parametersModel.V_PV = 160;//model->parametersModel.V_PV * model->hx * model->hx;
+    model->parametersModel.V_BV = model->parametersModel.V_BV * model->hx * model->hx;
+    model->parametersModel.V_PV = model->parametersModel.V_PV * model->hx * model->hx;
     WriteBVPV(model, model->thetaBV, model->thetaPV);
 }
 
@@ -425,12 +423,12 @@ const int numBlocks = 256;
 void SavingData(structModel model){
     float totalMic = 0, totalODC = 0, totalCDC = 0, totalADC = 0, totalIGG = 0, totalCD8 = 0;
     for(int kPos = 0; kPos < model.xSize*model.xSize; kPos++){
-        totalMic += model.microglia[0][kPos];
-        totalODC += model.oligodendrocyte[0][kPos];
-        totalCDC += model.conventionalDc[0][kPos];
-        totalADC += model.activatedDc[0][kPos];
-        totalCD8 += model.tCytotoxic[0][kPos];
-        totalIGG += model.antibody[0][kPos];
+        totalMic += model.microglia[1][kPos];
+        totalODC += model.oligodendrocyte[1][kPos];
+        totalCDC += model.conventionalDc[1][kPos];
+        totalADC += model.activatedDc[1][kPos];
+        totalCD8 += model.tCytotoxic[1][kPos];
+        totalIGG += model.antibody[1][kPos];
     }
     FILE *file;
     file = fopen("dataExecution.txt", "w");
@@ -806,6 +804,14 @@ void RunModel(structModel *model)
         stepKMinus += 1;
         stepKMinus = stepKMinus % 2;
     }
+    
+    cudaMemcpy(model->oligodendrocyte[1], devOligodendrocytesDCKPlus, model->xSize * model->xSize * sizeof(float), cudaMemcpyDeviceToHost);
+    cudaMemcpy(model->microglia[1], devMicrogliaKPlus, model->xSize * model->xSize * sizeof(float), cudaMemcpyDeviceToHost);
+    cudaMemcpy(model->tCytotoxic[1], devTCytotoxicKPlus, model->xSize * model->xSize * sizeof(float), cudaMemcpyDeviceToHost);
+    cudaMemcpy(model->antibody[1], devAntibodyKPlus, model->xSize * model->xSize * sizeof(float), cudaMemcpyDeviceToHost);
+    cudaMemcpy(model->conventionalDc[1], devConventionalDCKPlus, model->xSize * model->xSize * sizeof(float), cudaMemcpyDeviceToHost);
+    cudaMemcpy(model->activatedDc[1], devActivatedDCKPlus, model->xSize * model->xSize * sizeof(float), cudaMemcpyDeviceToHost);
+
     printf("Computation Done!!\n");
     printf("Saving results...\n\n");
     SavingData(*model);

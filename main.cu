@@ -72,7 +72,7 @@ void clearPhgTxt(){
 }
 
 int main(){
-    float ht = 0.0002, hx = 0.5;
+    float ht = 0.0002, hx = 0.05;
     clock_t start, end;
     float cpu_time_used;
     int numFigs = 28, numPointsLN = 1000, time = 28, space = 20;
