@@ -124,7 +124,7 @@ float fFunc(float valuePopulation, float avgPopulation);
 
 float* EquationsLymphNode(structModel model, float* populationLN, int stepPos);
 
-void SolverLymphNode(structModel *model, int stepPos, int numStepsLN);
+void SolverLymphNode(structModel *model, int stepPos);
 
 structModel ModelInitialize(structParameters params, int totThr, float ht, float hx, float time, float space, int numFigs, int numPointsLN);
 
