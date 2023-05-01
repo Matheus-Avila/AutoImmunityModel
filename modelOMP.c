@@ -223,7 +223,7 @@ void WriteBVPV(structModel *model, float *thetaBV, float *thetaPV){
     // system(command);
 }
 
-structModel ModelInitialize(structParameters params, int totThr, float ht, float hx, float time, float space, int numFigs, int numPointsLN){
+structModel ModelInitialize(structParameters params, int totThr, float ht, float hx, float time, float space, int numFigs, int numPointsLN, int numStepsLN){
     structModel model;
     srand(2);
     model.parametersModel = params;
@@ -234,6 +234,8 @@ structModel ModelInitialize(structParameters params, int totThr, float ht, float
     model.parametersModel = params;
     model.numFigs = numFigs;
     model.numPointsLN = numPointsLN;
+    model.numStepsLN = numStepsLN;
+
     model.ht = ht;
     model.hx = hx;
     model.tFinal = time;
@@ -337,8 +339,8 @@ float* EquationsLymphNode(structModel model, float* populationLN, int stepPos){
 
 void SolverLymphNode(structModel *model, int stepPos){
     float populationLN[6];
-    int stepKMinus = stepPos%2;
-    int stepKPlus = (stepKMinus+1)%2;
+    int stepKPlus = (stepPos%(2*model->numStepsLN))/model->numStepsLN;
+    int stepKMinus = !(stepKPlus && 1);
     populationLN[0] = model->dendriticLymphNode[stepKMinus];
     populationLN[1] = model->tCytotoxicLymphNode[stepKMinus];
     populationLN[2] = model->tHelperLymphNode[stepKMinus];
@@ -348,14 +350,16 @@ void SolverLymphNode(structModel *model, int stepPos){
     
     float* solutionLN;
     solutionLN = EquationsLymphNode(*model, populationLN, stepPos);
+
+    float htLN = model->ht*model->numStepsLN;
     
     //Execute Euler 
-    model->dendriticLymphNode[stepKPlus] = model->dendriticLymphNode[stepKMinus] + model->ht*solutionLN[0];
-    model->tCytotoxicLymphNode[stepKPlus] = model->tCytotoxicLymphNode[stepKMinus] + model->ht*solutionLN[1];
-    model->tHelperLymphNode[stepKPlus] = model->tHelperLymphNode[stepKMinus] + model->ht*solutionLN[2];
-    model->bCellLymphNode[stepKPlus] = model->bCellLymphNode[stepKMinus] + model->ht*solutionLN[3];
-    model->plasmaCellLymphNode[stepKPlus] = model->plasmaCellLymphNode[stepKMinus] + model->ht*solutionLN[4];
-    model->antibodyLymphNode[stepKPlus] = model->antibodyLymphNode[stepKMinus] + model->ht*solutionLN[5];
+    model->dendriticLymphNode[stepKPlus] = model->dendriticLymphNode[stepKMinus] + htLN*solutionLN[0];
+    model->tCytotoxicLymphNode[stepKPlus] = model->tCytotoxicLymphNode[stepKMinus] + htLN*solutionLN[1];
+    model->tHelperLymphNode[stepKPlus] = model->tHelperLymphNode[stepKMinus] + htLN*solutionLN[2];
+    model->bCellLymphNode[stepKPlus] = model->bCellLymphNode[stepKMinus] + htLN*solutionLN[3];
+    model->plasmaCellLymphNode[stepKPlus] = model->plasmaCellLymphNode[stepKMinus] + htLN*solutionLN[4];
+    model->antibodyLymphNode[stepKPlus] = model->antibodyLymphNode[stepKMinus] + htLN*solutionLN[5];
     free(solutionLN);
 
     int intervalPoints = (int)(model->tSize/model->numPointsLN);
@@ -369,6 +373,7 @@ void SolverLymphNode(structModel *model, int stepPos){
         model->antibodyLymphNodeSavedPoints[posSave] = model->antibodyLymphNode[stepKPlus];
     }
 }
+
 void SavingData(structModel model){
     float totalMic = 0, totalODC = 0, totalCDC = 0, totalADC = 0, totalIGG = 0, totalCD8 = 0;
     for(int kPos = 0; kPos < model.xSize*model.xSize; kPos++){
@@ -382,7 +387,7 @@ void SavingData(structModel model){
     FILE *file;
     file = fopen("dataExecution.txt", "w");
 
-    fprintf(file, "Days = %d - Space = %d - ht = %f, hx = %f\n", model.tFinal, model.xFinal, model.ht, model.hx);
+    fprintf(file, "Days = %d - Space = %d - ht = %f, hx = %f, Ht_JumpStep = %d\n", model.tFinal, model.xFinal, model.ht, model.hx, model.numStepsLN);
     fprintf(file, "Lymph node populations\n");
     fprintf(file, "DC = %f, TCD8 = %f, TCD4 = %f, B Cell = %f, Plasma cell = %f, IgG = %f\n", model.dendriticLymphNodeSavedPoints[model.numPointsLN-1], model.tCytotoxicLymphNodeSavedPoints[model.numPointsLN-1], model.tHelperLymphNodeSavedPoints[model.numPointsLN-1], model.bCellLymphNodeSavedPoints[model.numPointsLN-1], model.plasmaCellLymphNodeSavedPoints[model.numPointsLN-1], model.antibodyLymphNodeSavedPoints[model.numPointsLN-1]);
     fprintf(file, "Tissue populations\n");
@@ -410,7 +415,7 @@ void RunModel(structModel *model){
     //Save IC
     WriteFiles(*model, model->oligodendrocyte[0], model->microglia[0], model->tCytotoxic[0], model->antibody[0], model->conventionalDc[0], model->activatedDc[0], 0);
     
-    int stepKMinus = 0, stepKPlus, line, column;
+    int stepKMinus = 0, stepKPlus, line, column, stepKPlusLN = 0;
 
     float upperNeumannBC = 0.0, lowerNeumannBC = 0.0, leftNeumannBC = 0.0, rightNeumannBC = 0.0;
     
@@ -437,14 +442,17 @@ void RunModel(structModel *model){
             activatedDcClearance, activatedDcMigration, tCytotoxicMigration, odcAntibodyMicrogliaFagocitosis, antibodyMigration, odcMicrogliaFagocitosis, odcTCytotoxicApoptosis)
     for(kTime = 1; kTime <= model->tSize; kTime++){
         tid = omp_get_thread_num();
-    
-        if(tid == 0){
-            model->tCytotoxicTissueVessels = auxTCytotoxicBV * model->hx * model->hx / model->parametersModel.V_BV;
-            model->antibodyTissueVessels = auxAntibodyBV * model->hx * model->hx / model->parametersModel.V_BV;
-            model->activatedDCTissueVessels = auxAdcPV * model->hx * model->hx / model->parametersModel.V_PV;
-            auxAdcPV = 0.0, auxAntibodyBV = 0.0, auxTCytotoxicBV = 0.0;
-            SolverLymphNode(model, kTime);
+        if(kTime%model->numStepsLN == 0){
+            if(tid == 0){
+                model->tCytotoxicTissueVessels = auxTCytotoxicBV * model->hx * model->hx / model->parametersModel.V_BV;
+                model->antibodyTissueVessels = auxAntibodyBV * model->hx * model->hx / model->parametersModel.V_BV;
+                model->activatedDCTissueVessels = auxAdcPV * model->hx * model->hx / model->parametersModel.V_PV;
+                SolverLymphNode(model, kTime);
+            }
         }
+        #pragma omp barrier
+        auxAdcPV = 0.0, auxAntibodyBV = 0.0, auxTCytotoxicBV = 0.0;
+        #pragma omp barrier
         stepKPlus = kTime%2;
         #pragma omp for reduction(+:auxTCytotoxicBV, auxAntibodyBV, auxAdcPV)
         for(int kPos = 0; kPos < model->xSize*model->xSize; kPos++){

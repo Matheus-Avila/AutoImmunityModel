@@ -75,10 +75,10 @@ int main(int argc, char* argv[]){
     printf("Comecei o main\n");
     clearPhgTxt();
     int tot_thr = strtol(argv[1], NULL, 10);
-    float ht = 0.0002, hx = 0.05;
-    int numFigs = 28, numPointsLN = 1000, time = 28, space = 20;
+    float ht = 0.0002, hx = 0.5;
+    int numFigs = 28, numPointsLN = 1000, time = 28, space = 20, numStepsLN = 4;
     structParameters parameters = ParametersInitialize();
-    structModel model = ModelInitialize(parameters, tot_thr, ht, hx, time, space, numFigs, numPointsLN);
+    structModel model = ModelInitialize(parameters, tot_thr, ht, hx, time, space, numFigs, numPointsLN, numStepsLN);
     printf("Inicializacao feita!!\n\n");
     float start = omp_get_wtime();
     RunModel(&model);
