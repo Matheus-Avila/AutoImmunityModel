@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
-#include <time.h>
 
 structParameters ParametersInitialize(){
     structParameters params;
@@ -72,17 +71,11 @@ void clearPhgTxt(){
 }
 
 int main(){
-    float ht = 0.0002, hx = 0.05;
-    clock_t start, end;
-    float cpu_time_used;
-    int numFigs = 28, numPointsLN = 1000, time = 28, space = 20;
     clearPhgTxt();
+    float ht = 0.0002, hx = 0.5;
+    int numFigs = 28, numPointsLN = 1000, time = 28, space = 20;
     structParameters parameters = ParametersInitialize();
     structModel model = ModelInitialize(parameters, ht, hx, time, space, numFigs, numPointsLN);
-    start = clock();
     RunModel(&model);
-    end = clock();
-    cpu_time_used = ((float) (end - start)) / CLOCKS_PER_SEC;
-    WriteTime(cpu_time_used);
     return 0;
 }
