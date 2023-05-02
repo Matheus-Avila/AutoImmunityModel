@@ -70,6 +70,7 @@ typedef struct structModel
 
     int intervalFigures;
     int numPointsLN;
+    int numStepsLN;
     int numFigs;
     // int *timeVec;
     // int *spaceVec;

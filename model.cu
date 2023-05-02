@@ -240,7 +240,7 @@ void DefineBVPV(structModel *model){
     WriteBVPV(model, model->thetaBV, model->thetaPV);
 }
 
-structModel ModelInitialize(structParameters params, float ht, float hx, float time, float space, int numFigs, int numPointsLN)
+structModel ModelInitialize(structParameters params, float ht, float hx, float time, float space, int numFigs, int numPointsLN, int numStepsLN)
 {
     structModel model;
     srand(2);
@@ -249,6 +249,7 @@ structModel ModelInitialize(structParameters params, float ht, float hx, float t
     model.parametersModel = params;
     model.numFigs = numFigs;
     model.numPointsLN = numPointsLN;
+    model.numStepsLN = numStepsLN;
     model.ht = ht;
     model.hx = hx;
     model.tFinal = time;
