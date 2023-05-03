@@ -413,7 +413,7 @@ void SavingData(structModel model){
     FILE *file;
     file = fopen("dataExecution.txt", "w");
 
-    fprintf(file, "Days = %d - Space = %d - ht = %f, hx = %f\n", model.tFinal, model.xFinal, model.ht, model.hx);
+    fprintf(file, "Days = %d - Space = %d - ht = %f, hx = %f, Ht_JumpStep = %d\n", model.tFinal, model.xFinal, model.ht, model.hx, model.numStepsLN);
     fprintf(file, "Lymph node populations\n");
     fprintf(file, "DC = %f, TCD8 = %f, TCD4 = %f, B Cell = %f, Plasma cell = %f, IgG = %f\n", model.dendriticLymphNodeSavedPoints[model.numPointsLN-1], model.tCytotoxicLymphNodeSavedPoints[model.numPointsLN-1], model.tHelperLymphNodeSavedPoints[model.numPointsLN-1], model.bCellLymphNodeSavedPoints[model.numPointsLN-1], model.plasmaCellLymphNodeSavedPoints[model.numPointsLN-1], model.antibodyLymphNodeSavedPoints[model.numPointsLN-1]);
     fprintf(file, "Tissue populations\n");
