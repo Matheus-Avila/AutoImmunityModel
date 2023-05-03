@@ -690,10 +690,30 @@ void RunModel(structModel *model)
 
     for (int kTime = 1; kTime <= model->tSize; kTime++)
     {
-        auxAdcPV = 0.0, auxAntibodyBV = 0.0, auxTCytotoxicBV = 0.0;
         // solve lymphnode
-        SolverLymphNode(model, kTime);
-        // printf("Passou do linfonodo no tempo %d", kTime);
+        if(kTime%model->numStepLN == 0){
+            auxAdcPV = 0.0, auxAntibodyBV = 0.0, auxTCytotoxicBV = 0.0;
+            // Copia do device para o host as integrais do tecido
+            activatedDCVessel = (float *)calloc(numBlocks, sizeof(float));
+            antibodyVessel = (float *)calloc(numBlocks, sizeof(float));
+            tCytotoxicVessel = (float *)calloc(numBlocks, sizeof(float));
+
+            cudaMemcpy(activatedDCVessel, devActivatedDCVessel, numBlocks * sizeof(float), cudaMemcpyDeviceToHost);
+            cudaMemcpy(antibodyVessel, devAntibodyVessel, numBlocks * sizeof(float), cudaMemcpyDeviceToHost);
+            cudaMemcpy(tCytotoxicVessel, devTCytotoxicVessel, numBlocks * sizeof(float), cudaMemcpyDeviceToHost);
+            if (kTime == model->tSize)
+                printf("CPU\n DC Tissue = %f\n DC LN = %f \n", activatedDCVessel[0], model->dendriticLymphNode[stepKPlus]);
+            for (int pos = 0; pos < numBlocks; pos++)
+            {
+                auxAdcPV += activatedDCVessel[pos];
+                auxAntibodyBV += antibodyVessel[pos];
+                auxTCytotoxicBV += tCytotoxicVessel[pos];
+            }
+            model->tCytotoxicTissueVessels = auxTCytotoxicBV * model->hx * model->hx / model->parametersModel.V_BV;
+            model->antibodyTissueVessels = auxAntibodyBV * model->hx * model->hx / model->parametersModel.V_BV;
+            model->activatedDCTissueVessels = auxAdcPV * model->hx * model->hx / model->parametersModel.V_PV;   
+            SolverLymphNode(model, kTime); 
+        }        
         stepKPlus = kTime % 2;
         // copiar LN pra GPU
         cudaMemcpy(devActivatedDCLymphNode, &model->dendriticLymphNode[stepKPlus], sizeof(float), cudaMemcpyHostToDevice);
@@ -730,27 +750,7 @@ void RunModel(structModel *model)
 
             WriteFiles(*model, model->oligodendrocyte[stepKPlus], model->microglia[stepKPlus], model->tCytotoxic[stepKPlus], model->antibody[stepKPlus], model->conventionalDc[stepKPlus], model->activatedDc[stepKPlus], kTime);
         }
-        // Copia do device para o host as integrais do tecido
-        activatedDCVessel = (float *)calloc(numBlocks, sizeof(float));
-        antibodyVessel = (float *)calloc(numBlocks, sizeof(float));
-        tCytotoxicVessel = (float *)calloc(numBlocks, sizeof(float));
-
-        cudaMemcpy(activatedDCVessel, devActivatedDCVessel, numBlocks * sizeof(float), cudaMemcpyDeviceToHost);
-        cudaMemcpy(antibodyVessel, devAntibodyVessel, numBlocks * sizeof(float), cudaMemcpyDeviceToHost);
-        cudaMemcpy(tCytotoxicVessel, devTCytotoxicVessel, numBlocks * sizeof(float), cudaMemcpyDeviceToHost);
-        if (kTime == model->tSize)
-            printf("CPU\n DC Tissue = %f\n DC LN = %f \n", activatedDCVessel[0], model->dendriticLymphNode[stepKPlus]);
-        for (int pos = 0; pos < numBlocks; pos++)
-        {
-            auxAdcPV += activatedDCVessel[pos];
-            auxAntibodyBV += antibodyVessel[pos];
-            auxTCytotoxicBV += tCytotoxicVessel[pos];
-        }
-        model->tCytotoxicTissueVessels = auxTCytotoxicBV * model->hx * model->hx / model->parametersModel.V_BV;
-        model->antibodyTissueVessels = auxAntibodyBV * model->hx * model->hx / model->parametersModel.V_BV;
-        model->activatedDCTissueVessels = auxAdcPV * model->hx * model->hx / model->parametersModel.V_PV;
-        if (kTime == model->tSize)
-            printf("Tempo final T CD8 Vessel %f - DC LN %f\n", model->tCytotoxicTissueVessels, model->dendriticLymphNode[stepKPlus]);
+        
 
         stepKMinus += 1;
         stepKMinus = stepKMinus % 2;
