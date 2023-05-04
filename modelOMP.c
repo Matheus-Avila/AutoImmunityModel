@@ -81,42 +81,42 @@ void WriteFiles(structModel model, float *oligodendrocyte, float *microglia, flo
     
     snprintf(buffer, sizeof(buffer), "%.1f", day);
     
-    char pathOligodendrocytes[70];
+    char pathOligodendrocytes[200];
     getcwd(pathOligodendrocytes, sizeof(pathOligodendrocytes));
     strcat(pathOligodendrocytes, "/result/matrix/oligo");
     strcat(pathOligodendrocytes, buffer);
     strcat(pathOligodendrocytes, ".txt");
     WritePopulation(model, oligodendrocyte, pathOligodendrocytes, buffer);
 
-    char pathMicroglia[70];
+    char pathMicroglia[200];
     getcwd(pathMicroglia, sizeof(pathMicroglia));
     strcat(pathMicroglia, "/result/matrix/microglia");
     strcat(pathMicroglia, buffer);
     strcat(pathMicroglia, ".txt");
     WritePopulation(model, microglia, pathMicroglia, buffer);
 
-    char pathTCyto[70];
+    char pathTCyto[200];
     getcwd(pathTCyto, sizeof(pathTCyto));
     strcat(pathTCyto, "/result/matrix/tCyto");
     strcat(pathTCyto, buffer);
     strcat(pathTCyto, ".txt");
     WritePopulation(model, tCytotoxic, pathTCyto, buffer);
 
-    char pathAntibody[70];
+    char pathAntibody[200];
     getcwd(pathAntibody, sizeof(pathAntibody));
     strcat(pathAntibody, "/result/matrix/antibody");
     strcat(pathAntibody, buffer);
     strcat(pathAntibody, ".txt");
     WritePopulation(model, antibody, pathAntibody, buffer);
 
-    char pathConventionalDC[70];
+    char pathConventionalDC[200];
     getcwd(pathConventionalDC, sizeof(pathConventionalDC));
     strcat(pathConventionalDC, "/result/matrix/conventionalDC");
     strcat(pathConventionalDC, buffer);
     strcat(pathConventionalDC, ".txt");
     WritePopulation(model, conventionalDC, pathConventionalDC, buffer);
 
-    char pathActivatedDC[70];
+    char pathActivatedDC[200];
     getcwd(pathActivatedDC, sizeof(pathActivatedDC));
     strcat(pathActivatedDC, "/result/matrix/activatedDC");
     strcat(pathActivatedDC, buffer);
@@ -126,7 +126,7 @@ void WriteFiles(structModel model, float *oligodendrocyte, float *microglia, flo
 
 void PlotResults(structModel model){
     char buffer[10];
-    char command[70] = {};
+    char command[200] = {};
     strcat(command, "python3 plotMatrices.py ");
     snprintf(buffer, sizeof(buffer), "%d", model.xFinal);
     strcat(command, buffer);
@@ -213,7 +213,7 @@ void WriteBVPV(structModel *model, float *thetaBV, float *thetaPV){
     fclose(fileBV);
     fclose(filePV);
     char buffer[10];
-    char command[70] = {};
+    char command[200] = {};
     strcat(command, "python3 plotBVPV.py ");
     snprintf(buffer, sizeof(buffer), "%d", model->xFinal);
     strcat(command, buffer);
@@ -223,7 +223,7 @@ void WriteBVPV(structModel *model, float *thetaBV, float *thetaPV){
     // system(command);
 }
 
-structModel ModelInitialize(structParameters params, int totThr, float ht, float hx, float time, float space, int numFigs, int numPointsLN, int numStepsLN){
+structModel ModelInitialize(structParameters params, int totThr, float ht, float hx, float time, float space, int numFigs, int numPointsLN, int numStepsLN, int saveFigs){
     structModel model;
     srand(2);
     model.parametersModel = params;
@@ -243,6 +243,7 @@ structModel ModelInitialize(structParameters params, int totThr, float ht, float
     model.tSize = (int)(time/ht);
     model.xSize = (int)(space/hx);
     model.intervalFigures = (int)model.tSize/numFigs;
+    model.saveFigs = saveFigs;
     
     model.totalThreads = totThr;
     model.microglia = (float**)malloc(BUFFER * sizeof(float*));
@@ -302,14 +303,14 @@ float* EquationsLymphNode(structModel model, float* populationLN, int stepPos){
     //Describe equations
 
     //Dendritic cell
-    float activatedDcMigration = model.parametersModel.gammaD * (model.activatedDCTissueVessels - dcLN) * (float)(model.parametersModel.V_PV/model.parametersModel.V_LN);
+    float activatedDcMigration = model.parametersModel.gammaD * (model.activatedDCTissueVessels - dcLN);// * (float)(model.parametersModel.V_PV/model.parametersModel.V_LN);
     float activatedDcClearance = model.parametersModel.cDl * dcLN;
     result[0] = activatedDcMigration - activatedDcClearance;
 
     //T Cytotoxic
     float tCytoActivation = model.parametersModel.bTCytotoxic * (model.parametersModel.rhoTCytotoxic*tCytoLN*dcLN - tCytoLN*dcLN);
     float tCytoHomeostasis = model.parametersModel.alphaTCytotoxic * (model.parametersModel.estableTCytotoxic - tCytoLN);
-    float tCytoMigration = model.parametersModel.gammaT * (tCytoLN - model.tCytotoxicTissueVessels) * (float)(model.parametersModel.V_BV/model.parametersModel.V_LN);
+    float tCytoMigration = model.parametersModel.gammaT * (tCytoLN - model.tCytotoxicTissueVessels);// * (float)(model.parametersModel.V_BV/model.parametersModel.V_LN);
     result[1] = tCytoActivation + tCytoHomeostasis - tCytoMigration;
 
     //T Helper
@@ -331,7 +332,7 @@ float* EquationsLymphNode(structModel model, float* populationLN, int stepPos){
     //Antibody
     float antibodyProduction = model.parametersModel.rhoAntibody * plasmaCellLN;
     float antibodyDecayment = model.parametersModel.cF * antibodyLN;
-    float antibodyMigration = model.parametersModel.gammaAntibody * (antibodyLN - model.antibodyTissueVessels) * (float)(model.parametersModel.V_BV/model.parametersModel.V_LN);
+    float antibodyMigration = model.parametersModel.gammaAntibody * (antibodyLN - model.antibodyTissueVessels);// * (float)(model.parametersModel.V_BV/model.parametersModel.V_LN);
     result[5] = antibodyProduction - antibodyMigration - antibodyDecayment;
 
     return result;
@@ -413,7 +414,8 @@ void SavingData(structModel model){
 
 void RunModel(structModel *model){
     //Save IC
-    WriteFiles(*model, model->oligodendrocyte[0], model->microglia[0], model->tCytotoxic[0], model->antibody[0], model->conventionalDc[0], model->activatedDc[0], 0);
+    if(model->saveFigs)
+        WriteFiles(*model, model->oligodendrocyte[0], model->microglia[0], model->tCytotoxic[0], model->antibody[0], model->conventionalDc[0], model->activatedDc[0], 0);
     
     int stepKMinus = 0, stepKPlus, line, column, stepKPlusLN = 0;
 
@@ -573,11 +575,12 @@ void RunModel(structModel *model){
                 auxAdcPV += model->activatedDc[stepKPlus][kPos];
             }
         }
-        if(kTime%model->intervalFigures == 0 || kTime == model->tSize)
+        if(model->saveFigs && kTime%model->intervalFigures == 0)
+            WriteFiles(*model, model->oligodendrocyte[stepKPlus], model->microglia[stepKPlus], model->tCytotoxic[stepKPlus], model->antibody[stepKPlus], model->conventionalDc[stepKPlus], model->activatedDc[stepKPlus], kTime);
+        if(kTime == model->tSize)
             WriteFiles(*model, model->oligodendrocyte[stepKPlus], model->microglia[stepKPlus], model->tCytotoxic[stepKPlus], model->antibody[stepKPlus], model->conventionalDc[stepKPlus], model->activatedDc[stepKPlus], kTime);
         stepKMinus += 1;
         stepKMinus = stepKMinus%2;
-
     }
         
     printf("Computation Done!!\n");
@@ -606,15 +609,16 @@ void RunModel(structModel *model){
     free(model->antibodyLymphNode);
     free(model->bCellLymphNode);
     free(model->plasmaCellLymphNode);
-    printf("Saving results...\n\n");
-    WriteLymphNodeFiles(*model, model->dendriticLymphNodeSavedPoints, model->tHelperLymphNodeSavedPoints, model->tCytotoxicLymphNodeSavedPoints, model->bCellLymphNodeSavedPoints, model->plasmaCellLymphNodeSavedPoints, model->antibodyLymphNodeSavedPoints);
-    
+
+    if(model->saveFigs){
+        printf("Saving results...\n\n");
+        WriteLymphNodeFiles(*model, model->dendriticLymphNodeSavedPoints, model->tHelperLymphNodeSavedPoints, model->tCytotoxicLymphNodeSavedPoints, model->bCellLymphNodeSavedPoints, model->plasmaCellLymphNodeSavedPoints, model->antibodyLymphNodeSavedPoints);
+        PlotResults(*model);
+    }
     free(model->dendriticLymphNodeSavedPoints);
     free(model->tCytotoxicLymphNodeSavedPoints);
     free(model->tHelperLymphNodeSavedPoints);
     free(model->antibodyLymphNodeSavedPoints);
     free(model->bCellLymphNodeSavedPoints);
     free(model->plasmaCellLymphNodeSavedPoints);
-
-    PlotResults(*model);
 }

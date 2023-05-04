@@ -74,6 +74,7 @@ typedef struct structModel
     int intervalFigures;
     int numPointsLN;
     int numFigs;
+    int saveFigs;
 
     int tSize;
     int xSize;
@@ -127,7 +128,7 @@ float* EquationsLymphNode(structModel model, float* populationLN, int stepPos);
 
 void SolverLymphNode(structModel *model, int stepPos);
 
-structModel ModelInitialize(structParameters params, int totThr, float ht, float hx, float time, float space, int numFigs, int numPointsLN, int numStepsLN);
+structModel ModelInitialize(structParameters params, int totThr, float ht, float hx, float time, float space, int numFigs, int numPointsLN, int numStepsLN, int saveFigs);
 
 void DefineBVPV(structModel *model);
 
