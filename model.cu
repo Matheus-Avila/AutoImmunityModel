@@ -442,10 +442,11 @@ void SavingData(structModel model){
 
 __device__ __constant__ float upperNeumannBC, lowerNeumannBC, leftNeumannBC, rightNeumannBC, constHx, constHt;
 __device__ __constant__ int constXSize;
+__device__ __constant__ structParameters modelParams;
 const int threadsPerBlock = 256;
 const int numBlocks = 4;
 
-__global__ void kernelPDE(structParameters *devParams, int kTime, float *tCytoSumVessel, float *activatedDCSumVessel, float *antibodySumVessel, float *devActivatedDCLymphNode, float *devAntibodyLymphNode, float *devTCytotoxicLymphNode, float *devThetaPV, float *devThetaBV, float *devMicrogliaKMinus, float *devMicrogliaKPlus, float *devTCytotoxicKMinus, float *devTCytotoxicKPlus, float *devAntibodyKMinus, float *devAntibodyKPlus, float *devConventionalDCKMinus, float *devConventionalDCKPlus, float *devActivatedDCKMinus, float *devActivatedDCKPlus, float *devOligodendrocyteKMinus, float *devOligodendrocyteKPlus)
+__global__ void kernelPDE(int kTime, float *tCytoSumVessel, float *activatedDCSumVessel, float *antibodySumVessel, float *devActivatedDCLymphNode, float *devAntibodyLymphNode, float *devTCytotoxicLymphNode, float *devThetaPV, float *devThetaBV, float *devMicrogliaKMinus, float *devMicrogliaKPlus, float *devTCytotoxicKMinus, float *devTCytotoxicKPlus, float *devAntibodyKMinus, float *devAntibodyKPlus, float *devConventionalDCKMinus, float *devConventionalDCKPlus, float *devActivatedDCKMinus, float *devActivatedDCKPlus, float *devOligodendrocyteKMinus, float *devOligodendrocyteKPlus)
 {
     int thrIdx = blockIdx.x * blockDim.x + threadIdx.x;
     int vesselIdx = threadIdx.x;
@@ -486,9 +487,9 @@ __global__ void kernelPDE(structParameters *devParams, int kTime, float *tCytoSu
         float microgliaChemotaxis = 0;
         CalculateDiffusion(constHx, valJPlus, valJMinus, valIPlus, valIMinus, devMicrogliaKMinus[thrIdx], &microgliaDiffusion);
         CalculateChemottaxis(constHx, valJPlus, valJMinus, valIPlus, valIMinus, devMicrogliaKMinus[thrIdx],
-                             devParams->avgMic, gradientOdcI, gradientOdcJ, &microgliaChemotaxis);
-        microgliaChemotaxis *= devParams->chi;
-        microgliaDiffusion *= devParams->micDiffusion;
+                             modelParams.avgMic, gradientOdcI, gradientOdcJ, &microgliaChemotaxis);
+        microgliaChemotaxis *= modelParams.chi;
+        microgliaDiffusion *= modelParams.micDiffusion;
         // Diffusion and Chemotaxis CDC
 
         valIPlus = (line != constXSize - 1) ? devConventionalDCKMinus[thrIdx + constXSize] : devConventionalDCKMinus[thrIdx] - (float)(2 * constHx * lowerNeumannBC);
@@ -500,9 +501,9 @@ __global__ void kernelPDE(structParameters *devParams, int kTime, float *tCytoSu
         float conventionalDcChemotaxis = 0;
         CalculateDiffusion(constHx, valJPlus, valJMinus, valIPlus, valIMinus, devConventionalDCKMinus[thrIdx], &conventionalDcDiffusion);
         CalculateChemottaxis(constHx, valJPlus, valJMinus, valIPlus, valIMinus, devConventionalDCKMinus[thrIdx],
-                             devParams->avgDc, gradientOdcI, gradientOdcJ, &conventionalDcChemotaxis);
-        conventionalDcChemotaxis *= devParams->chi;
-        conventionalDcDiffusion *= devParams->cDcDiffusion;
+                             modelParams.avgDc, gradientOdcI, gradientOdcJ, &conventionalDcChemotaxis);
+        conventionalDcChemotaxis *= modelParams.chi;
+        conventionalDcDiffusion *= modelParams.cDcDiffusion;
 
         // Difussion and Chemotaxis CD8T
 
@@ -515,9 +516,9 @@ __global__ void kernelPDE(structParameters *devParams, int kTime, float *tCytoSu
         float tCytotoxicChemotaxis = 0;
         CalculateDiffusion(constHx, valJPlus, valJMinus, valIPlus, valIMinus, devTCytotoxicKMinus[thrIdx], &tCytotoxicDiffusion);
         CalculateChemottaxis(constHx, valJPlus, valJMinus, valIPlus, valIMinus, devTCytotoxicKMinus[thrIdx],
-                             devParams->avgT, gradientOdcI, gradientOdcJ, &tCytotoxicChemotaxis);
-        tCytotoxicChemotaxis *= devParams->chi;
-        tCytotoxicDiffusion *= devParams->tCytoDiffusion;
+                             modelParams.avgT, gradientOdcI, gradientOdcJ, &tCytotoxicChemotaxis);
+        tCytotoxicChemotaxis *= modelParams.chi;
+        tCytotoxicDiffusion *= modelParams.tCytoDiffusion;
 
         // Difussion ADC
 
@@ -528,7 +529,7 @@ __global__ void kernelPDE(structParameters *devParams, int kTime, float *tCytoSu
 
         float activatedDCDiffusion = 0;
         CalculateDiffusion(constHx, valJPlus, valJMinus, valIPlus, valIMinus, devActivatedDCKMinus[thrIdx], &activatedDCDiffusion);
-        activatedDCDiffusion *= devParams->aDcDiffusion;
+        activatedDCDiffusion *= modelParams.aDcDiffusion;
 
         // Difussion Antibody
 
@@ -539,50 +540,50 @@ __global__ void kernelPDE(structParameters *devParams, int kTime, float *tCytoSu
 
         float antibodyDiffusion = 0;
         CalculateDiffusion(constHx, valJPlus, valJMinus, valIPlus, valIMinus, devAntibodyKMinus[thrIdx], &antibodyDiffusion);
-        antibodyDiffusion *= devParams->antibodyDiffusion;
+        antibodyDiffusion *= modelParams.antibodyDiffusion;
 
         //*******************************************Solving Tissue equations*****************************************************
 
         // Microglia update
-        float microgliaReaction = devParams->muMic * devMicrogliaKMinus[thrIdx] * (devParams->avgMic - devMicrogliaKMinus[thrIdx]);
-        float microgliaClearance = devParams->cMic * devMicrogliaKMinus[thrIdx];
+        float microgliaReaction = modelParams.muMic * devMicrogliaKMinus[thrIdx] * (modelParams.avgMic - devMicrogliaKMinus[thrIdx]);
+        float microgliaClearance = modelParams.cMic * devMicrogliaKMinus[thrIdx];
 
         devMicrogliaKPlus[thrIdx] = devMicrogliaKMinus[thrIdx] +
                                     constHt * (microgliaDiffusion - microgliaChemotaxis + microgliaReaction - microgliaClearance);
 
         // Conventional DC update
-        float conventionalDcReaction = devParams->muCDc * devOligodendrocyteKMinus[thrIdx] * (devParams->avgDc - devConventionalDCKMinus[thrIdx]);
-        float conventionalDcActivation = devParams->bD * devConventionalDCKMinus[thrIdx] * devOligodendrocyteKMinus[thrIdx];
-        float conventionalDcClearance = devParams->cCDc * devConventionalDCKMinus[thrIdx];
+        float conventionalDcReaction = modelParams.muCDc * devOligodendrocyteKMinus[thrIdx] * (modelParams.avgDc - devConventionalDCKMinus[thrIdx]);
+        float conventionalDcActivation = modelParams.bD * devConventionalDCKMinus[thrIdx] * devOligodendrocyteKMinus[thrIdx];
+        float conventionalDcClearance = modelParams.cCDc * devConventionalDCKMinus[thrIdx];
 
         devConventionalDCKPlus[thrIdx] = devConventionalDCKMinus[thrIdx] +
                                          constHt * (conventionalDcDiffusion - conventionalDcChemotaxis - conventionalDcClearance + conventionalDcReaction - conventionalDcActivation);
 
         // Activated DC update
-        float activatedDcClearance = devParams->cADc * devActivatedDCKMinus[thrIdx];
-        float activatedDcMigration = devThetaPV[thrIdx] * devParams->gammaD * (*devActivatedDCLymphNode - devActivatedDCKMinus[thrIdx]);
+        float activatedDcClearance = modelParams.cADc * devActivatedDCKMinus[thrIdx];
+        float activatedDcMigration = devThetaPV[thrIdx] * modelParams.gammaD * (*devActivatedDCLymphNode - devActivatedDCKMinus[thrIdx]);
 
         devActivatedDCKPlus[thrIdx] = devActivatedDCKMinus[thrIdx] + constHt * (activatedDCDiffusion + conventionalDcActivation + activatedDcMigration - activatedDcClearance);
 
         // CD8 T update
-        float tCytotoxicMigration = devThetaBV[thrIdx] * devParams->gammaT * (*devTCytotoxicLymphNode - devTCytotoxicKMinus[thrIdx]);
+        float tCytotoxicMigration = devThetaBV[thrIdx] * modelParams.gammaT * (*devTCytotoxicLymphNode - devTCytotoxicKMinus[thrIdx]);
 
         devTCytotoxicKPlus[thrIdx] = devTCytotoxicKMinus[thrIdx] + constHt * (tCytotoxicDiffusion - tCytotoxicChemotaxis + tCytotoxicMigration);
 
         // Antibody update
         float resultFFuncMic = 0;
-        fFunc(devMicrogliaKMinus[thrIdx], devParams->avgMic, &resultFFuncMic);
-        float odcAntibodyMicrogliaFagocitosis = devParams->lambAntMic * devAntibodyKMinus[thrIdx] * (devParams->avgOdc - devOligodendrocyteKMinus[thrIdx]) * resultFFuncMic;
-        float antibodyMigration = devThetaBV[thrIdx] * devParams->gammaAntibody * (*devAntibodyLymphNode - devAntibodyKMinus[thrIdx]);
+        fFunc(devMicrogliaKMinus[thrIdx], modelParams.avgMic, &resultFFuncMic);
+        float odcAntibodyMicrogliaFagocitosis = modelParams.lambAntMic * devAntibodyKMinus[thrIdx] * (modelParams.avgOdc - devOligodendrocyteKMinus[thrIdx]) * resultFFuncMic;
+        float antibodyMigration = devThetaBV[thrIdx] * modelParams.gammaAntibody * (*devAntibodyLymphNode - devAntibodyKMinus[thrIdx]);
 
         devAntibodyKPlus[thrIdx] = devAntibodyKMinus[thrIdx] + constHt * (antibodyDiffusion + antibodyMigration - odcAntibodyMicrogliaFagocitosis);
 
         // Oligodendrocytes update
         float result = 0, result1 = 0;
-        fFunc(devMicrogliaKMinus[thrIdx], devParams->avgMic, &result);
-        fFunc(devTCytotoxicKMinus[thrIdx], devParams->avgT, &result1);
-        float odcMicrogliaFagocitosis = devParams->rM * result * (devParams->avgOdc - devOligodendrocyteKMinus[thrIdx]);
-        float odcTCytotoxicApoptosis = devParams->rT * result1 * (devParams->avgOdc - devOligodendrocyteKMinus[thrIdx]);
+        fFunc(devMicrogliaKMinus[thrIdx], modelParams.avgMic, &result);
+        fFunc(devTCytotoxicKMinus[thrIdx], modelParams.avgT, &result1);
+        float odcMicrogliaFagocitosis = modelParams.rM * result * (modelParams.avgOdc - devOligodendrocyteKMinus[thrIdx]);
+        float odcTCytotoxicApoptosis = modelParams.rT * result1 * (modelParams.avgOdc - devOligodendrocyteKMinus[thrIdx]);
 
         devOligodendrocyteKPlus[thrIdx] = devOligodendrocyteKMinus[thrIdx] + constHt * (odcAntibodyMicrogliaFagocitosis + odcMicrogliaFagocitosis + odcTCytotoxicApoptosis);
 
@@ -659,12 +660,6 @@ void RunModel(structModel *model)
     cudaMemcpy(devConventionalDCKMinus, model->conventionalDc[0], model->xSize * model->xSize * sizeof(float), cudaMemcpyHostToDevice);
     cudaMemcpy(devActivatedDCKMinus, model->activatedDc[0], model->xSize * model->xSize * sizeof(float), cudaMemcpyHostToDevice);
 
-    structParameters *devParams;
-
-    // se der errado passar parametro por parametro (tentar com memoria de constantes)
-    cudaMalloc((void **)&devParams, sizeof(structParameters));
-    cudaMemcpy(devParams, &model->parametersModel, sizeof(structParameters), cudaMemcpyHostToDevice);
-
     cudaMalloc((void **)&devActivatedDCLymphNode, sizeof(float));
     cudaMalloc((void **)&devAntibodyLymphNode, sizeof(float));
     cudaMalloc((void **)&devTCytotoxicLymphNode, sizeof(float));
@@ -686,6 +681,7 @@ void RunModel(structModel *model)
     cudaMemcpyToSymbol(constHt, &model->ht, sizeof(float));
     cudaMemcpyToSymbol(constHx, &model->hx, sizeof(float));
     cudaMemcpyToSymbol(constXSize, &model->xSize, sizeof(float));
+    cudaMemcpyToSymbol(modelParams, &model->parametersModel, sizeof(structParameters));
 
     int devKTime;
     cudaMalloc((void **)&devKTime, sizeof(int));
@@ -724,9 +720,9 @@ void RunModel(structModel *model)
         cudaMemcpy(&devKTime, &kTime, sizeof(int), cudaMemcpyHostToDevice);
 
         if (stepKPlus % 2 == 1)
-            kernelPDE<<<numBlocks, threadsPerBlock>>>(devParams, devKTime, devTCytotoxicVessel, devActivatedDCVessel, devAntibodyVessel, devActivatedDCLymphNode, devAntibodyLymphNode, devTCytotoxicLymphNode, devThetaPV, devThetaBV, devMicrogliaKMinus, devMicrogliaKPlus, devTCytotoxicKMinus, devTCytotoxicKPlus, devAntibodyKMinus, devAntibodyKPlus, devConventionalDCKMinus, devConventionalDCKPlus, devActivatedDCKMinus, devActivatedDCKPlus, devOligodendrocytesDCKMinus, devOligodendrocytesDCKPlus);
+            kernelPDE<<<numBlocks, threadsPerBlock>>>(devKTime, devTCytotoxicVessel, devActivatedDCVessel, devAntibodyVessel, devActivatedDCLymphNode, devAntibodyLymphNode, devTCytotoxicLymphNode, devThetaPV, devThetaBV, devMicrogliaKMinus, devMicrogliaKPlus, devTCytotoxicKMinus, devTCytotoxicKPlus, devAntibodyKMinus, devAntibodyKPlus, devConventionalDCKMinus, devConventionalDCKPlus, devActivatedDCKMinus, devActivatedDCKPlus, devOligodendrocytesDCKMinus, devOligodendrocytesDCKPlus);
         else
-            kernelPDE<<<numBlocks, threadsPerBlock>>>(devParams, devKTime, devTCytotoxicVessel, devActivatedDCVessel, devAntibodyVessel, devActivatedDCLymphNode, devAntibodyLymphNode, devTCytotoxicLymphNode, devThetaPV, devThetaBV, devMicrogliaKPlus, devMicrogliaKMinus, devTCytotoxicKPlus, devTCytotoxicKMinus, devAntibodyKPlus, devAntibodyKMinus, devConventionalDCKPlus, devConventionalDCKMinus, devActivatedDCKPlus, devActivatedDCKMinus, devOligodendrocytesDCKPlus, devOligodendrocytesDCKMinus);
+            kernelPDE<<<numBlocks, threadsPerBlock>>>(devKTime, devTCytotoxicVessel, devActivatedDCVessel, devAntibodyVessel, devActivatedDCLymphNode, devAntibodyLymphNode, devTCytotoxicLymphNode, devThetaPV, devThetaBV, devMicrogliaKPlus, devMicrogliaKMinus, devTCytotoxicKPlus, devTCytotoxicKMinus, devAntibodyKPlus, devAntibodyKMinus, devConventionalDCKPlus, devConventionalDCKMinus, devActivatedDCKPlus, devActivatedDCKMinus, devOligodendrocytesDCKPlus, devOligodendrocytesDCKMinus);
         if (model->saveFigs && kTime % model->intervalFigures == 0)
         {
             if (stepKPlus % 2 == 1)
