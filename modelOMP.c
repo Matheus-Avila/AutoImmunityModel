@@ -36,25 +36,35 @@ void WritePopulation(structModel model, float *population, char* fileName, char*
     FILE *file;
     file = fopen(fileName, "w");
     int k = 0;
-    while (k < model.xSize*model.xSize){
-        int i = k;
-        while (i < k + model.xSize){
-            fprintf(file, "%f ", population[i]);
-            i++;
+    if(file != NULL){
+        while (k < model.xSize*model.xSize){
+            int i = k;
+            while (i < k + model.xSize){
+                fprintf(file, "%f ", population[i]);
+                i++;
+            }
+            fprintf(file,"\n");
+            k+=model.xSize;
         }
-        fprintf(file,"\n");
-        k+=model.xSize;
+        fclose(file);
+    }else{
+        printf("Error lymph node file\n");
+        exit(0);
     }
-    fclose(file);
 }
 
 void WritePopulationLymphNode(structModel model, float *population, char* fileName){
     FILE *file;
     file = fopen(fileName, "w");
-    for(int i=0;i<model.numPointsLN;i++){
-        fprintf(file, "%f\n", population[i]);
+    if(file != NULL){
+        for(int i=0;i<model.numPointsLN;i++){
+            fprintf(file, "%f\n", population[i]);
+        }
+        fclose(file);
+    }else{
+        printf("Error matrix file\n");
+        exit(0);
     }
-    fclose(file);
 }
 
 void WriteLymphNodeFiles(structModel model, float *dendritic, float *tHelper, float *tCytotoxic, float *bCell, float *plasmaCell, float *antibody){
@@ -200,18 +210,23 @@ void WriteBVPV(structModel *model, float *thetaBV, float *thetaPV){
     fileBV = fopen("./result/bv.txt", "w");
     FILE *filePV;
     filePV = fopen("./result/pv.txt", "w");
-    for(int k = 0; k < model->xSize*model->xSize; k++){
-        int i = (int)k/model->xSize;
-        int j = k%model->xSize;
-        fprintf(fileBV, "%f ", thetaBV[k]);
-        fprintf(filePV, "%f ", thetaPV[k]);    
-        if(k%model->xSize == 0 && k != 0){
-            fprintf(fileBV,"\n");
-            fprintf(filePV,"\n");
+    if(fileBV != NULL && filePV != NULL){
+        for(int k = 0; k < model->xSize*model->xSize; k++){
+            int i = (int)k/model->xSize;
+            int j = k%model->xSize;
+            fprintf(fileBV, "%f ", thetaBV[k]);
+            fprintf(filePV, "%f ", thetaPV[k]);    
+            if(k%model->xSize == 0 && k != 0){
+                fprintf(fileBV,"\n");
+                fprintf(filePV,"\n");
+            }
         }
+        fclose(fileBV);
+        fclose(filePV);
+    }else{
+        printf("Error matrix file\n");
+        exit(0);
     }
-    fclose(fileBV);
-    fclose(filePV);
     char buffer[10];
     char command[200] = {};
     strcat(command, "python3 plotBVPV.py ");
@@ -387,29 +402,33 @@ void SavingData(structModel model){
     }
     FILE *file;
     file = fopen("dataExecution.txt", "w");
-
-    fprintf(file, "Days = %d - Space = %d - ht = %f, hx = %f, Ht_JumpStep = %d\n", model.tFinal, model.xFinal, model.ht, model.hx, model.numStepsLN);
-    fprintf(file, "Lymph node populations\n");
-    fprintf(file, "DC = %f, TCD8 = %f, TCD4 = %f, B Cell = %f, Plasma cell = %f, IgG = %f\n", model.dendriticLymphNodeSavedPoints[model.numPointsLN-1], model.tCytotoxicLymphNodeSavedPoints[model.numPointsLN-1], model.tHelperLymphNodeSavedPoints[model.numPointsLN-1], model.bCellLymphNodeSavedPoints[model.numPointsLN-1], model.plasmaCellLymphNodeSavedPoints[model.numPointsLN-1], model.antibodyLymphNodeSavedPoints[model.numPointsLN-1]);
-    fprintf(file, "Tissue populations\n");
-    fprintf(file, "ODC = %f, Microglia = %f, ConventionalDC = %f, ActivatedDC = %f, TCD8 = %f, IgG = %f\n", totalODC, totalMic, totalCDC, totalADC, totalCD8, totalIGG);    
-    fprintf(file, "Parameters\n");
-    fprintf(file, "micDiffusion  = %f, antibodyDiffusion = %f, cDcDiffusion = %f, aDcDiffusion = %f, tCytoDiffusion = %f, chi = %f, muCDc = %f, muMic = %f, \
-    rM = %f, rT = %f, lambAntMic = %f, bD = %f, gammaD = %f, gammaAntibody = %f, gammaT = %f,  avgT = %f, avgDc = %f, avgMic = %f, avgOdc = %f,  cMic = %f, \
-    cCDc = %f, cADc = %f, cDl = %f, cF = %f, alphaTHelper = %f, alphaTCytotoxic = %f, alphaB = %f, alphaP = %f, bTHelper = %f, bTCytotoxic = %f, bRho = %f, \
-    bRhoB = %f, bRhoP = %f, rhoTHelper = %f, rhoTCytotoxic = %f, rhoB = %f, rhoP = %f, rhoAntibody = %f, estableTHelper = %f, estableTCytotoxic = %f, \
-    estableB = %f, estableP = %f, V_LN = %d, V_BV = %f, V_PV = %f\n",
-    model.parametersModel.micDiffusion, model.parametersModel.antibodyDiffusion, model.parametersModel.cDcDiffusion, model.parametersModel.aDcDiffusion, \
-    model.parametersModel.tCytoDiffusion, model.parametersModel.chi, model.parametersModel.muCDc, model.parametersModel.muMic, model.parametersModel.rM, \
-    model.parametersModel.rT, model.parametersModel.lambAntMic, model.parametersModel.bD, model.parametersModel.gammaD, model.parametersModel.gammaAntibody, \
-    model.parametersModel.gammaT,  model.parametersModel.avgT, model.parametersModel.avgDc, model.parametersModel.avgMic, model.parametersModel.avgOdc, \
-    model.parametersModel.cMic, model.parametersModel.cCDc, model.parametersModel.cADc, model.parametersModel.cDl, model.parametersModel.cF, \
-    model.parametersModel.alphaTHelper, model.parametersModel.alphaTCytotoxic, model.parametersModel.alphaB, model.parametersModel.alphaP, \
-    model.parametersModel.bTHelper, model.parametersModel.bTCytotoxic, model.parametersModel.bRho, model.parametersModel.bRhoB, model.parametersModel.bRhoP,\
-    model.parametersModel.rhoTHelper, model.parametersModel.rhoTCytotoxic, model.parametersModel.rhoB, model.parametersModel.rhoP,\
-    model.parametersModel.rhoAntibody, model.parametersModel.estableTHelper, model.parametersModel.estableTCytotoxic, model.parametersModel.estableB,\
-    model.parametersModel.estableP, model.parametersModel.V_LN, model.parametersModel.V_BV, model.parametersModel.V_PV);
-    fclose(file);
+    if(file != NULL){
+        fprintf(file, "Days = %d - Space = %d - ht = %f, hx = %f, Ht_JumpStep = %d\n", model.tFinal, model.xFinal, model.ht, model.hx, model.numStepsLN);
+        fprintf(file, "Lymph node populations\n");
+        fprintf(file, "DC = %f, TCD8 = %f, TCD4 = %f, B Cell = %f, Plasma cell = %f, IgG = %f\n", model.dendriticLymphNodeSavedPoints[model.numPointsLN-1], model.tCytotoxicLymphNodeSavedPoints[model.numPointsLN-1], model.tHelperLymphNodeSavedPoints[model.numPointsLN-1], model.bCellLymphNodeSavedPoints[model.numPointsLN-1], model.plasmaCellLymphNodeSavedPoints[model.numPointsLN-1], model.antibodyLymphNodeSavedPoints[model.numPointsLN-1]);
+        fprintf(file, "Tissue populations\n");
+        fprintf(file, "ODC = %f, Microglia = %f, ConventionalDC = %f, ActivatedDC = %f, TCD8 = %f, IgG = %f\n", totalODC, totalMic, totalCDC, totalADC, totalCD8, totalIGG);    
+        fprintf(file, "Parameters\n");
+        fprintf(file, "micDiffusion  = %f, antibodyDiffusion = %f, cDcDiffusion = %f, aDcDiffusion = %f, tCytoDiffusion = %f, chi = %f, muCDc = %f, muMic = %f, \
+        rM = %f, rT = %f, lambAntMic = %f, bD = %f, gammaD = %f, gammaAntibody = %f, gammaT = %f,  avgT = %f, avgDc = %f, avgMic = %f, avgOdc = %f,  cMic = %f, \
+        cCDc = %f, cADc = %f, cDl = %f, cF = %f, alphaTHelper = %f, alphaTCytotoxic = %f, alphaB = %f, alphaP = %f, bTHelper = %f, bTCytotoxic = %f, bRho = %f, \
+        bRhoB = %f, bRhoP = %f, rhoTHelper = %f, rhoTCytotoxic = %f, rhoB = %f, rhoP = %f, rhoAntibody = %f, estableTHelper = %f, estableTCytotoxic = %f, \
+        estableB = %f, estableP = %f, V_LN = %d, V_BV = %f, V_PV = %f\n",
+        model.parametersModel.micDiffusion, model.parametersModel.antibodyDiffusion, model.parametersModel.cDcDiffusion, model.parametersModel.aDcDiffusion, \
+        model.parametersModel.tCytoDiffusion, model.parametersModel.chi, model.parametersModel.muCDc, model.parametersModel.muMic, model.parametersModel.rM, \
+        model.parametersModel.rT, model.parametersModel.lambAntMic, model.parametersModel.bD, model.parametersModel.gammaD, model.parametersModel.gammaAntibody, \
+        model.parametersModel.gammaT,  model.parametersModel.avgT, model.parametersModel.avgDc, model.parametersModel.avgMic, model.parametersModel.avgOdc, \
+        model.parametersModel.cMic, model.parametersModel.cCDc, model.parametersModel.cADc, model.parametersModel.cDl, model.parametersModel.cF, \
+        model.parametersModel.alphaTHelper, model.parametersModel.alphaTCytotoxic, model.parametersModel.alphaB, model.parametersModel.alphaP, \
+        model.parametersModel.bTHelper, model.parametersModel.bTCytotoxic, model.parametersModel.bRho, model.parametersModel.bRhoB, model.parametersModel.bRhoP,\
+        model.parametersModel.rhoTHelper, model.parametersModel.rhoTCytotoxic, model.parametersModel.rhoB, model.parametersModel.rhoP,\
+        model.parametersModel.rhoAntibody, model.parametersModel.estableTHelper, model.parametersModel.estableTCytotoxic, model.parametersModel.estableB,\
+        model.parametersModel.estableP, model.parametersModel.V_LN, model.parametersModel.V_BV, model.parametersModel.V_PV);
+        fclose(file);
+    }else{
+        printf("dataExecution file not found!\n");
+        exit(0);
+    }
 }
 
 void RunModel(structModel *model){

@@ -69,6 +69,14 @@ void WriteTime(float ExecTime){
 void clearPhgTxt(){
     system("find ./result/ -name '*.png' -type f -delete");
     system("find ./result/ -name '*.txt' -type f -delete");
+    system("mkdir result");
+    system("mkdir result/matrix");
+    system("mkdir result/odc");
+    system("mkdir result/mic");
+    system("mkdir result/tke");
+    system("mkdir result/ant");
+    system("mkdir result/da");
+    system("mkdir result/dc");
 }
 
 int main(int argc, char* argv[]){
