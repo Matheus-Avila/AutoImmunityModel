@@ -59,15 +59,28 @@ structParameters ParametersInitialize(){
 }
 
 void WriteTime(float ExecTime){
-    FILE *fileAllTime;
-    fileAllTime = fopen("./ExecsTimes.txt", "a");
-    fprintf(fileAllTime, "%f\n", ExecTime);
-    fclose(fileAllTime);
+    FILE *fileTime;
+    fileTime = fopen("./ExecsTimes.txt", "a");
+    if(fileTime != NULL){
+    fprintf(fileTime, "%f\n", ExecTime);
+    fclose(fileTime);
+    }else{
+        printf("Error execution time file\n");
+        exit(0);
+    }
 }
 
 void clearPhgTxt(){
     system("find ./result/ -name '*.png' -type f -delete");
     system("find ./result/ -name '*.txt' -type f -delete");
+    system("mkdir result");
+    system("mkdir result/matrix");
+    system("mkdir result/odc");
+    system("mkdir result/mic");
+    system("mkdir result/tke");
+    system("mkdir result/ant");
+    system("mkdir result/da");
+    system("mkdir result/dc");
 }
 
 int main(){
