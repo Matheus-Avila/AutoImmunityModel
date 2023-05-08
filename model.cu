@@ -428,6 +428,7 @@ void SavingData(structModel model){
     FILE *file;
     file = fopen("dataExecution.txt", "w");
     if(file != NULL){
+        fprintf(file, "Execution Time of Kernel = %f\n", model.execTimeKernel);
         fprintf(file, "Days = %d - Space = %d - ht = %f, hx = %f, Ht_JumpStep = %d\n", model.tFinal, model.xFinal, model.ht, model.hx, model.numStepsLN);
         fprintf(file, "Lymph node populations\n");
         fprintf(file, "DC = %f, TCD8 = %f, TCD4 = %f, B Cell = %f, Plasma cell = %f, IgG = %f\n", model.dendriticLymphNodeSavedPoints[model.numPointsLN-1], model.tCytotoxicLymphNodeSavedPoints[model.numPointsLN-1], model.tHelperLymphNodeSavedPoints[model.numPointsLN-1], model.bCellLymphNodeSavedPoints[model.numPointsLN-1], model.plasmaCellLymphNodeSavedPoints[model.numPointsLN-1], model.antibodyLymphNodeSavedPoints[model.numPointsLN-1]);
@@ -638,6 +639,11 @@ void RunModel(structModel *model)
     if(model->saveFigs)
         WriteFiles(*model, model->oligodendrocyte[0], model->microglia[0], model->tCytotoxic[0], model->antibody[0], model->conventionalDc[0], model->activatedDc[0], 0);
 
+    float elapsedTimeKernel = 0, elapsedTimeKernelAux = 0;
+    cudaEvent_t start, stop;
+    cudaEventCreate(&start);
+    cudaEventCreate(&stop);
+
     float *activatedDCVessel, *tCytotoxicVessel, *antibodyVessel;
 
     float *devThetaPV, *devThetaBV, *devActivatedDCVessel, *devTCytotoxicVessel, *devAntibodyVessel, *devActivatedDCLymphNode, *devAntibodyLymphNode, *devTCytotoxicLymphNode, *devMicrogliaKMinus, *devMicrogliaKPlus, *devTCytotoxicKMinus, *devTCytotoxicKPlus, *devAntibodyKMinus, *devAntibodyKPlus, *devConventionalDCKMinus, *devConventionalDCKPlus, *devActivatedDCKMinus, *devActivatedDCKPlus, *devOligodendrocytesDCKMinus, *devOligodendrocytesDCKPlus;
@@ -732,10 +738,15 @@ void RunModel(structModel *model)
         }
         cudaMemcpy(&devKTime, &kTime, sizeof(int), cudaMemcpyHostToDevice);
 
+        cudaEventRecord(&start, 0);
         if (stepKPlus % 2 == 1)
             kernelPDE<<<numBlocks, threadsPerBlock>>>(devKTime, devTCytotoxicVessel, devActivatedDCVessel, devAntibodyVessel, devActivatedDCLymphNode, devAntibodyLymphNode, devTCytotoxicLymphNode, devThetaPV, devThetaBV, devMicrogliaKMinus, devMicrogliaKPlus, devTCytotoxicKMinus, devTCytotoxicKPlus, devAntibodyKMinus, devAntibodyKPlus, devConventionalDCKMinus, devConventionalDCKPlus, devActivatedDCKMinus, devActivatedDCKPlus, devOligodendrocytesDCKMinus, devOligodendrocytesDCKPlus);
         else
             kernelPDE<<<numBlocks, threadsPerBlock>>>(devKTime, devTCytotoxicVessel, devActivatedDCVessel, devAntibodyVessel, devActivatedDCLymphNode, devAntibodyLymphNode, devTCytotoxicLymphNode, devThetaPV, devThetaBV, devMicrogliaKPlus, devMicrogliaKMinus, devTCytotoxicKPlus, devTCytotoxicKMinus, devAntibodyKPlus, devAntibodyKMinus, devConventionalDCKPlus, devConventionalDCKMinus, devActivatedDCKPlus, devActivatedDCKMinus, devOligodendrocytesDCKPlus, devOligodendrocytesDCKMinus);
+        cudaEventRecord(&stop, 0);
+        cudaEventSynchronize(stop);
+        cudaEventElapsedTime(&elapsedTimeKernelAux, start, stop);
+        elapsedTimeKernel += elapsedTimeKernelAux;
         if (model->saveFigs && kTime % model->intervalFigures == 0)
         {
             if (stepKPlus % 2 == 1)
@@ -783,6 +794,7 @@ void RunModel(structModel *model)
         stepKMinus += 1;
         stepKMinus = stepKMinus % 2;
     }
+    model->execTimeKernel = elapsedTimeKernel;
     printf("Computation Done!!\n");
     SavingData(*model);
     if(model->saveFigs){

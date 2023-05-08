@@ -68,6 +68,8 @@ typedef struct structModel
     int tFinal;
     int xFinal;
 
+    float execTimeKernel;
+
     int intervalFigures;
     int numPointsLN;
     int numStepsLN;
