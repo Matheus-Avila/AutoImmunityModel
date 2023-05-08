@@ -60,10 +60,15 @@ structParameters ParametersInitialize(){
 }
 
 void WriteTime(float ExecTime){
-    FILE *fileAllTime;
-    fileAllTime = fopen("./ExecsTimes.txt", "a");
-    fprintf(fileAllTime, "%f\n", ExecTime);
-    fclose(fileAllTime);
+    FILE *fileTime;
+    fileTime = fopen("./ExecsTimes.txt", "a");
+    if(fileTime != NULL){
+    fprintf(fileTime, "%f\n", ExecTime);
+    fclose(fileTime);
+    }else{
+        printf("Error execution time file\n");
+        exit(0);
+    }
 }
 
 void clearPhgTxt(){
