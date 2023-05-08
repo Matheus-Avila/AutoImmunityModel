@@ -36,6 +36,7 @@ void WritePopulation(structModel model, float *population, char *fileName, char 
     FILE *file;
     file = fopen(fileName, "w");
     if(file != NULL){
+        int k = 0;
         while (k < model.xSize*model.xSize){
             int i = k;
             while (i < k + model.xSize){
