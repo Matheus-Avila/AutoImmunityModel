@@ -70,6 +70,10 @@ typedef struct structModel
 
     float execTimeKernel;
 
+    float elapsedTimeLymphNode;
+    float elapsedTimeCopiesDeviceToHost;
+    float elapsedTimeCopiesHostToDevice;
+
     int intervalFigures;
     int numPointsLN;
     int numStepsLN;
