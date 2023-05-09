@@ -646,9 +646,9 @@ void RunModel(structModel *model)
     clock_t start, end;
     float elapsedTimeLymphNode = 0, elapsedTimeCopiesDeviceToHost = 0, elapsedTimeCopiesHostToDevice = 0;
     float elapsedTimeKernel = 0, elapsedTimeKernelAux = 0;
-    cudaEvent_t start, stop;
-    cudaEventCreate(&start);
-    cudaEventCreate(&stop);
+    cudaEvent_t startKernel, stopKernel;
+    cudaEventCreate(&startKernel);
+    cudaEventCreate(&stopKernel);
 
     float *activatedDCVessel, *tCytotoxicVessel, *antibodyVessel;
 
@@ -756,14 +756,14 @@ void RunModel(structModel *model)
         }
         cudaMemcpy(&devKTime, &kTime, sizeof(int), cudaMemcpyHostToDevice);
 
-        cudaEventRecord(start, 0);
+        cudaEventRecord(startKernel, 0);
         if (stepKPlus % 2 == 1)
             kernelPDE<<<numBlocks, threadsPerBlock>>>(devKTime, devTCytotoxicVessel, devActivatedDCVessel, devAntibodyVessel, devActivatedDCLymphNode, devAntibodyLymphNode, devTCytotoxicLymphNode, devThetaPV, devThetaBV, devMicrogliaKMinus, devMicrogliaKPlus, devTCytotoxicKMinus, devTCytotoxicKPlus, devAntibodyKMinus, devAntibodyKPlus, devConventionalDCKMinus, devConventionalDCKPlus, devActivatedDCKMinus, devActivatedDCKPlus, devOligodendrocytesDCKMinus, devOligodendrocytesDCKPlus);
         else
             kernelPDE<<<numBlocks, threadsPerBlock>>>(devKTime, devTCytotoxicVessel, devActivatedDCVessel, devAntibodyVessel, devActivatedDCLymphNode, devAntibodyLymphNode, devTCytotoxicLymphNode, devThetaPV, devThetaBV, devMicrogliaKPlus, devMicrogliaKMinus, devTCytotoxicKPlus, devTCytotoxicKMinus, devAntibodyKPlus, devAntibodyKMinus, devConventionalDCKPlus, devConventionalDCKMinus, devActivatedDCKPlus, devActivatedDCKMinus, devOligodendrocytesDCKPlus, devOligodendrocytesDCKMinus);
-        cudaEventRecord(stop, 0);
-        cudaEventSynchronize(stop);
-        cudaEventElapsedTime(&elapsedTimeKernelAux, start, stop);
+        cudaEventRecord(stopKernel, 0);
+        cudaEventSynchronize(stopKernel);
+        cudaEventElapsedTime(&elapsedTimeKernelAux, startKernel, stopKernel);
         elapsedTimeKernel += elapsedTimeKernelAux;
         if (model->saveFigs && kTime % model->intervalFigures == 0)
         {
@@ -816,7 +816,7 @@ void RunModel(structModel *model)
     model->elapsedTimeLymphNode = elapsedTimeLymphNode;
     model->elapsedTimeCopiesDeviceToHost = elapsedTimeCopiesDeviceToHost;
     model->elapsedTimeCopiesHostToDevice = elapsedTimeCopiesHostToDevice;
-    model->execTimeKernel = elapsedTimeKernel*1000;
+    model->execTimeKernel = elapsedTimeKernel/1000;
     printf("Computation Done!!\n");
     SavingData(*model);
     if(model->saveFigs){
