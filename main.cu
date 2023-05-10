@@ -86,7 +86,7 @@ void clearPhgTxt(){
 int main(){
     clearPhgTxt();
     float ht = 0.0002, hx = 0.05;
-    int numFigs = 28, numPointsLN = 1000, time = 28, space = 20, numStepsLN = 4, saveFigs = 1;
+    int numFigs = 28, numPointsLN = 1000, time = 28, space = 20, numStepsLN = 100, saveFigs = 1;
     structParameters parameters = ParametersInitialize();
     structModel model = ModelInitialize(parameters, ht, hx, time, space, numFigs, numPointsLN, numStepsLN, saveFigs);
     RunModel(&model);
