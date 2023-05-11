@@ -1,0 +1,11 @@
+Execution Time of Kernel = 0.000000 secs
+Execution Time of Lymph Node = 0.001259 secs
+Execution Time of Copies Device to Host = 0.001241 secs
+Execution Time of Copies Host to Device = 0.001194 secs
+Days = 28 - Space = 20 - ht = 0.000200, hx = 0.050000, Ht_JumpStep = 100
+Lymph node populations
+DC = 0.000000, TCD8 = 1.904760, TCD4 = 78.896088, B Cell = 23.480959, Plasma cell = 2.499994, IgG = 0.318742
+Tissue populations
+ODC = 0.000000, Microglia = 732335.062500, ConventionalDC = 0.000000, ActivatedDC = 0.000000, TCD8 = 0.000000, IgG = 0.000000
+Parameters
+micDiffusion  = 0.015206, antibodyDiffusion = 0.152064, cDcDiffusion = 0.015206, aDcDiffusion = 0.015206, tCytoDiffusion = 0.015206, chi = 35.759998, muCDc = 0.432000, muMic = 0.004320,         rM = 0.005702, rT = 0.100000, lambAntMic = 0.005702, bD = 0.001000, gammaD = 0.010000, gammaAntibody = 0.300000, gammaT = 2.000000,  avgT = 37.000000, avgDc = 33.000000, avgMic = 350.000000, avgOdc = 400.000000,  cMic = 0.100000,         cCDc = 0.100000, cADc = 0.100000, cDl = 0.100000, cF = 0.100000, alphaTHelper = 0.100000, alphaTCytotoxic = 0.100000, alphaB = 0.100000, alphaP = 1.000000, bTHelper = 0.170000, bTCytotoxic = 0.001000, bRho = 0.600000,         bRhoB = 3.020000, bRhoP = 1.020000, rhoTHelper = 2.000000, rhoTCytotoxic = 2.000000, rhoB = 11.000000, rhoP = 3.000000, rhoAntibody = 0.051000, estableTHelper = 84.000000, estableTCytotoxic = 40.000000,         estableB = 25.000000, estableP = 2.500000, V_LN = 160, V_BV = 160.000000, V_PV = 160.000000

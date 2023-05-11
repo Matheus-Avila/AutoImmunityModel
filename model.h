@@ -1,5 +1,5 @@
-#ifndef _MODELOMP_H_
-#define _MODELOMP_H_
+#ifndef _MODEL_H_
+#define _MODEL_H_
 
 #define BUFFER 2
 
@@ -62,18 +62,25 @@ typedef struct structParameters
 
 typedef struct structModel
 {
-    int totalThreads;
-    int calculateQoI;
-    
     float ht;
     float hx;
 
     int tFinal;
     int xFinal;
 
+    float execTimeKernel;
+
+    float elapsedTimeLymphNode;
+    float elapsedTimeCopiesDeviceToHost;
+    float elapsedTimeCopiesHostToDevice;
+
     int intervalFigures;
     int numPointsLN;
+    int numStepsLN;
     int numFigs;
+    int saveFigs;
+    // int *timeVec;
+    // int *spaceVec;
 
     int tSize;
     int xSize;
@@ -127,7 +134,7 @@ float* EquationsLymphNode(structModel model, float* populationLN, int stepPos);
 
 void SolverLymphNode(structModel *model, int stepPos);
 
-structModel ModelInitialize(structParameters params, int totThr, float ht, float hx, float time, float space, int numFigs, int numPointsLN, int calculateQoI);
+structModel ModelInitialize(structParameters params, float ht, float hx, float time, float space, int numFigs, int numPointsLN, int numStepsLN, int saveFigs);
 
 void DefineBVPV(structModel *model);
 
