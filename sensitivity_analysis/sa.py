@@ -17,7 +17,7 @@ def printResult(indexes, title, fileName):
     plt.barh(label, indexes, color ='maroon')
     plt.xlabel("Sobol's indices")
     # plt.show()
-    plt.savefig("./sensitivity_analysis/"+ fileName +".png", dpi = 900)
+    plt.savefig("./"+ fileName +".png", dpi = 900)
     plt.clf()
 
 
@@ -25,7 +25,7 @@ def model(d_mic, d_anti, d_dc, d_da, d_t_cit, chi, mu_dc, mu_m, r_m, r_t, lamb_f
  cMic, cCDc, cADc, cDl, cF, alpha_T_h, alpha_T_c, alpha_B, alpha_P, b_Th, b_Tc, b_rho, b_rho_b, b_rho_p, rho_Th, rho_Tc, rho_B, rho_P, rho_F):
 # def model(mu_m, d_mic):
     #Escrever parametros em um txt
-    with open('./sensitivity_analysis/SA_parameters.txt', 'w') as filep:
+    with open('./SA_parameters.txt', 'w') as filep:
         filep.write(str(chi)+"\n"+str(d_mic)+"\n"+str(d_dc)+"\n"+str(d_da)+"\n"+str(d_t_cit)+"\n"+str(d_anti)+
         "\n"+str(mu_m)+"\n"+str(r_m)+"\n"+str(lamb_f_m)+"\n"+str(b_d)+"\n"+str(r_t)+
         "\n"+str(mu_dc)+"\n"+str(gamma_D)+"\n"+str(gamma_F)+"\n"+str(gamma_T)+"\n"+str(alpha_T_h)+"\n"+str(alpha_T_c)+
@@ -36,7 +36,7 @@ def model(d_mic, d_anti, d_dc, d_da, d_t_cit, chi, mu_dc, mu_m, r_m, r_t, lamb_f
     os.system("./main")#Executa o modelo C
     #Ler resultado em C
     outPut = 0
-    with open("./sensitivity_analysis/SAoutput.txt", 'r') as f:
+    with open("./SAoutput.txt", 'r') as f:
         outPut = f.readline()
     outPut = float(outPut)
     return outPut
@@ -195,7 +195,7 @@ def printHeatMap(population, title, fileName):
                 max_val = population[i][j]    
     sns.heatmap(matrix, xticklabels = label, yticklabels = label, annot=False, vmax=max_val, vmin=0, center=.5*max_val, linewidths=.2, cmap='crest')
     plt.title(title)
-    plt.savefig("./sensitivity_analysis/"+ fileName +".png", dpi = 900)
+    plt.savefig("./"+ fileName +".png", dpi = 900)
     plt.clf()
 
 def printMesh(population, title, fileName):
@@ -271,7 +271,7 @@ def RunSA():
     # inputFile.close()
 
     numParams = problem["num_vars"]
-    with open("sample.txt", "r") as file:
+    with open("../sample.txt", "r") as file:
         for i in range(numOutPuts):
             for j in range(numParams):
                 sample[i][j] = file.readline()
@@ -287,7 +287,7 @@ def RunSA():
 
     output_file = np.zeros(numOutPuts)
     i = 0
-    with open("./sensitivity_analysis/SAalloutput.txt", "r") as f:
+    with open("./SAalloutput.txt", "r") as f:
         # output_file = f.readlines()
         for y in f.read().split("\n"):
             if i == numOutPuts:
