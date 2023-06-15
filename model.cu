@@ -271,6 +271,10 @@ structModel ModelInitialize(structParameters params, float ht, float hx, float t
     model.tSize = (int)(time / ht);
     model.xSize = (int)(space / hx);
     model.intervalFigures = (int)model.tSize / numFigs;
+    if(!VerifyCFL(model.parametersModel, ht, hx)){
+        printf("Falhou CFL!!\n");
+        exit(0);
+    }  
 
     // inicializar dinamicamente todos os vetores do tecido
     model.microglia = (float **)calloc(BUFFER, sizeof(float *));
