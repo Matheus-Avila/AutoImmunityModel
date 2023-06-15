@@ -117,7 +117,7 @@ float AdvectionTerm(float populationPoint, float avgValue);
 
 float UpDownWind(float frontIPoint, float ijPoint, float avgValue);
 
-float CalculateChemottaxis(structModel model, float ponto_posterior_j, float ponto_anterior_j, float ponto_posterior_i, float ponto_anterior_i, float ponto_atual,\
+float CalculateChemotaxis(structModel model, float ponto_posterior_j, float ponto_anterior_j, float ponto_posterior_i, float ponto_anterior_i, float ponto_atual,\
  float valor_medio, float gradiente_odc_i, float gradiente_odc_j);
 
 float CalculateDiffusion(structModel model, float ponto_posterior_j, float ponto_anterior_j, float ponto_posterior_i, float ponto_anterior_i, float ponto_atual);

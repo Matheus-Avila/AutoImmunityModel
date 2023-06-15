@@ -160,7 +160,7 @@ float UpDownWind(float frontPoint, float rearPoint, float avgValue){
     return AdvectionTerm(frontPoint, avgValue) - AdvectionTerm(rearPoint, avgValue);
 }
 
-float CalculateChemottaxis(structModel model, float frontJPoint, float rearJPoint, float frontIPoint, float rearIPoint, float ijPoint,\
+float CalculateChemotaxis(structModel model, float frontJPoint, float rearJPoint, float frontIPoint, float rearIPoint, float ijPoint,\
  float avgValue, float gradientOdcI, float gradientOdcJ){
     float gradientPopulationI, gradientPopulationJ;
     if(gradientOdcI<0)
@@ -171,7 +171,6 @@ float CalculateChemottaxis(structModel model, float frontJPoint, float rearJPoin
         gradientPopulationJ = UpDownWind(frontJPoint, ijPoint, avgValue)/(float)model.hx;
     else
         gradientPopulationJ = UpDownWind(ijPoint, rearJPoint, avgValue)/(float)model.hx;
-
     return gradientOdcI*gradientPopulationI + gradientOdcJ*gradientPopulationJ;
 }
 
@@ -453,10 +452,12 @@ void RunModel(structModel *model){
 
     float auxAdcPV = 0.0, auxAntibodyBV = 0.0, auxTCytotoxicBV = 0.0;
 
+    float diffusionOdc;
+
     int kTime;
     int tid;
     #pragma omp parallel num_threads(model->totalThreads) default(none) shared(model, auxTCytotoxicBV, auxAntibodyBV, auxAdcPV, lowerNeumannBC, rightNeumannBC, upperNeumannBC, leftNeumannBC)\
-            private(tid, kTime, stepKMinus, stepKPlus, line, column, microgliaKMinus, conventionalDcKMinus,\
+            private(tid, kTime, stepKMinus, stepKPlus, line, column, microgliaKMinus, conventionalDcKMinus, diffusionOdc,\
             activatedDcKMinus, tCytotoxicKMinus, antibodyKMinus, oligodendrocyteKMinus, valIPlus, valJPlus, valIMinus, valJMinus, gradientOdcI,\
             gradientOdcJ, microgliaDiffusion, microgliaChemotaxis, conventionalDcDiffusion, conventionalDcChemotaxis, tCytotoxicDiffusion, tCytotoxicChemotaxis,\
             activatedDCDiffusion, antibodyDiffusion, microgliaReaction, microgliaClearance, conventionalDcReaction, conventionalDcActivation, conventionalDcClearance,\
@@ -496,6 +497,8 @@ void RunModel(structModel *model){
             gradientOdcI = (float)(valIPlus - valIMinus)/(float)(2*model->hx);
             gradientOdcJ = (float)(valJPlus - valJMinus)/(float)(2*model->hx);
 
+            diffusionOdc = CalculateDiffusion(*model, valJPlus, valJMinus, valIPlus, valIMinus, oligodendrocyteKMinus);
+
             //Diffusion and Chemotaxis Mic
 
             valIPlus  = (line != model->xSize-1)? model->microglia[stepKMinus][kPos + model->xSize]: model->microglia[stepKMinus][kPos] - (float)(2*model->hx*lowerNeumannBC);
@@ -504,8 +507,8 @@ void RunModel(structModel *model){
             valJMinus = (column != 0)? model->microglia[stepKMinus][kPos - 1]: model->microglia[stepKMinus][kPos] - (float)(2*model->hx*leftNeumannBC);
             
             microgliaDiffusion = model->parametersModel.micDiffusion*CalculateDiffusion(*model, valJPlus, valJMinus, valIPlus, valIMinus, model->microglia[stepKMinus][kPos]);
-            microgliaChemotaxis = model->parametersModel.chi*CalculateChemottaxis(*model, valJPlus, valJMinus, valIPlus, valIMinus, model->microglia[stepKMinus][kPos],\
-            model->parametersModel.avgMic, gradientOdcI, gradientOdcJ);
+            microgliaChemotaxis = model->parametersModel.chi*CalculateChemotaxis(*model, valJPlus, valJMinus, valIPlus, valIMinus, model->microglia[stepKMinus][kPos],\
+            model->parametersModel.avgMic, gradientOdcI, gradientOdcJ) + diffusionOdc * AdvectionTerm(microgliaKMinus, model->parametersModel.avgMic);
 
             //Diffusion and Chemotaxis CDC
 
@@ -515,8 +518,8 @@ void RunModel(structModel *model){
             valJMinus = (column != 0)? model->conventionalDc[stepKMinus][kPos - 1]: model->conventionalDc[stepKMinus][kPos] - (float)(2*model->hx*leftNeumannBC);
 
             conventionalDcDiffusion = model->parametersModel.cDcDiffusion*CalculateDiffusion(*model, valJPlus, valJMinus, valIPlus, valIMinus, model->conventionalDc[stepKMinus][kPos]);
-            conventionalDcChemotaxis = model->parametersModel.chi*CalculateChemottaxis(*model, valJPlus, valJMinus, valIPlus, valIMinus, model->conventionalDc[stepKMinus][kPos],\
-            model->parametersModel.avgDc, gradientOdcI, gradientOdcJ);
+            conventionalDcChemotaxis = model->parametersModel.chi*CalculateChemotaxis(*model, valJPlus, valJMinus, valIPlus, valIMinus, model->conventionalDc[stepKMinus][kPos],\
+            model->parametersModel.avgDc, gradientOdcI, gradientOdcJ) + diffusionOdc * AdvectionTerm(conventionalDcKMinus, model->parametersModel.avgDc);
 
             //Difussion and Chemotaxis CD8T
 
@@ -526,8 +529,8 @@ void RunModel(structModel *model){
             valJMinus = (column != 0)? model->tCytotoxic[stepKMinus][kPos - 1]: model->tCytotoxic[stepKMinus][kPos] - (float)(2*model->hx*leftNeumannBC);
 
             tCytotoxicDiffusion = model->parametersModel.tCytoDiffusion*CalculateDiffusion(*model, valJPlus, valJMinus, valIPlus, valIMinus, model->tCytotoxic[stepKMinus][kPos]);
-            tCytotoxicChemotaxis = model->parametersModel.chi*CalculateChemottaxis(*model, valJPlus, valJMinus, valIPlus, valIMinus, model->tCytotoxic[stepKMinus][kPos],\
-            model->parametersModel.avgT, gradientOdcI, gradientOdcJ);
+            tCytotoxicChemotaxis = model->parametersModel.chi*CalculateChemotaxis(*model, valJPlus, valJMinus, valIPlus, valIMinus, model->tCytotoxic[stepKMinus][kPos],\
+            model->parametersModel.avgT, gradientOdcI, gradientOdcJ) + diffusionOdc * AdvectionTerm(tCytotoxicKMinus, model->parametersModel.avgT);
 
             //Difussion ADC
 

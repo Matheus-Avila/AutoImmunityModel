@@ -88,8 +88,8 @@ int main(int argc, char* argv[]){
     printf("Comecei o main\n");
     clearPhgTxt();
     int tot_thr = strtol(argv[1], NULL, 10);
-    float ht = 0.0002, hx = 0.5;
-    int numFigs = 28, numPointsLN = 1000, time = 28, space = 20, numStepsLN = 100, saveFigs = 0;
+    float ht = 0.00002, hx = 0.5;
+    int numFigs = 28, numPointsLN = 1000, time = 28, space = 20, numStepsLN = 1, saveFigs = 1;
     structParameters parameters = ParametersInitialize();
     structModel model = ModelInitialize(parameters, tot_thr, ht, hx, time, space, numFigs, numPointsLN, numStepsLN, saveFigs);
     printf("Inicializacao feita!!\n\n");
