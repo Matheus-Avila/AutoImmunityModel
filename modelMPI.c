@@ -297,7 +297,10 @@ float hx, float time, float space, int numFigs, int numPointsLN, int my_rank, in
     model.intervaloFiguras = (int)model.tSize/numFigs;
     xSize = model.xSize;
     tSize = model.tSize;
-
+    if(!VerifyCFL(model.parametersModel, ht, hx)){
+        printf("Falhou CFL!!\n");
+        exit(0);
+    }  
     model.my_rank = my_rank;
     model.comm_sz = comm_sz;
     
