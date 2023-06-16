@@ -475,7 +475,7 @@ __global__ void kernelPDE(int kTime, float *tCytoSumVessel, float *activatedDCSu
     int line = (int)thrIdx / constXSize;
     int column = thrIdx % constXSize;
     float devOligodendrocyteKMinusThrIdx, devMicrogliaKMinusThrIdx, devConventionalDCKMinusThrIdx, devTCytotoxicKMinusThrIdx, devActivatedDCKMinusThrIdx, devAntibodyKMinusThrIdx;
-    float avgOdcMinusODC;
+    float avgOdcMinusODC, diffusionODC;
     __shared__ float tCytoSumVesselBlock[threadsPerBlock];
     __shared__ float activatedDCSumVesselBlock[threadsPerBlock];
     __shared__ float antibodySumVesselBlock[threadsPerBlock];
@@ -497,64 +497,69 @@ __global__ void kernelPDE(int kTime, float *tCytoSumVessel, float *activatedDCSu
         column = thrIdx % constXSize;
 
         // Define gradient ODCs
-        float valIPlus = (line != constXSize - 1) ? devOligodendrocyteKMinus[thrIdx + constXSize] : devOligodendrocyteKMinusThrIdx;
-        float valJPlus = (column != constXSize - 1) ? devOligodendrocyteKMinus[thrIdx + 1] : devOligodendrocyteKMinusThrIdx;
-        float valIMinus = (line != 0) ? devOligodendrocyteKMinus[thrIdx - constXSize] : devOligodendrocyteKMinusThrIdx;
-        float valJMinus = (column != 0) ? devOligodendrocyteKMinus[thrIdx - 1] : devOligodendrocyteKMinusThrIdx;
+        float valIPlus = (line != constXSize - 1) ? devOligodendrocyteKMinus[thrIdx + constXSize] : devOligodendrocyteKMinus[thrIdx - constXSize];
+        float valJPlus = (column != constXSize - 1) ? devOligodendrocyteKMinus[thrIdx + 1] : devOligodendrocyteKMinus[thrIdx - 1];
+        float valIMinus = (line != 0) ? devOligodendrocyteKMinus[thrIdx - constXSize] : devOligodendrocyteKMinus[thrIdx + constXSize];
+        float valJMinus = (column != 0) ? devOligodendrocyteKMinus[thrIdx - 1] : devOligodendrocyteKMinus[thrIdx + 1];
 
         float gradientOdcI = (float)(valIPlus - valIMinus) / (float)(constHx*2);
         float gradientOdcJ = (float)(valJPlus - valJMinus) / (float)(constHx*2);
 
+        CalculateDiffusion(constHx, valJPlus, valJMinus, valIPlus, valIMinus, devOligodendrocyteKMinusThrIdx, &diffusionODC);
+
         // Diffusion and Chemotaxis Mic
 
-        valIPlus = (line != constXSize - 1) ? devMicrogliaKMinus[thrIdx + constXSize] : devMicrogliaKMinusThrIdx - (float)(constHx*2 * lowerNeumannBC);
-        valJPlus = (column != constXSize - 1) ? devMicrogliaKMinus[thrIdx + 1] : devMicrogliaKMinusThrIdx - (float)(constHx*2 * rightNeumannBC);
-        valIMinus = (line != 0) ? devMicrogliaKMinus[thrIdx - constXSize] : devMicrogliaKMinusThrIdx - (float)(constHx*2 * upperNeumannBC);
-        valJMinus = (column != 0) ? devMicrogliaKMinus[thrIdx - 1] : devMicrogliaKMinusThrIdx - (float)(constHx*2 * leftNeumannBC);
+        valIPlus = (line != constXSize - 1) ? devMicrogliaKMinus[thrIdx + constXSize] : devMicrogliaKMinus[thrIdx - constXSize] - (float)(constHx*2 * lowerNeumannBC);
+        valJPlus = (column != constXSize - 1) ? devMicrogliaKMinus[thrIdx + 1] : devMicrogliaKMinus[thrIdx - 1] - (float)(constHx*2 * rightNeumannBC);
+        valIMinus = (line != 0) ? devMicrogliaKMinus[thrIdx - constXSize] : devMicrogliaKMinus[thrIdx + constXSize] - (float)(constHx*2 * upperNeumannBC);
+        valJMinus = (column != 0) ? devMicrogliaKMinus[thrIdx - 1] : devMicrogliaKMinus[thrIdx + 1] - (float)(constHx*2 * leftNeumannBC);
 
         float microgliaDiffusion = 0;
         float microgliaChemotaxis = 0;
         CalculateDiffusion(constHx, valJPlus, valJMinus, valIPlus, valIMinus, devMicrogliaKMinusThrIdx, &microgliaDiffusion);
         CalculateChemottaxis(constHx, valJPlus, valJMinus, valIPlus, valIMinus, devMicrogliaKMinusThrIdx,
                              modelParams.avgMic, gradientOdcI, gradientOdcJ, &microgliaChemotaxis);
+        microgliaChemotaxis += diffusionODC * devMicrogliaKMinusThrIdx / (devMicrogliaKMinusThrIdx + modelParams.avgMic);
         microgliaChemotaxis *= modelParams.chi;
         microgliaDiffusion *= modelParams.micDiffusion;
         // Diffusion and Chemotaxis CDC
 
-        valIPlus = (line != constXSize - 1) ? devConventionalDCKMinus[thrIdx + constXSize] : devConventionalDCKMinusThrIdx - (float)(constHx*2 * lowerNeumannBC);
-        valJPlus = (column != constXSize - 1) ? devConventionalDCKMinus[thrIdx + 1] : devConventionalDCKMinusThrIdx - (float)(constHx*2 * rightNeumannBC);
-        valIMinus = (line != 0) ? devConventionalDCKMinus[thrIdx - constXSize] : devConventionalDCKMinusThrIdx - (float)(constHx*2 * upperNeumannBC);
-        valJMinus = (column != 0) ? devConventionalDCKMinus[thrIdx - 1] : devConventionalDCKMinusThrIdx - (float)(constHx*2 * leftNeumannBC);
+        valIPlus = (line != constXSize - 1) ? devConventionalDCKMinus[thrIdx + constXSize] : devConventionalDCKMinus[thrIdx - constXSize] - (float)(constHx*2 * lowerNeumannBC);
+        valJPlus = (column != constXSize - 1) ? devConventionalDCKMinus[thrIdx + 1] : devConventionalDCKMinus[thrIdx - 1] - (float)(constHx*2 * rightNeumannBC);
+        valIMinus = (line != 0) ? devConventionalDCKMinus[thrIdx - constXSize] : devConventionalDCKMinus[thrIdx + constXSize] - (float)(constHx*2 * upperNeumannBC);
+        valJMinus = (column != 0) ? devConventionalDCKMinus[thrIdx - 1] : devConventionalDCKMinus[thrIdx + 1] - (float)(constHx*2 * leftNeumannBC);
 
         float conventionalDcDiffusion = 0;
         float conventionalDcChemotaxis = 0;
         CalculateDiffusion(constHx, valJPlus, valJMinus, valIPlus, valIMinus, devConventionalDCKMinusThrIdx, &conventionalDcDiffusion);
         CalculateChemottaxis(constHx, valJPlus, valJMinus, valIPlus, valIMinus, devConventionalDCKMinusThrIdx,
                              modelParams.avgDc, gradientOdcI, gradientOdcJ, &conventionalDcChemotaxis);
+        conventionalDcChemotaxis += diffusionODC * devConventionalDCKMinusThrIdx / (devConventionalDCKMinusThrIdx + modelParams.avgDc);
         conventionalDcChemotaxis *= modelParams.chi;
         conventionalDcDiffusion *= modelParams.cDcDiffusion;
 
         // Difussion and Chemotaxis CD8T
 
-        valIPlus = (line != constXSize - 1) ? devTCytotoxicKMinus[thrIdx + constXSize] : devTCytotoxicKMinusThrIdx - (float)(constHx*2 * lowerNeumannBC);
-        valJPlus = (column != constXSize - 1) ? devTCytotoxicKMinus[thrIdx + 1] : devTCytotoxicKMinusThrIdx - (float)(constHx*2 * rightNeumannBC);
-        valIMinus = (line != 0) ? devTCytotoxicKMinus[thrIdx - constXSize] : devTCytotoxicKMinusThrIdx - (float)(constHx*2 * upperNeumannBC);
-        valJMinus = (column != 0) ? devTCytotoxicKMinus[thrIdx - 1] : devTCytotoxicKMinusThrIdx - (float)(constHx*2 * leftNeumannBC);
+        valIPlus = (line != constXSize - 1) ? devTCytotoxicKMinus[thrIdx + constXSize] : devTCytotoxicKMinus[thrIdx - constXSize] - (float)(constHx*2 * lowerNeumannBC);
+        valJPlus = (column != constXSize - 1) ? devTCytotoxicKMinus[thrIdx + 1] : devTCytotoxicKMinus[thrIdx - 1] - (float)(constHx*2 * rightNeumannBC);
+        valIMinus = (line != 0) ? devTCytotoxicKMinus[thrIdx - constXSize] : devTCytotoxicKMinus[thrIdx + constXSize] - (float)(constHx*2 * upperNeumannBC);
+        valJMinus = (column != 0) ? devTCytotoxicKMinus[thrIdx - 1] : devTCytotoxicKMinus[thrIdx + 1] - (float)(constHx*2 * leftNeumannBC);
 
         float tCytotoxicDiffusion = 0;
         float tCytotoxicChemotaxis = 0;
         CalculateDiffusion(constHx, valJPlus, valJMinus, valIPlus, valIMinus, devTCytotoxicKMinusThrIdx, &tCytotoxicDiffusion);
         CalculateChemottaxis(constHx, valJPlus, valJMinus, valIPlus, valIMinus, devTCytotoxicKMinusThrIdx,
                              modelParams.avgT, gradientOdcI, gradientOdcJ, &tCytotoxicChemotaxis);
+        tCytotoxicChemotaxis += diffusionODC * devTCytotoxicKMinusThrIdx / (devTCytotoxicKMinusThrIdx + modelParams.avgDc);
         tCytotoxicChemotaxis *= modelParams.chi;
         tCytotoxicDiffusion *= modelParams.tCytoDiffusion;
 
         // Difussion ADC
 
-        valIPlus = (line != constXSize - 1) ? devActivatedDCKMinus[thrIdx + constXSize] : devActivatedDCKMinusThrIdx - (float)(constHx*2 * lowerNeumannBC);
-        valJPlus = (column != constXSize - 1) ? devActivatedDCKMinus[thrIdx + 1] : devActivatedDCKMinusThrIdx - (float)(constHx*2 * rightNeumannBC);
-        valIMinus = (line != 0) ? devActivatedDCKMinus[thrIdx - constXSize] : devActivatedDCKMinusThrIdx - (float)(constHx*2 * upperNeumannBC);
-        valJMinus = (column != 0) ? devActivatedDCKMinus[thrIdx - 1] : devActivatedDCKMinusThrIdx - (float)(constHx*2 * leftNeumannBC);
+        valIPlus = (line != constXSize - 1) ? devActivatedDCKMinus[thrIdx + constXSize] : devActivatedDCKMinus[thrIdx - constXSize] - (float)(constHx*2 * lowerNeumannBC);
+        valJPlus = (column != constXSize - 1) ? devActivatedDCKMinus[thrIdx + 1] : devActivatedDCKMinus[thrIdx - 1] - (float)(constHx*2 * rightNeumannBC);
+        valIMinus = (line != 0) ? devActivatedDCKMinus[thrIdx - constXSize] : devActivatedDCKMinus[thrIdx + constXSize] - (float)(constHx*2 * upperNeumannBC);
+        valJMinus = (column != 0) ? devActivatedDCKMinus[thrIdx - 1] : devActivatedDCKMinus[thrIdx + 1] - (float)(constHx*2 * leftNeumannBC);
 
         float activatedDCDiffusion = 0;
         CalculateDiffusion(constHx, valJPlus, valJMinus, valIPlus, valIMinus, devActivatedDCKMinusThrIdx, &activatedDCDiffusion);
@@ -562,10 +567,10 @@ __global__ void kernelPDE(int kTime, float *tCytoSumVessel, float *activatedDCSu
 
         // Difussion Antibody
 
-        valIPlus = (line != constXSize - 1) ? devAntibodyKMinus[thrIdx + constXSize] : devAntibodyKMinusThrIdx - (float)(constHx*2 * lowerNeumannBC);
-        valJPlus = (column != constXSize - 1) ? devAntibodyKMinus[thrIdx + 1] : devAntibodyKMinusThrIdx - (float)(constHx*2 * rightNeumannBC);
-        valIMinus = (line != 0) ? devAntibodyKMinus[thrIdx - constXSize] : devAntibodyKMinusThrIdx - (float)(constHx*2 * upperNeumannBC);
-        valJMinus = (column != 0) ? devAntibodyKMinus[thrIdx - 1] : devAntibodyKMinusThrIdx - (float)(constHx*2 * leftNeumannBC);
+        valIPlus = (line != constXSize - 1) ? devAntibodyKMinus[thrIdx + constXSize] : devAntibodyKMinus[thrIdx - constXSize] - (float)(constHx*2 * lowerNeumannBC);
+        valJPlus = (column != constXSize - 1) ? devAntibodyKMinus[thrIdx + 1] : devAntibodyKMinus[thrIdx - 1] - (float)(constHx*2 * rightNeumannBC);
+        valIMinus = (line != 0) ? devAntibodyKMinus[thrIdx - constXSize] : devAntibodyKMinus[thrIdx + constXSize] - (float)(constHx*2 * upperNeumannBC);
+        valJMinus = (column != 0) ? devAntibodyKMinus[thrIdx - 1] : devAntibodyKMinus[thrIdx + 1] - (float)(constHx*2 * leftNeumannBC);
 
         float antibodyDiffusion = 0;
         CalculateDiffusion(constHx, valJPlus, valJMinus, valIPlus, valIMinus, devAntibodyKMinusThrIdx, &antibodyDiffusion);
