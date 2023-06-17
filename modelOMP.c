@@ -27,7 +27,7 @@ void InitialConditionLymphNode(structModel* model, float dendriticLN, float thel
 }
 
 int VerifyCFL(structParameters parametersModel, float ht, float hx){
-    if(parametersModel.micDiffusion*ht/(hx*hx) < 0.25 && parametersModel.cDcDiffusion*ht/(hx*hx) < 0.25 && parametersModel.aDcDiffusion*ht/(hx*hx) < 0.25 && parametersModel.tCytoDiffusion*ht/(hx*hx) < 0.25 && parametersModel.chi*ht/hx < 0.5)
+    if(parametersModel.micDiffusion*ht/(hx*hx) < 0.25 && parametersModel.cDcDiffusion*ht/(hx*hx) < 0.25 && parametersModel.aDcDiffusion*ht/(hx*hx) < 0.25 && parametersModel.tCytoDiffusion*ht/(hx*hx) < 0.25 && parametersModel.chi*ht/hx < 0.5 && parametersModel.chi*ht/(hx*hx) < 0.25)
         return 1;
     return 0;
 }

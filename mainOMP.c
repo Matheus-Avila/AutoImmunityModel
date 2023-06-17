@@ -11,7 +11,7 @@ structParameters ParametersInitialize(){
     params.cDcDiffusion = 9.6*24*6.6*pow(10,-5);
     params.aDcDiffusion = 9.6*24*6.6*pow(10,-5);
     params.tCytoDiffusion = 9.6*24*6.6*pow(10,-5);
-    params.chi = 0.002;
+    params.chi = 0.003;
     
     params.muCDc = 60*24*3*pow(10,-4);
     params.muMic = 60*24*3*pow(10,-6);
@@ -88,7 +88,7 @@ int main(int argc, char* argv[]){
     printf("Comecei o main\n");
     clearPhgTxt();
     int tot_thr = strtol(argv[1], NULL, 10);
-    float ht = 0.0002, hx = 0.05;
+    float ht = 0.0002, hx = 0.5;
     int numFigs = 28, numPointsLN = 1000, time = 28, space = 20, numStepsLN = 1, saveFigs = 1;
     structParameters parameters = ParametersInitialize();
     structModel model = ModelInitialize(parameters, tot_thr, ht, hx, time, space, numFigs, numPointsLN, numStepsLN, saveFigs);
