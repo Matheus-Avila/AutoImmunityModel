@@ -6,11 +6,11 @@
 
 structParameters ParametersInitialize(){
     structParameters params;
-    params.micDiffusion = 9.6*24*6.6*pow(10,-5);
-    params.antibodyDiffusion = 9.6*24*6.6*pow(10,-4);
-    params.cDcDiffusion = 9.6*24*6.6*pow(10,-5);
-    params.aDcDiffusion = 9.6*24*6.6*pow(10,-5);
-    params.tCytoDiffusion = 9.6*24*6.6*pow(10,-5);
+    params.micDiffusion = 24*6.6*pow(10,-5);
+    params.antibodyDiffusion = 24*6.6*pow(10,-4);
+    params.cDcDiffusion = 24*6.6*pow(10,-5);
+    params.aDcDiffusion = 24*6.6*pow(10,-5);
+    params.tCytoDiffusion = 24*6.6*pow(10,-5);
     params.chi = 0.003;
     
     params.muCDc = 60*24*3*pow(10,-4);
