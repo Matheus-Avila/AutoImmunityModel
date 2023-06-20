@@ -508,7 +508,7 @@ void RunModel(structModel *model){
             
             microgliaDiffusion = model->parametersModel.micDiffusion*CalculateDiffusion(*model, valJPlus, valJMinus, valIPlus, valIMinus, model->microglia[stepKMinus][kPos]);
             microgliaChemotaxis = model->parametersModel.chi * CalculateChemotaxis(*model, valJPlus, valJMinus, valIPlus, valIMinus, model->microglia[stepKMinus][kPos],\
-            model->parametersModel.avgMic, gradientOdcI, gradientOdcJ) * model->parametersModel.avgMic / ((microgliaKMinus + model->parametersModel.avgMic) * (microgliaKMinus + model->parametersModel.avgMic))\
+            model->parametersModel.avgMic, gradientOdcI, gradientOdcJ)\
             + model->parametersModel.chi * diffusionOdc * PreventionOverCrowdingTerm(microgliaKMinus, model->parametersModel.avgMic);
 
             //Diffusion and Chemotaxis CDC
@@ -520,7 +520,7 @@ void RunModel(structModel *model){
 
             conventionalDcDiffusion = model->parametersModel.cDcDiffusion*CalculateDiffusion(*model, valJPlus, valJMinus, valIPlus, valIMinus, model->conventionalDc[stepKMinus][kPos]);
             conventionalDcChemotaxis = model->parametersModel.chi*CalculateChemotaxis(*model, valJPlus, valJMinus, valIPlus, valIMinus, model->conventionalDc[stepKMinus][kPos],\
-            model->parametersModel.avgDc, gradientOdcI, gradientOdcJ) * model->parametersModel.avgDc / ((conventionalDcKMinus + model->parametersModel.avgDc) * (conventionalDcKMinus + model->parametersModel.avgDc))\
+            model->parametersModel.avgDc, gradientOdcI, gradientOdcJ)\
             + model->parametersModel.chi * diffusionOdc * PreventionOverCrowdingTerm(conventionalDcKMinus, model->parametersModel.avgDc);
 
             //Difussion and Chemotaxis CD8T
@@ -532,7 +532,7 @@ void RunModel(structModel *model){
 
             tCytotoxicDiffusion = model->parametersModel.tCytoDiffusion*CalculateDiffusion(*model, valJPlus, valJMinus, valIPlus, valIMinus, model->tCytotoxic[stepKMinus][kPos]);
             tCytotoxicChemotaxis = model->parametersModel.chi*CalculateChemotaxis(*model, valJPlus, valJMinus, valIPlus, valIMinus, model->tCytotoxic[stepKMinus][kPos],\
-            model->parametersModel.avgT, gradientOdcI, gradientOdcJ) * model->parametersModel.avgT / ((tCytotoxicKMinus + model->parametersModel.avgT) * (tCytotoxicKMinus + model->parametersModel.avgT))\
+            model->parametersModel.avgT, gradientOdcI, gradientOdcJ)\
             + model->parametersModel.chi * diffusionOdc * PreventionOverCrowdingTerm(tCytotoxicKMinus, model->parametersModel.avgT);
 
             //Difussion ADC
