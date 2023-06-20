@@ -298,7 +298,7 @@ structModel ModelInitialize(structParameters params, int totThr, float ht, float
     model.bCellLymphNode = (float*)calloc(2, sizeof(float));
     model.plasmaCellLymphNode = (float*)calloc(2, sizeof(float));    
 
-    float dendriticLN = 0.0, thelperLN = 0.0, tcytotoxicLN = 0.0, bcellLN = 0.0, plasmacellLN = 0.0, antibodyLN = 0.0;
+    float dendriticLN = 0.0, thelperLN = params.estableTHelper, tcytotoxicLN = params.estableTCytotoxic, bcellLN = params.estableB, plasmacellLN = 0.0, antibodyLN = 0.0;
     InitialConditionLymphNode(&model, dendriticLN, thelperLN, tcytotoxicLN, bcellLN, plasmacellLN, antibodyLN);
     InitialConditionTissueMicroglia(&model);
     return model;
@@ -489,10 +489,10 @@ void RunModel(structModel *model){
             oligodendrocyteKMinus = model->oligodendrocyte[stepKMinus][kPos];
 
             //Define gradient ODCs
-            valIPlus = (line != model->xSize-1)? model->oligodendrocyte[stepKMinus][kPos + model->xSize]: model->oligodendrocyte[stepKMinus][kPos - model->xSize];
-            valJPlus = (column != model->xSize-1)? model->oligodendrocyte[stepKMinus][kPos + 1]: model->oligodendrocyte[stepKMinus][kPos - 1];
-            valIMinus = (line != 0)? model->oligodendrocyte[stepKMinus][kPos - model->xSize]: model->oligodendrocyte[stepKMinus][kPos + model->xSize];
-            valJMinus = (column != 0)? model->oligodendrocyte[stepKMinus][kPos - 1]: model->oligodendrocyte[stepKMinus][kPos + 1];
+            valIPlus = (line != model->xSize-1)? model->oligodendrocyte[stepKMinus][kPos + model->xSize]: model->oligodendrocyte[stepKMinus][kPos - model->xSize] - (float)(2*model->hx*lowerNeumannBC);
+            valJPlus = (column != model->xSize-1)? model->oligodendrocyte[stepKMinus][kPos + 1]: model->oligodendrocyte[stepKMinus][kPos - 1] - (float)(2*model->hx*rightNeumannBC);
+            valIMinus = (line != 0)? model->oligodendrocyte[stepKMinus][kPos - model->xSize]: model->oligodendrocyte[stepKMinus][kPos + model->xSize] - (float)(2*model->hx*upperNeumannBC);
+            valJMinus = (column != 0)? model->oligodendrocyte[stepKMinus][kPos - 1]: model->oligodendrocyte[stepKMinus][kPos + 1] - (float)(2*model->hx*leftNeumannBC);
             
             diffusionOdc = CalculateDiffusion(*model, valJPlus, valJMinus, valIPlus, valIMinus, model->oligodendrocyte[stepKMinus][kPos]);
 
