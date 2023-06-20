@@ -113,7 +113,7 @@ typedef struct structModel
 
 int VerifyCFL(structParameters parametersModel, float ht, float hx);
 
-float AdvectionTerm(float populationPoint, float avgValue);
+float PreventionOverCrowdingTerm(float populationPoint, float avgValue);
 
 float UpDownWind(float frontIPoint, float ijPoint, float avgValue);
 
