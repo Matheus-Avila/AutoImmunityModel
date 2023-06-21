@@ -543,9 +543,9 @@ void RunModel(structModel *model){
             valJMinus = (column != 0)? model->microglia[stepKMinus][kPos - 1]: model->microglia[stepKMinus][kPos + 1] - (float)(2*model->hx*leftNeumannBC);
             
             microgliaDiffusion = model->parametersModel.micDiffusion*CalculateDiffusion(*model, valJPlus, valJMinus, valIPlus, valIMinus, model->microglia[stepKMinus][kPos]);
-            microgliaChemotaxis = model->parametersModel.chi * CalculateFLux(*model, valJPlus, valJMinus, valIPlus, valIMinus, model->microglia[stepKMinus][kPos], model->parametersModel.avgMic,\
+            // microgliaChemotaxis = model->parametersModel.chi * CalculateFLux(*model, valJPlus, valJMinus, valIPlus, valIMinus, model->microglia[stepKMinus][kPos], model->parametersModel.avgMic,\
             valJPlusO, valJMinusO, valIPlusO, valIMinusO, oligodendrocyteKMinus, line, column);
-            // model->parametersModel.chi * CalculateChemotaxis(*model, valJPlus, valJMinus, valIPlus, valIMinus, model->microglia[stepKMinus][kPos],\
+            microgliaChemotaxis = model->parametersModel.chi * CalculateChemotaxis(*model, valJPlus, valJMinus, valIPlus, valIMinus, model->microglia[stepKMinus][kPos],\
             model->parametersModel.avgMic, gradientOdcI, gradientOdcJ)\
             + model->parametersModel.chi * diffusionOdc * PreventionOverCrowdingTerm(microgliaKMinus, model->parametersModel.avgMic);
 
@@ -557,9 +557,9 @@ void RunModel(structModel *model){
             valJMinus = (column != 0)? model->conventionalDc[stepKMinus][kPos - 1]: model->conventionalDc[stepKMinus][kPos + 1] - (float)(2*model->hx*leftNeumannBC);
 
             conventionalDcDiffusion = model->parametersModel.cDcDiffusion*CalculateDiffusion(*model, valJPlus, valJMinus, valIPlus, valIMinus, model->conventionalDc[stepKMinus][kPos]);
-            conventionalDcChemotaxis = model->parametersModel.chi * CalculateFLux(*model, valJPlus, valJMinus, valIPlus, valIMinus, conventionalDcKMinus, model->parametersModel.avgDc,\
+            // conventionalDcChemotaxis = model->parametersModel.chi * CalculateFLux(*model, valJPlus, valJMinus, valIPlus, valIMinus, conventionalDcKMinus, model->parametersModel.avgDc,\
             valJPlusO, valJMinusO, valIPlusO, valIMinusO, oligodendrocyteKMinus, line, column);
-            // model->parametersModel.chi*CalculateChemotaxis(*model, valJPlus, valJMinus, valIPlus, valIMinus, model->conventionalDc[stepKMinus][kPos],\
+            conventionalDcChemotaxis = model->parametersModel.chi*CalculateChemotaxis(*model, valJPlus, valJMinus, valIPlus, valIMinus, model->conventionalDc[stepKMinus][kPos],\
             model->parametersModel.avgDc, gradientOdcI, gradientOdcJ)\
             + model->parametersModel.chi * diffusionOdc * PreventionOverCrowdingTerm(conventionalDcKMinus, model->parametersModel.avgDc);
 
@@ -571,9 +571,9 @@ void RunModel(structModel *model){
             valJMinus = (column != 0)? model->tCytotoxic[stepKMinus][kPos - 1]: model->tCytotoxic[stepKMinus][kPos + 1] - (float)(2*model->hx*leftNeumannBC);
 
             tCytotoxicDiffusion = model->parametersModel.tCytoDiffusion*CalculateDiffusion(*model, valJPlus, valJMinus, valIPlus, valIMinus, model->tCytotoxic[stepKMinus][kPos]);
-            tCytotoxicChemotaxis = model->parametersModel.chi * CalculateFLux(*model, valJPlus, valJMinus, valIPlus, valIMinus, tCytotoxicKMinus, model->parametersModel.avgT,\
+            // tCytotoxicChemotaxis = model->parametersModel.chi * CalculateFLux(*model, valJPlus, valJMinus, valIPlus, valIMinus, tCytotoxicKMinus, model->parametersModel.avgT,\
             valJPlusO, valJMinusO, valIPlusO, valIMinusO, oligodendrocyteKMinus, line, column);
-            // model->parametersModel.chi*CalculateChemotaxis(*model, valJPlus, valJMinus, valIPlus, valIMinus, model->tCytotoxic[stepKMinus][kPos],\
+            tCytotoxicChemotaxis = model->parametersModel.chi*CalculateChemotaxis(*model, valJPlus, valJMinus, valIPlus, valIMinus, model->tCytotoxic[stepKMinus][kPos],\
             model->parametersModel.avgT, gradientOdcI, gradientOdcJ)\
             + model->parametersModel.chi * diffusionOdc * PreventionOverCrowdingTerm(tCytotoxicKMinus, model->parametersModel.avgT);
 
