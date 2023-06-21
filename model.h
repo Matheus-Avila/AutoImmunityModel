@@ -67,12 +67,12 @@ typedef struct structModel
 
     int tFinal;
     int xFinal;
-
+    
+    int numStepsLN;
     int intervalFigures;
     int numPointsLN;
     int numFigs;
-    // int *timeVec;
-    // int *spaceVec;
+    int saveFigs;
 
     int tSize;
     int xSize;
@@ -111,11 +111,11 @@ typedef struct structModel
 
 int VerifyCFL(structParameters parametersModel, float ht, float hx);
 
-float AdvectionTerm(float populationPoint, float avgValue);
+float PreventionOverCrowdingTerm(float populationPoint, float avgValue);
 
 float UpDownWind(float frontIPoint, float ijPoint, float avgValue);
 
-float CalculateChemottaxis(structModel model, float ponto_posterior_j, float ponto_anterior_j, float ponto_posterior_i, float ponto_anterior_i, float ponto_atual,\
+float CalculateChemotaxis(structModel model, float ponto_posterior_j, float ponto_anterior_j, float ponto_posterior_i, float ponto_anterior_i, float ponto_atual,\
  float valor_medio, float gradiente_odc_i, float gradiente_odc_j);
 
 float CalculateDiffusion(structModel model, float ponto_posterior_j, float ponto_anterior_j, float ponto_posterior_i, float ponto_anterior_i, float ponto_atual);
@@ -126,7 +126,7 @@ float* EquationsLymphNode(structModel model, float* populationLN, int stepPos);
 
 void SolverLymphNode(structModel *model, int stepPos);
 
-structModel ModelInitialize(structParameters params, float ht, float hx, float time, float space, int numFigs, int numPointsLN);
+structModel ModelInitialize(structParameters params, float ht, float hx, float time, float space, int numFigs, int numPointsLN, int numStepsLN, int saveFigs);
 
 void DefineBVPV(structModel *model);
 
