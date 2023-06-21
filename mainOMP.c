@@ -48,10 +48,10 @@ structParameters ParametersInitialize(){
     params.rhoB = 11;
     params.rhoP = 3;
     params.rhoAntibody = 5.1*pow(10,-2);
-    params.estableTHelper = 70;
-    params.estableTCytotoxic = 40;
-    params.estableB = 25;
-    params.estableP = 2.5;
+    params.stableTHelper = 70;
+    params.stableTCytotoxic = 40;
+    params.stableB = 25;
+    params.stableP = 2.5;
     params.V_LN = 160;
     params.V_BV = 0;
     params.V_PV = 0;
@@ -89,7 +89,7 @@ int main(int argc, char* argv[]){
     clearPhgTxt();
     int tot_thr = strtol(argv[1], NULL, 10);
     float ht = 0.0002, hx = 0.5;
-    int numFigs = 28, numPointsLN = 1000, time = 28, space = 20, numStepsLN = 1, saveFigs = 0;
+    int numFigs = 28, numPointsLN = 1000, time = 28, space = 20, numStepsLN = 1, saveFigs = 1;
     structParameters parameters = ParametersInitialize();
     structModel model = ModelInitialize(parameters, tot_thr, ht, hx, time, space, numFigs, numPointsLN, numStepsLN, saveFigs);
     printf("Inicializacao feita!!\n\n");
