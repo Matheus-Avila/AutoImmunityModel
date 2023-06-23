@@ -231,8 +231,8 @@ void DefineBVPV(structModel *model){
                 model->thetaPV[k-model->xSize+1] = 1;
         }
     }
-    model->parametersModel.V_BV = 160;//model->parametersModel.V_BV * model->hx * model->hx;
-    model->parametersModel.V_PV = 160;//model->parametersModel.V_PV * model->hx * model->hx;
+    model->parametersModel.V_BV = model->parametersModel.V_BV * model->hx * model->hx;
+    model->parametersModel.V_PV = model->parametersModel.V_PV * model->hx * model->hx;
     printf("bv = %f, pv = %f \n", model->parametersModel.V_BV, model->parametersModel.V_PV);
     WriteBVPV(model, model->thetaBV, model->thetaPV);
 }
@@ -242,16 +242,18 @@ void WriteBVPV(structModel *model, float *thetaBV, float *thetaPV){
     fileBV = fopen("./result/bv.txt", "w");
     FILE *filePV;
     filePV = fopen("./result/pv.txt", "w");
+    int k = 0;
     if(fileBV != NULL && filePV != NULL){
-        for(int k = 0; k < model->xSize*model->xSize; k++){
-            int i = (int)k/model->xSize;
-            int j = k%model->xSize;
-            fprintf(fileBV, "%f ", thetaBV[k]);
-            fprintf(filePV, "%f ", thetaPV[k]);    
-            if(k%model->xSize == 0 && k != 0){
-                fprintf(fileBV,"\n");
-                fprintf(filePV,"\n");
+        while (k < model->xSize*model->xSize){
+            int i = k;
+            while (i < k + model->xSize){
+                fprintf(fileBV, "%f ", thetaBV[i]);
+                fprintf(filePV, "%f ", thetaPV[i]);
+                i++;
             }
+            fprintf(fileBV,"\n");
+            fprintf(filePV,"\n");
+            k+=model->xSize;
         }
         fclose(fileBV);
         fclose(filePV);
@@ -349,14 +351,14 @@ float* EquationsLymphNode(structModel model, float* populationLN, int stepPos){
     //Describe equations
 
     //Dendritic cell
-    float activatedDcMigration = model.parametersModel.gammaD * (model.activatedDCTissueVessels - dcLN);// * (float)(model.parametersModel.V_PV/model.parametersModel.V_LN);
+    float activatedDcMigration = model.parametersModel.gammaD * (model.activatedDCTissueVessels - dcLN) * (float)(model.parametersModel.V_PV/model.parametersModel.V_LN);
     float activatedDcClearance = model.parametersModel.cDl * dcLN;
     result[0] = activatedDcMigration - activatedDcClearance;
 
     //T Cytotoxic
     float tCytoActivation = model.parametersModel.bTCytotoxic * (model.parametersModel.rhoTCytotoxic*tCytoLN*dcLN - tCytoLN*dcLN);
     float tCytoHomeostasis = model.parametersModel.alphaTCytotoxic * (model.parametersModel.estableTCytotoxic - tCytoLN);
-    float tCytoMigration = model.parametersModel.gammaT * (tCytoLN - model.tCytotoxicTissueVessels);// * (float)(model.parametersModel.V_BV/model.parametersModel.V_LN);
+    float tCytoMigration = model.parametersModel.gammaT * (tCytoLN - model.tCytotoxicTissueVessels) * (float)(model.parametersModel.V_BV/model.parametersModel.V_LN);
     result[1] = tCytoActivation + tCytoHomeostasis - tCytoMigration;
 
     //T Helper
@@ -378,7 +380,7 @@ float* EquationsLymphNode(structModel model, float* populationLN, int stepPos){
     //Antibody
     float antibodyProduction = model.parametersModel.rhoAntibody * plasmaCellLN;
     float antibodyDecayment = model.parametersModel.cF * antibodyLN;
-    float antibodyMigration = model.parametersModel.gammaAntibody * (antibodyLN - model.antibodyTissueVessels);// * (float)(model.parametersModel.V_BV/model.parametersModel.V_LN);
+    float antibodyMigration = model.parametersModel.gammaAntibody * (antibodyLN - model.antibodyTissueVessels) * (float)(model.parametersModel.V_BV/model.parametersModel.V_LN);
     result[5] = antibodyProduction - antibodyMigration - antibodyDecayment;
 
     return result;
