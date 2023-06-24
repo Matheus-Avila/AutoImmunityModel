@@ -504,7 +504,7 @@ void RunModel(structModel *model){
         microgliaTotalKPlus = 0;
         dendriticTotalKPlus = 0;
         float diffusionMax = 0, ChemoMax = 0;
-        float tCytoMigration = 0, microgliaProd = 0, dendritcProd = 0;
+        float tCytoProd = 0, microgliaProd = 0, dendritcProd = 0;
         for(int kPos = 0; kPos < model->xSize*model->xSize; kPos++){
 
             line = (int)kPos/model->xSize;
@@ -621,7 +621,7 @@ void RunModel(structModel *model){
             tCytotoxicMigration = model->thetaBV[kPos]*model->parametersModel.gammaT*(model->tCytotoxicLymphNode[stepKPlus] - tCytotoxicKMinus);
             
             model->tCytotoxic[stepKPlus][kPos] = tCytotoxicKMinus + model->ht*(tCytotoxicDiffusion - tCytotoxicChemotaxis + tCytotoxicMigration);
-            tCytoMigration += model->ht*(tCytotoxicDiffusion + tCytotoxicMigration);
+            tCytoProd += model->ht*(tCytotoxicDiffusion + tCytotoxicMigration);
             
             //Antibody update
             odcAntibodyMicrogliaFagocitosis = model->parametersModel.lambAntMic*antibodyKMinus*(model->parametersModel.avgOdc - oligodendrocyteKMinus)*fFunc(microgliaKMinus, model->parametersModel.avgMic);
@@ -656,8 +656,8 @@ void RunModel(structModel *model){
             microgliaTotalKPlus += model->microglia[stepKPlus][kPos];
         }
 
-        if(tCytoTotalKPlus - tCytoTotalKMinus - tCytoMigration > 0.01){// && kTime * model->ht > 27.7){
-            printf("T CD8: deu erro no tempo %f!! diferenca entre os tempos: %f\n", kTime * model->ht, tCytoTotalKPlus - tCytoTotalKMinus - tCytoMigration);
+        if(tCytoTotalKPlus - tCytoTotalKMinus - tCytoProd > 0.01){// && kTime * model->ht > 27.7){
+            printf("T CD8: deu erro no tempo %f!! diferenca entre os tempos: %f\n", kTime * model->ht, tCytoTotalKPlus - tCytoTotalKMinus - tCytoProd);
             printf("T CD8: deu erro no tempo %f!! valor difusao ODC %f -- valor difusao*chi %f\n", kTime * model->ht, diffusionMax, diffusionMax * model->parametersModel.chi);
             // exit(1);    
         }
