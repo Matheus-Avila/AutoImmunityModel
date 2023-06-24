@@ -30,7 +30,7 @@ def printMesh(time, population, type):
         max_population += 1
     levels = np.linspace(0, max_population, 50)
 
-    cp = plt.contourf(x_pts, y_pts,population, levels=levels)
+    cp = plt.contourf(x_pts, y_pts,population)#, levels=levels)
     plt.title(populationTitle[type], fontsize=20)
     matplotlib.rc('xtick', labelsize=15) 
     matplotlib.rc('ytick', labelsize=16)

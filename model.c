@@ -231,8 +231,8 @@ void DefineBVPV(structModel *model){
                 model->thetaPV[k-model->xSize+1] = 1;
         }
     }
-    model->parametersModel.V_BV = model->parametersModel.V_BV * model->hx * model->hx;
-    model->parametersModel.V_PV = model->parametersModel.V_PV * model->hx * model->hx;
+    model->parametersModel.V_BV = 40;//model->parametersModel.V_BV * model->hx * model->hx;
+    model->parametersModel.V_PV = 40;//model->parametersModel.V_PV * model->hx * model->hx;
     printf("bv = %f, pv = %f \n", model->parametersModel.V_BV, model->parametersModel.V_PV);
     WriteBVPV(model, model->thetaBV, model->thetaPV);
 }
@@ -278,8 +278,8 @@ structModel ModelInitialize(structParameters params, float ht, float hx, float t
     model.parametersModel = params;
     if(!VerifyCFL(model.parametersModel, ht, hx)){
         printf("Falhou CFL!!\n");
-        exit(0);
-    }        
+        exit(1);
+    }
     model.parametersModel = params;
     model.numFigs = numFigs;
     model.numPointsLN = numPointsLN;
@@ -474,7 +474,7 @@ void RunModel(structModel *model){
     
     float valIPlus = 0.0, valIMinus = 0.0, valJPlus = 0.0, valJMinus = 0.0, gradientOdcI = 0.0, gradientOdcJ = 0.0;
 
-    float microgliaChemotaxis = 0.0, tCytotoxicChemotaxis = 0.0, conventionalDcChemotaxis = 0.0,\
+    float microgliaChemotaxis = 0.0, tCytotoxicChemotaxis = 0.0, conventionalDcChemotaxis = 0.0, diffusionOdc = 0.0,\
      microgliaDiffusion = 0.0, tCytotoxicDiffusion = 0.0, conventionalDcDiffusion = 0.0, activatedDCDiffusion = 0.0, antibodyDiffusion = 0.0;
 
     float microgliaReaction = 0.0, microgliaClearance = 0.0, tCytotoxicMigration = 0.0, odcAntibodyMicrogliaFagocitosis = 0.0, \
@@ -485,9 +485,9 @@ void RunModel(structModel *model){
 
     float auxAdcPV = 0.0, auxAntibodyBV = 0.0, auxTCytotoxicBV = 0.0;
 
-    float diffusionOdc;
-
     int kTime;
+
+    float tCytoTotalKPlus = 0, microgliaTotalKPlus = 7116.666504 /*esse valor vem da IC(pode ser necessario alterar para hx != 0.5)*/, dendriticTotalKPlus = 0;
     
     for(kTime = 1; kTime <= model->tSize; kTime++){
         if(kTime%model->numStepsLN == 0){
@@ -498,7 +498,15 @@ void RunModel(structModel *model){
         }
         auxAdcPV = 0.0, auxAntibodyBV = 0.0, auxTCytotoxicBV = 0.0;
         stepKPlus = kTime%2;
+
+        float tCytoTotalKMinus = tCytoTotalKPlus, microgliaTotalKMinus = microgliaTotalKPlus, dendriticTotalKMinus = dendriticTotalKPlus;
+        tCytoTotalKPlus = 0;
+        microgliaTotalKPlus = 0;
+        dendriticTotalKPlus = 0;
+        float diffusionMax = 0, ChemoMax = 0;
+        float tCytoMigration = 0, microgliaProd = 0, dendritcProd = 0;
         for(int kPos = 0; kPos < model->xSize*model->xSize; kPos++){
+
             line = (int)kPos/model->xSize;
             column = kPos%model->xSize;
             
@@ -590,6 +598,8 @@ void RunModel(structModel *model){
 
             model->microglia[stepKPlus][kPos] = microgliaKMinus + \
             model->ht*(microgliaDiffusion - microgliaChemotaxis + microgliaReaction - microgliaClearance);
+            
+            microgliaProd += model->ht*(microgliaReaction - microgliaClearance + microgliaDiffusion);
 
             //Conventional DC update
             conventionalDcReaction = model->parametersModel.muCDc*oligodendrocyteKMinus*(model->parametersModel.avgDc - conventionalDcKMinus);
@@ -598,6 +608,8 @@ void RunModel(structModel *model){
 
             model->conventionalDc[stepKPlus][kPos] = conventionalDcKMinus + \
             model->ht*(conventionalDcDiffusion - conventionalDcChemotaxis - conventionalDcClearance + conventionalDcReaction - conventionalDcActivation);
+            
+            dendritcProd += model->ht*(conventionalDcDiffusion - conventionalDcClearance + conventionalDcReaction - conventionalDcActivation);
 
             //Activated DC update
             activatedDcClearance = model->parametersModel.cADc*activatedDcKMinus;
@@ -609,6 +621,7 @@ void RunModel(structModel *model){
             tCytotoxicMigration = model->thetaBV[kPos]*model->parametersModel.gammaT*(model->tCytotoxicLymphNode[stepKPlus] - tCytotoxicKMinus);
             
             model->tCytotoxic[stepKPlus][kPos] = tCytotoxicKMinus + model->ht*(tCytotoxicDiffusion - tCytotoxicChemotaxis + tCytotoxicMigration);
+            tCytoMigration += model->ht*(tCytotoxicDiffusion + tCytotoxicMigration);
             
             //Antibody update
             odcAntibodyMicrogliaFagocitosis = model->parametersModel.lambAntMic*antibodyKMinus*(model->parametersModel.avgOdc - oligodendrocyteKMinus)*fFunc(microgliaKMinus, model->parametersModel.avgMic);
@@ -628,7 +641,39 @@ void RunModel(structModel *model){
             if(model->thetaPV[kPos] == 1){
                 auxAdcPV += model->activatedDc[stepKPlus][kPos];
             }
+            if(model->oligodendrocyte[stepKPlus][kPos] > model->parametersModel.avgOdc)
+                printf("kpos %d, tempo %f, valor %f\n", kPos, kTime * model->ht, model->oligodendrocyte[stepKPlus][kPos]);
+            // if(model->tCytotoxic[stepKPlus][kPos] > model->parametersModel.avgT)
+            //     model->tCytotoxic[stepKPlus][kPos] = model->parametersModel.avgT;
+            // if(model->conventionalDc[stepKPlus][kPos] > model->parametersModel.avgDc)
+            //     model->conventionalDc[stepKPlus][kPos] = model->parametersModel.avgDc;
+            // if(model->microglia[stepKPlus][kPos] > model->parametersModel.avgMic)
+            //     model->microglia[stepKPlus][kPos] = model->parametersModel.avgMic;
+            if(diffusionOdc > diffusionMax)
+                diffusionMax = diffusionOdc;
+            tCytoTotalKPlus += model->tCytotoxic[stepKPlus][kPos];
+            dendriticTotalKPlus += model->conventionalDc[stepKPlus][kPos];
+            microgliaTotalKPlus += model->microglia[stepKPlus][kPos];
         }
+
+        if(tCytoTotalKPlus - tCytoTotalKMinus - tCytoMigration > 0.01){// && kTime * model->ht > 27.7){
+            printf("T CD8: deu erro no tempo %f!! diferenca entre os tempos: %f\n", kTime * model->ht, tCytoTotalKPlus - tCytoTotalKMinus - tCytoMigration);
+            printf("T CD8: deu erro no tempo %f!! valor difusao ODC %f -- valor difusao*chi %f\n", kTime * model->ht, diffusionMax, diffusionMax * model->parametersModel.chi);
+            // exit(1);    
+        }
+
+        if(microgliaTotalKPlus - microgliaTotalKMinus - microgliaProd > 0.01){// && kTime * model->ht > 27.7){
+            printf("microglia: deu erro no tempo %f!! diferenca entre os tempos: %f\n", kTime * model->ht, microgliaTotalKPlus - microgliaTotalKMinus - microgliaProd);
+            printf("microglia: deu erro no tempo %f!! valor difusao ODC %f -- valor difusao*chi %f\n", kTime * model->ht, diffusionMax, diffusionMax * model->parametersModel.chi);
+            // exit(1);    
+        }
+
+        if(dendriticTotalKPlus - dendriticTotalKMinus - dendritcProd > 0.01){// && kTime * model->ht > 27.7){
+            printf("Conventional DC: deu erro no tempo %f!! diferenca entre os tempos: %f\n", kTime * model->ht, dendriticTotalKPlus - dendriticTotalKMinus - dendritcProd);
+            printf("Conventional DC: deu erro no tempo %f!! valor difusao ODC %f -- valor difusao*chi %f\n", kTime * model->ht, diffusionMax, diffusionMax * model->parametersModel.chi);
+            // exit(1);    
+        }
+        // printf("tempo %f!! valor maximo difusao ODC %f -- valor maximo difusao*chi %f\n", kTime * model->ht, diffusionMax, diffusionMax * model->parametersModel.chi);
         if(model->saveFigs && kTime%model->intervalFigures == 0)
             WriteFiles(*model, model->oligodendrocyte[stepKPlus], model->microglia[stepKPlus], model->tCytotoxic[stepKPlus], model->antibody[stepKPlus], model->conventionalDc[stepKPlus], model->activatedDc[stepKPlus], kTime);
         if(kTime == model->tSize)
@@ -636,7 +681,7 @@ void RunModel(structModel *model){
         stepKMinus += 1;
         stepKMinus = stepKMinus%2;
     }
-        
+    
     printf("Computation Done!!\n");
     SavingData(*model);
     for(int index=0;index<BUFFER;++index){
