@@ -656,23 +656,23 @@ void RunModel(structModel *model){
             microgliaTotalKPlus += model->microglia[stepKPlus][kPos];
         }
 
-        // if(tCytoTotalKPlus - tCytoTotalKMinus - tCytoProd > 0.01){// && kTime * model->ht > 27.7){
-        //     printf("T CD8: deu erro no tempo %f!! diferenca entre os tempos: %f\n", kTime * model->ht, tCytoTotalKPlus - tCytoTotalKMinus - tCytoProd);
-        //     printf("T CD8: deu erro no tempo %f!! valor difusao ODC %f -- valor difusao*chi %f\n", kTime * model->ht, diffusionMax, diffusionMax * model->parametersModel.chi);
-        //     // exit(1);    
-        // }
+        if(tCytoTotalKPlus - tCytoTotalKMinus - tCytoProd > 1){// && kTime * model->ht > 27.7){
+            printf("T CD8: deu erro no tempo %f!! diferenca entre os tempos: %f\n", kTime * model->ht, tCytoTotalKPlus - tCytoTotalKMinus - tCytoProd);
+            printf("T CD8: deu erro no tempo %f!! valor difusao ODC %f -- valor difusao*chi %f\n", kTime * model->ht, diffusionMax, diffusionMax * model->parametersModel.chi);
+            // exit(1);    
+        }
 
-        // if(microgliaTotalKPlus - microgliaTotalKMinus - microgliaProd > 0.01){// && kTime * model->ht > 27.7){
-        //     printf("microglia: deu erro no tempo %f!! diferenca entre os tempos: %f\n", kTime * model->ht, microgliaTotalKPlus - microgliaTotalKMinus - microgliaProd);
-        //     printf("microglia: deu erro no tempo %f!! valor difusao ODC %f -- valor difusao*chi %f\n", kTime * model->ht, diffusionMax, diffusionMax * model->parametersModel.chi);
-        //     // exit(1);    
-        // }
+        if(microgliaTotalKPlus - microgliaTotalKMinus - microgliaProd > 1){// && kTime * model->ht > 27.7){
+            printf("microglia: deu erro no tempo %f!! diferenca entre os tempos: %f\n", kTime * model->ht, microgliaTotalKPlus - microgliaTotalKMinus - microgliaProd);
+            printf("microglia: deu erro no tempo %f!! valor difusao ODC %f -- valor difusao*chi %f\n", kTime * model->ht, diffusionMax, diffusionMax * model->parametersModel.chi);
+            // exit(1);    
+        }
 
-        // if(dendriticTotalKPlus - dendriticTotalKMinus - dendritcProd > 0.01){// && kTime * model->ht > 27.7){
-        //     printf("Conventional DC: deu erro no tempo %f!! diferenca entre os tempos: %f\n", kTime * model->ht, dendriticTotalKPlus - dendriticTotalKMinus - dendritcProd);
-        //     printf("Conventional DC: deu erro no tempo %f!! valor difusao ODC %f -- valor difusao*chi %f\n", kTime * model->ht, diffusionMax, diffusionMax * model->parametersModel.chi);
-        //     // exit(1);    
-        // }
+        if(dendriticTotalKPlus - dendriticTotalKMinus - dendritcProd > 1){// && kTime * model->ht > 27.7){
+            printf("Conventional DC: deu erro no tempo %f!! diferenca entre os tempos: %f\n", kTime * model->ht, dendriticTotalKPlus - dendriticTotalKMinus - dendritcProd);
+            printf("Conventional DC: deu erro no tempo %f!! valor difusao ODC %f -- valor difusao*chi %f\n", kTime * model->ht, diffusionMax, diffusionMax * model->parametersModel.chi);
+            // exit(1);    
+        }
         // printf("tempo %f!! valor maximo difusao ODC %f -- valor maximo difusao*chi %f\n", kTime * model->ht, diffusionMax, diffusionMax * model->parametersModel.chi);
         if(model->saveFigs && kTime%model->intervalFigures == 0)
             WriteFiles(*model, model->oligodendrocyte[stepKPlus], model->microglia[stepKPlus], model->tCytotoxic[stepKPlus], model->antibody[stepKPlus], model->conventionalDc[stepKPlus], model->activatedDc[stepKPlus], kTime);
