@@ -30,8 +30,8 @@ structParameters ParametersInitialize(){
     params.avgOdc = 400;
 
     params.cMic = 0.1;
-    params.cCDc = 0.1;
-    params.cADc = 0.1;
+    params.cCDc = 1;
+    params.cADc = 1;
     params.cDl = 0.1;
     params.cF = 0.1;
     params.alphaTHelper = 0.1;
