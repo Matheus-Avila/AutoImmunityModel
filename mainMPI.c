@@ -6,23 +6,23 @@
 
 structParameters ParametersInitialize(){
     structParameters params;
-    params.micDiffusion = 9.6*24*6.6*pow(10,-5);
+    params.micDiffusion = 3*24*6.6*pow(10,-5);
     params.antibodyDiffusion = 9.6*24*6.6*pow(10,-4);
-    params.cDcDiffusion = 9.6*24*6.6*pow(10,-5);
+    params.cDcDiffusion = 9.6*24*6.6*pow(10,-6);
     params.aDcDiffusion = 9.6*24*6.6*pow(10,-5);
-    params.tCytoDiffusion = 9.6*24*6.6*pow(10,-5);
-    params.chi = 0.298*60*2;
+    params.tCytoDiffusion = 50.6*24*6.6*pow(10,-5);
+    params.chi = 0.033;
     
-    params.muCDc = 60*24*3*pow(10,-4);
+    params.muCDc = 60*24*3*pow(10,-5);
     params.muMic = 60*24*3*pow(10,-6);
-    params.rM = 60*24*3.96*pow(10,-6);
-    params.rT = 0.1;
+    params.rM = 60*24*6*pow(10,-7);
+    params.rT = 0.001;
     params.lambAntMic = 5.702*pow(10,-3);
     params.bD = 0.001;
     
-    params.gammaD = 0.01;
+    params.gammaD = 0.1;
     params.gammaAntibody = 0.3;
-    params.gammaT = 2;
+    params.gammaT = 0.1;
 
     params.avgT = 37;
     params.avgDc = 33;
@@ -30,8 +30,8 @@ structParameters ParametersInitialize(){
     params.avgOdc = 400;
 
     params.cMic = 0.1;
-    params.cCDc = 0.1;
-    params.cADc = 0.1;
+    params.cCDc = 1;
+    params.cADc = 1;
     params.cDl = 0.1;
     params.cF = 0.1;
     params.alphaTHelper = 0.1;
@@ -48,26 +48,45 @@ structParameters ParametersInitialize(){
     params.rhoB = 11;
     params.rhoP = 3;
     params.rhoAntibody = 5.1*pow(10,-2);
-    params.estableTHelper = 84;
+    params.estableTHelper = 70;
     params.estableTCytotoxic = 40;
     params.estableB = 25;
     params.estableP = 2.5;
-    params.V_LN = 160;
+    params.V_LN = 40;
     params.V_BV = 0;
     params.V_PV = 0;
 
     return params;
 }
 
-void clearPngTxt(){
-    system("find ./modelmpi/result/ -name '*.png' -type f -delete");
-    system("find ./modelmpi/result/ -name '*.txt' -type f -delete");
+void WriteTime(float ExecTime){
+    FILE *fileTime;
+    fileTime = fopen("./ExecsTimes.txt", "a");
+    if(fileTime != NULL){
+    fprintf(fileTime, "%f\n", ExecTime);
+    fclose(fileTime);
+    }else{
+        printf("Error execution time file\n");
+        exit(0);
+    }
 }
 
+void clearPhgTxt(){
+    system("find ./result/ -name '*.png' -type f -delete");
+    system("find ./result/ -name '*.txt' -type f -delete");
+    system("mkdir result");
+    system("mkdir result/matrix");
+    system("mkdir result/odc");
+    system("mkdir result/mic");
+    system("mkdir result/tke");
+    system("mkdir result/ant");
+    system("mkdir result/da");
+    system("mkdir result/dc");
+}
 
 int main(int argc, char* argv[]){
 
-    //clearPngTxt();
+    clearPngTxt();
 
     int my_rank, comm_sz;
     MPI_Init(NULL, NULL);
@@ -76,11 +95,10 @@ int main(int argc, char* argv[]){
 
     MPI_Comm_size(MPI_COMM_WORLD, &comm_sz);
     float ht = 0.0002, hx = 0.5;
-    int numFigs = 28, numPointsLN = 1000, time = 28, space = 20;
+    int numFigs = 28, numPointsLN = 1000, time = 28, space = 20, numStepsLN = 1, saveFigs = 1;
     structParameters parameters = ParametersInitialize();
     structModel model = ModelInitialize(parameters, ht, hx, 
-    time, space, numFigs, numPointsLN, my_rank, comm_sz);
-    
+    time, space, numFigs, numPointsLN, my_rank, comm_sz);    
     RunModel(&model);
     MPI_Finalize();
     return 0;

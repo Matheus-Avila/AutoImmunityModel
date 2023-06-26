@@ -57,14 +57,15 @@ typedef struct structParameters
     float rhoB;
     float rhoP;
     float rhoAntibody;
-    float estableTHelper;
-    float estableTCytotoxic;
-    float estableB;
-    float estableP;
-    int V_PV;
-    int V_BV;
+    float stableTHelper;
+    float stableTCytotoxic;
+    float stableB;
+    float stableP;
+    float V_PV;
+    float V_BV;
     int V_LN;
 }structParameters;
+
 
 typedef struct structModel
 {
