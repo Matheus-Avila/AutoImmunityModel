@@ -183,40 +183,6 @@ float fFunc(float valuePopulation, float avgPopulation){
     return valuePopulation*valuePopulation/(float)(valuePopulation + avgPopulation);
 }
 
-float CalculateFLux(structModel model, float frontJPoint, float rearJPoint, float frontIPoint, float rearIPoint, float ijPoint,\
- float avgValue, float frontODCJPoint, float rearODCJPoint, float frontODCIPoint, float rearODCIPoint, float ijODCPoint, int line, int column){
-    float fluxLeftI = 0, fluxRightI = 0, fluxLeftJ = 0, fluxRightJ = 0, fluxI = 0, fluxJ = 0;
-    if(column == model.xSize-1 || column == 0)
-        fluxI = 0;
-    else{
-        if(ijODCPoint - rearODCIPoint > 0)
-            fluxLeftI = rearIPoint * (ijODCPoint - rearODCIPoint) / model.hx;
-        else
-            fluxLeftI = ijPoint * (ijODCPoint - rearODCIPoint) / model.hx;
-        if(frontODCIPoint - ijODCPoint > 0)
-            fluxRightI = ijPoint * (frontODCIPoint - ijODCPoint) / model.hx;
-        else
-            fluxRightI = frontIPoint * (frontODCIPoint - ijODCPoint) / model.hx;
-        
-        fluxI = (fluxLeftI + fluxRightI) / model.hx;
-    }
-    if(line == model.xSize-1 || line == 0)
-        fluxJ = 0;
-    else{
-        if(ijODCPoint - rearODCJPoint > 0)
-            fluxLeftJ = rearIPoint * (ijODCPoint - rearODCJPoint) / model.hx;
-        else
-            fluxLeftJ = ijPoint * (ijODCPoint - rearODCJPoint) / model.hx;
-        if(frontODCJPoint - ijODCPoint > 0)
-            fluxRightJ = ijPoint * (frontODCJPoint - ijODCPoint) / model.hx;
-        else
-            fluxRightJ = frontIPoint * (frontODCJPoint - ijODCPoint) / model.hx;
-
-        fluxJ = (fluxLeftJ + fluxRightJ) / model.hx;
-    }
-    return fluxI + fluxJ;
-}
-
 void DefineBVPV(structModel *model){
     int randomVal;
     for(int k = 0; k < model->xSize*model->xSize; k++){
@@ -233,8 +199,8 @@ void DefineBVPV(structModel *model){
                 model->thetaPV[k-model->xSize+1] = 1;
         }
     }
-    model->parametersModel.V_BV = 160;//model->parametersModel.V_BV * model->hx * model->hx;
-    model->parametersModel.V_PV = 160;//model->parametersModel.V_PV * model->hx * model->hx;
+    model->parametersModel.V_BV = 40;//model->parametersModel.V_BV * model->hx * model->hx;
+    model->parametersModel.V_PV = 40;//model->parametersModel.V_PV * model->hx * model->hx;
     printf("bv = %f, pv = %f \n", model->parametersModel.V_BV, model->parametersModel.V_PV);
     WriteBVPV(model, model->thetaBV, model->thetaPV);
 }
@@ -244,16 +210,18 @@ void WriteBVPV(structModel *model, float *thetaBV, float *thetaPV){
     fileBV = fopen("./result/bv.txt", "w");
     FILE *filePV;
     filePV = fopen("./result/pv.txt", "w");
+    int k = 0;
     if(fileBV != NULL && filePV != NULL){
-        for(int k = 0; k < model->xSize*model->xSize; k++){
-            int i = (int)k/model->xSize;
-            int j = k%model->xSize;
-            fprintf(fileBV, "%f ", thetaBV[k]);
-            fprintf(filePV, "%f ", thetaPV[k]);    
-            if(k%model->xSize == 0 && k != 0){
-                fprintf(fileBV,"\n");
-                fprintf(filePV,"\n");
+        while (k < model->xSize*model->xSize){
+            int i = k;
+            while (i < k + model->xSize){
+                fprintf(fileBV, "%f ", thetaBV[i]);
+                fprintf(filePV, "%f ", thetaPV[i]);
+                i++;
             }
+            fprintf(fileBV,"\n");
+            fprintf(filePV,"\n");
+            k+=model->xSize;
         }
         fclose(fileBV);
         fclose(filePV);
@@ -354,15 +322,15 @@ float* EquationsLymphNode(structModel model, float* populationLN, int stepPos){
 
     //Describe equations
 
-    //Dendritic cell (Activated)
-    float activatedDcMigration = model.parametersModel.gammaD * (model.activatedDCTissueVessels - dcLN);// * (float)(model.parametersModel.V_PV/model.parametersModel.V_LN);
+    //Dendritic cell
+    float activatedDcMigration = model.parametersModel.gammaD * (model.activatedDCTissueVessels - dcLN) * (float)(model.parametersModel.V_PV/model.parametersModel.V_LN);
     float activatedDcClearance = model.parametersModel.cDl * dcLN;
     result[0] = activatedDcMigration - activatedDcClearance;
 
     //T Cytotoxic
     float tCytoActivation = model.parametersModel.bTCytotoxic * (model.parametersModel.rhoTCytotoxic*tCytoLN*dcLN - tCytoLN*dcLN);
     float tCytoHomeostasis = model.parametersModel.alphaTCytotoxic * (model.parametersModel.stableTCytotoxic - tCytoLN);
-    float tCytoMigration = model.parametersModel.gammaT * (tCytoLN - model.tCytotoxicTissueVessels);// * (float)(model.parametersModel.V_BV/model.parametersModel.V_LN);
+    float tCytoMigration = model.parametersModel.gammaT * (tCytoLN - model.tCytotoxicTissueVessels) * (float)(model.parametersModel.V_BV/model.parametersModel.V_LN);
     result[1] = tCytoActivation + tCytoHomeostasis - tCytoMigration;
 
     //T Helper
@@ -384,7 +352,7 @@ float* EquationsLymphNode(structModel model, float* populationLN, int stepPos){
     //Antibody
     float antibodyProduction = model.parametersModel.rhoAntibody * plasmaCellLN;
     float antibodyDecayment = model.parametersModel.cF * antibodyLN;
-    float antibodyMigration = model.parametersModel.gammaAntibody * (antibodyLN - model.antibodyTissueVessels);// * (float)(model.parametersModel.V_BV/model.parametersModel.V_LN);
+    float antibodyMigration = model.parametersModel.gammaAntibody * (antibodyLN - model.antibodyTissueVessels) * (float)(model.parametersModel.V_BV/model.parametersModel.V_LN);
     result[5] = antibodyProduction - antibodyMigration - antibodyDecayment;
 
     return result;
@@ -534,8 +502,6 @@ void RunModel(structModel *model){
             valJPlus = (column != model->xSize-1)? model->oligodendrocyte[stepKMinus][kPos + 1]: model->oligodendrocyte[stepKMinus][kPos - 1] - (float)(2*model->hx*rightNeumannBC);
             valIMinus = (line != 0)? model->oligodendrocyte[stepKMinus][kPos - model->xSize]: model->oligodendrocyte[stepKMinus][kPos + model->xSize] - (float)(2*model->hx*upperNeumannBC);
             valJMinus = (column != 0)? model->oligodendrocyte[stepKMinus][kPos - 1]: model->oligodendrocyte[stepKMinus][kPos + 1] - (float)(2*model->hx*leftNeumannBC);
-            
-            float valIPlusO = valIPlus, valJPlusO = valJPlus, valIMinusO = valIMinus, valJMinusO = valJMinusO;
 
             diffusionOdc = CalculateDiffusion(*model, valJPlus, valJMinus, valIPlus, valIMinus, model->oligodendrocyte[stepKMinus][kPos]);
 
@@ -544,15 +510,13 @@ void RunModel(structModel *model){
 
             //Diffusion and Chemotaxis Mic
 
-
             valIPlus  = (line != model->xSize-1)? model->microglia[stepKMinus][kPos + model->xSize]: model->microglia[stepKMinus][kPos - model->xSize] - (float)(2*model->hx*lowerNeumannBC);
             valJPlus  = (column != model->xSize-1)? model->microglia[stepKMinus][kPos + 1]: model->microglia[stepKMinus][kPos - 1] - (float)(2*model->hx*rightNeumannBC);
             valIMinus = (line != 0)? model->microglia[stepKMinus][kPos - model->xSize]: model->microglia[stepKMinus][kPos + model->xSize] - (float)(2*model->hx*upperNeumannBC);
             valJMinus = (column != 0)? model->microglia[stepKMinus][kPos - 1]: model->microglia[stepKMinus][kPos + 1] - (float)(2*model->hx*leftNeumannBC);
             
             microgliaDiffusion = model->parametersModel.micDiffusion*CalculateDiffusion(*model, valJPlus, valJMinus, valIPlus, valIMinus, model->microglia[stepKMinus][kPos]);
-            // microgliaChemotaxis = model->parametersModel.chi * CalculateFLux(*model, valJPlus, valJMinus, valIPlus, valIMinus, model->microglia[stepKMinus][kPos], model->parametersModel.avgMic,\
-            valJPlusO, valJMinusO, valIPlusO, valIMinusO, oligodendrocyteKMinus, line, column);
+            
             microgliaChemotaxis = model->parametersModel.chi * CalculateChemotaxis(*model, valJPlus, valJMinus, valIPlus, valIMinus, model->microglia[stepKMinus][kPos],\
             model->parametersModel.avgMic, gradientOdcI, gradientOdcJ)\
             + model->parametersModel.chi * diffusionOdc * PreventionOverCrowdingTerm(microgliaKMinus, model->parametersModel.avgMic);
@@ -565,35 +529,24 @@ void RunModel(structModel *model){
             valJMinus = (column != 0)? model->conventionalDc[stepKMinus][kPos - 1]: model->conventionalDc[stepKMinus][kPos + 1] - (float)(2*model->hx*leftNeumannBC);
 
             conventionalDcDiffusion = model->parametersModel.cDcDiffusion*CalculateDiffusion(*model, valJPlus, valJMinus, valIPlus, valIMinus, model->conventionalDc[stepKMinus][kPos]);
-            // conventionalDcChemotaxis = model->parametersModel.chi * CalculateFLux(*model, valJPlus, valJMinus, valIPlus, valIMinus, conventionalDcKMinus, model->parametersModel.avgDc,\
-            valJPlusO, valJMinusO, valIPlusO, valIMinusO, oligodendrocyteKMinus, line, column);
+            
             conventionalDcChemotaxis = model->parametersModel.chi*CalculateChemotaxis(*model, valJPlus, valJMinus, valIPlus, valIMinus, model->conventionalDc[stepKMinus][kPos],\
             model->parametersModel.avgDc, gradientOdcI, gradientOdcJ)\
             + model->parametersModel.chi * diffusionOdc * PreventionOverCrowdingTerm(conventionalDcKMinus, model->parametersModel.avgDc);
 
             //Difussion and Chemotaxis CD8T
 
-            float totalAntes = 0;
-
             valIPlus  = (line != model->xSize-1)? model->tCytotoxic[stepKMinus][kPos + model->xSize]: model->tCytotoxic[stepKMinus][kPos - model->xSize] - (float)(2*model->hx*lowerNeumannBC);
             valJPlus  = (column != model->xSize-1)? model->tCytotoxic[stepKMinus][kPos + 1]: model->tCytotoxic[stepKMinus][kPos - 1] - (float)(2*model->hx*rightNeumannBC);
             valIMinus = (line != 0)? model->tCytotoxic[stepKMinus][kPos - model->xSize]: model->tCytotoxic[stepKMinus][kPos + model->xSize] - (float)(2*model->hx*upperNeumannBC);
             valJMinus = (column != 0)? model->tCytotoxic[stepKMinus][kPos - 1]: model->tCytotoxic[stepKMinus][kPos + 1] - (float)(2*model->hx*leftNeumannBC);
-            
-            totalAntes += valIPlus + valJPlus + valIMinus + valJMinus + model->tCytotoxic[stepKMinus][kPos];
 
+            tCytotoxicDiffusion = model->parametersModel.tCytoDiffusion*CalculateDiffusion(*model, valJPlus, valJMinus, valIPlus, valIMinus, model->tCytotoxic[stepKMinus][kPos]);
+            
             tCytotoxicChemotaxis = model->parametersModel.chi*CalculateChemotaxis(*model, valJPlus, valJMinus, valIPlus, valIMinus, model->tCytotoxic[stepKMinus][kPos],\
             model->parametersModel.avgT, gradientOdcI, gradientOdcJ)\
             + model->parametersModel.chi * diffusionOdc * PreventionOverCrowdingTerm(tCytotoxicKMinus, model->parametersModel.avgT);
 
-            // if(tid == 0 &&){
-                
-            // }
-
-            tCytotoxicDiffusion = model->parametersModel.tCytoDiffusion*CalculateDiffusion(*model, valJPlus, valJMinus, valIPlus, valIMinus, model->tCytotoxic[stepKMinus][kPos]);
-            // tCytotoxicChemotaxis = model->parametersModel.chi * CalculateFLux(*model, valJPlus, valJMinus, valIPlus, valIMinus, tCytotoxicKMinus, model->parametersModel.avgT,\
-            valJPlusO, valJMinusO, valIPlusO, valIMinusO, oligodendrocyteKMinus, line, column);
-            
             //Difussion ADC
 
             valIPlus  = (line != model->xSize-1)? model->activatedDc[stepKMinus][kPos + model->xSize]: model->activatedDc[stepKMinus][kPos - model->xSize] - (float)(2*model->hx*lowerNeumannBC);
