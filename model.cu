@@ -145,7 +145,7 @@ void PlotResults(structModel model)
     system(command);
 }
 
-__device__ void AdvectionTerm(float populationPoint, float avgValue, float *result)
+__device__ void PreventionOverCrowdingTerm(float populationPoint, float avgValue, float *result)
 {
     *result = populationPoint / (populationPoint + avgValue);
 }
@@ -153,8 +153,8 @@ __device__ void AdvectionTerm(float populationPoint, float avgValue, float *resu
 __device__ void UpDownWind(float frontPoint, float rearPoint, float avgValue, float *result)
 {
     float resultF;
-    AdvectionTerm(frontPoint, avgValue, result);
-    AdvectionTerm(rearPoint, avgValue, &resultF);
+    PreventionOverCrowdingTerm(frontPoint, avgValue, result);
+    PreventionOverCrowdingTerm(rearPoint, avgValue, &resultF);
     *result = *result - resultF;
 }
 
@@ -196,22 +196,45 @@ __device__ void fFunc(float valuePopulation, float avgPopulation, float *result)
     *result = valuePopulation * valuePopulation / (float)(valuePopulation + avgPopulation);
 }
 
-void WriteBVPV(structModel *model, float *thetaBV, float *thetaPV)
-{
+void DefineBVPV(structModel *model){
+    int randomVal;
+    for(int k = 0; k < model->xSize*model->xSize; k++){
+        int i = (int)k/model->xSize;
+        int j = k%model->xSize;
+        randomVal = rand() % 100;
+        if(randomVal <10){
+            model->parametersModel.V_BV++;
+            model->parametersModel.V_PV++;
+            model->thetaBV[k] = 1;
+            if(j != model->xSize-1)
+                model->thetaPV[k+1] = 1;
+            else
+                model->thetaPV[k-model->xSize+1] = 1;
+        }
+    }
+    model->parametersModel.V_BV = 40;//model->parametersModel.V_BV * model->hx * model->hx;
+    model->parametersModel.V_PV = 40;//model->parametersModel.V_PV * model->hx * model->hx;
+    printf("bv = %f, pv = %f \n", model->parametersModel.V_BV, model->parametersModel.V_PV);
+    WriteBVPV(model, model->thetaBV, model->thetaPV);
+}
+
+void WriteBVPV(structModel *model, float *thetaBV, float *thetaPV){
     FILE *fileBV;
     fileBV = fopen("./result/bv.txt", "w");
     FILE *filePV;
     filePV = fopen("./result/pv.txt", "w");
+    int k = 0;
     if(fileBV != NULL && filePV != NULL){
-        for(int k = 0; k < model->xSize*model->xSize; k++){
-            int i = (int)k/model->xSize;
-            int j = k%model->xSize;
-            fprintf(fileBV, "%f ", thetaBV[k]);
-            fprintf(filePV, "%f ", thetaPV[k]);    
-            if(k%model->xSize == 0 && k != 0){
-                fprintf(fileBV,"\n");
-                fprintf(filePV,"\n");
+        while (k < model->xSize*model->xSize){
+            int i = k;
+            while (i < k + model->xSize){
+                fprintf(fileBV, "%f ", thetaBV[i]);
+                fprintf(filePV, "%f ", thetaPV[i]);
+                i++;
             }
+            fprintf(fileBV,"\n");
+            fprintf(filePV,"\n");
+            k+=model->xSize;
         }
         fclose(fileBV);
         fclose(filePV);
@@ -230,92 +253,67 @@ void WriteBVPV(structModel *model, float *thetaBV, float *thetaPV)
     // system(command);
 }
 
-void DefineBVPV(structModel *model){
-    int randomVal;
-    for(int k = 0; k < model->xSize*model->xSize; k++){
-        int i = (int)k/model->xSize;
-        int j = k%model->xSize;
-        randomVal = rand() % 100;
-        if(randomVal <10){
-            model->parametersModel.V_BV++;
-            model->parametersModel.V_PV++;
-            model->thetaBV[k] = 1;
-            if(j != model->xSize-1)
-                model->thetaPV[k+1] = 1;
-            else
-                model->thetaPV[k-model->xSize+1] = 1;
-        }
-    }
-    model->parametersModel.V_BV = 160;//model->parametersModel.V_BV * model->hx * model->hx;
-    model->parametersModel.V_PV = 160;//model->parametersModel.V_PV * model->hx * model->hx;
-    printf("bv = %f, pv = %f \n", model->parametersModel.V_BV, model->parametersModel.V_PV);
-    WriteBVPV(model, model->thetaBV, model->thetaPV);
-}
-
-structModel ModelInitialize(structParameters params, float ht, float hx, float time, float space, int numFigs, int numPointsLN, int numStepsLN, int saveFigs)
-{
+structModel ModelInitialize(structParameters params, float ht, float hx, float time, float space, int numFigs, int numPointsLN, int numStepsLN, int saveFigs){
     structModel model;
     srand(2);
-
-    // Pegar os valores pelos parametros
+    model.parametersModel = params;
+    if(!VerifyCFL(model.parametersModel, ht, hx)){
+        printf("Falhou CFL!!\n");
+        exit(1);
+    }
     model.parametersModel = params;
     model.numFigs = numFigs;
     model.numPointsLN = numPointsLN;
     model.numStepsLN = numStepsLN;
-    model.saveFigs = saveFigs;
 
     model.ht = ht;
     model.hx = hx;
     model.tFinal = time;
     model.xFinal = space;
-    model.tSize = (int)(time / ht);
-    model.xSize = (int)(space / hx);
-    model.intervalFigures = (int)model.tSize / numFigs;
-    if(!VerifyCFL(model.parametersModel, ht, hx)){
-        printf("Falhou CFL!!\n");
-        exit(0);
-    }  
+    model.tSize = (int)(time/ht);
+    model.xSize = (int)(space/hx);
+    model.intervalFigures = (int)model.tSize/numFigs;
+    model.saveFigs = saveFigs;
 
-    // inicializar dinamicamente todos os vetores do tecido
-    model.microglia = (float **)calloc(BUFFER, sizeof(float *));
-    model.oligodendrocyte = (float **)calloc(BUFFER, sizeof(float *));
-    model.tCytotoxic = (float **)calloc(BUFFER, sizeof(float *));
-    model.antibody = (float **)calloc(BUFFER, sizeof(float *));
-    model.conventionalDc = (float **)calloc(BUFFER, sizeof(float *));
-    model.activatedDc = (float **)calloc(BUFFER, sizeof(float *));
-    for (int index = 0; index < BUFFER; index++)
-    {
-        model.microglia[index] = (float *)calloc(model.xSize * model.xSize, sizeof(float));
-        model.oligodendrocyte[index] = (float *)calloc(model.xSize * model.xSize, sizeof(float));
-        model.tCytotoxic[index] = (float *)calloc(model.xSize * model.xSize, sizeof(float));
-        model.antibody[index] = (float *)calloc(model.xSize * model.xSize, sizeof(float));
-        model.conventionalDc[index] = (float *)calloc(model.xSize * model.xSize, sizeof(float));
-        model.activatedDc[index] = (float *)calloc(model.xSize * model.xSize, sizeof(float));
-    }
+    model.microglia = (float**)malloc(BUFFER * sizeof(float*));
+    model.oligodendrocyte = (float**)malloc(BUFFER * sizeof(float*));
+    model.tCytotoxic = (float**)malloc(BUFFER * sizeof(float*));
+    model.antibody = (float**)malloc(BUFFER * sizeof(float*));
+    model.conventionalDc = (float**)malloc(BUFFER * sizeof(float*));
+    model.activatedDc = (float**)malloc(BUFFER * sizeof(float*));
 
     model.activatedDCTissueVessels = 0;
     model.tCytotoxicTissueVessels = 0;
     model.antibodyTissueVessels = 0;
 
-    // definir BV e PV
-    model.thetaPV = (float *)calloc(model.xSize * model.xSize, sizeof(float));
-    model.thetaBV = (float *)calloc(model.xSize * model.xSize, sizeof(float));
+    for (int index=0;index<BUFFER;++index){
+        model.microglia[index] = (float*)calloc(model.xSize*model.xSize, sizeof(float));
+        model.oligodendrocyte[index] = (float*)calloc(model.xSize*model.xSize, sizeof(float));
+        model.tCytotoxic[index] = (float*)calloc(model.xSize*model.xSize, sizeof(float));
+        model.conventionalDc[index] = (float*)calloc(model.xSize*model.xSize, sizeof(float));
+        model.activatedDc[index] = (float*)calloc(model.xSize*model.xSize, sizeof(float));
+        model.antibody[index] = (float*)calloc(model.xSize*model.xSize, sizeof(float));
+    }
+    //definir BV e PV
+    model.thetaPV = (float*)calloc(model.xSize*model.xSize, sizeof(float));
+    model.thetaBV = (float*)calloc(model.xSize*model.xSize, sizeof(float));
     DefineBVPV(&model);
-    // definir lymph node
-    model.dendriticLymphNodeSavedPoints = (float *)calloc(model.numPointsLN, sizeof(float));
-    model.tCytotoxicLymphNodeSavedPoints = (float *)calloc(model.numPointsLN, sizeof(float));
-    model.tHelperLymphNodeSavedPoints = (float *)calloc(model.numPointsLN, sizeof(float));
-    model.antibodyLymphNodeSavedPoints = (float *)calloc(model.numPointsLN, sizeof(float));
-    model.bCellLymphNodeSavedPoints = (float *)calloc(model.numPointsLN, sizeof(float));
-    model.plasmaCellLymphNodeSavedPoints = (float *)calloc(model.numPointsLN, sizeof(float));
+    //definir lymph node
+    model.dendriticLymphNodeSavedPoints = (float*)calloc(model.numPointsLN, sizeof(float));
+    model.tCytotoxicLymphNodeSavedPoints = (float*)calloc(model.numPointsLN, sizeof(float));
+    model.tHelperLymphNodeSavedPoints = (float*)calloc(model.numPointsLN, sizeof(float));
+    model.antibodyLymphNodeSavedPoints = (float*)calloc(model.numPointsLN, sizeof(float));
+    model.bCellLymphNodeSavedPoints = (float*)calloc(model.numPointsLN, sizeof(float));
+    model.plasmaCellLymphNodeSavedPoints = (float*)calloc(model.numPointsLN, sizeof(float));
 
-    model.dendriticLymphNode = (float *)calloc(2, sizeof(float));
-    model.tCytotoxicLymphNode = (float *)calloc(2, sizeof(float));
-    model.tHelperLymphNode = (float *)calloc(2, sizeof(float));
-    model.antibodyLymphNode = (float *)calloc(2, sizeof(float));
-    model.bCellLymphNode = (float *)calloc(2, sizeof(float));
-    model.plasmaCellLymphNode = (float *)calloc(2, sizeof(float));
-    float dendriticLN = 0.0, thelperLN = 0.0, tcytotoxicLN = 0.0, bcellLN = 0.0, plasmacellLN = 0.0, antibodyLN = 0.0;
+    model.dendriticLymphNode = (float*)calloc(2, sizeof(float));
+    model.tCytotoxicLymphNode = (float*)calloc(2, sizeof(float));
+    model.tHelperLymphNode = (float*)calloc(2, sizeof(float));
+    model.antibodyLymphNode = (float*)calloc(2, sizeof(float));
+    model.bCellLymphNode = (float*)calloc(2, sizeof(float));
+    model.plasmaCellLymphNode = (float*)calloc(2, sizeof(float));    
+
+    float dendriticLN = 0.0, thelperLN = params.stableTHelper, tcytotoxicLN = params.stableTCytotoxic, bcellLN = params.stableB, plasmacellLN = 0.0, antibodyLN = 0.0;
     InitialConditionLymphNode(&model, dendriticLN, thelperLN, tcytotoxicLN, bcellLN, plasmacellLN, antibodyLN);
     InitialConditionTissueMicroglia(&model);
     return model;
@@ -348,14 +346,14 @@ float* EquationsLymphNode(structModel model, float* populationLN, int stepPos){
     //Describe equations
 
     //Dendritic cell
-    float activatedDcMigration = model.parametersModel.gammaD * (model.activatedDCTissueVessels - dcLN);// * (float)(model.parametersModel.V_PV/model.parametersModel.V_LN);
+    float activatedDcMigration = model.parametersModel.gammaD * (model.activatedDCTissueVessels - dcLN) * (float)(model.parametersModel.V_PV/model.parametersModel.V_LN);
     float activatedDcClearance = model.parametersModel.cDl * dcLN;
     result[0] = activatedDcMigration - activatedDcClearance;
 
     //T Cytotoxic
     float tCytoActivation = model.parametersModel.bTCytotoxic * (model.parametersModel.rhoTCytotoxic*tCytoLN*dcLN - tCytoLN*dcLN);
     float tCytoHomeostasis = model.parametersModel.alphaTCytotoxic * (model.parametersModel.estableTCytotoxic - tCytoLN);
-    float tCytoMigration = model.parametersModel.gammaT * (tCytoLN - model.tCytotoxicTissueVessels);// * (float)(model.parametersModel.V_BV/model.parametersModel.V_LN);
+    float tCytoMigration = model.parametersModel.gammaT * (tCytoLN - model.tCytotoxicTissueVessels) * (float)(model.parametersModel.V_BV/model.parametersModel.V_LN);
     result[1] = tCytoActivation + tCytoHomeostasis - tCytoMigration;
 
     //T Helper
@@ -377,7 +375,7 @@ float* EquationsLymphNode(structModel model, float* populationLN, int stepPos){
     //Antibody
     float antibodyProduction = model.parametersModel.rhoAntibody * plasmaCellLN;
     float antibodyDecayment = model.parametersModel.cF * antibodyLN;
-    float antibodyMigration = model.parametersModel.gammaAntibody * (antibodyLN - model.antibodyTissueVessels);// * (float)(model.parametersModel.V_BV/model.parametersModel.V_LN);
+    float antibodyMigration = model.parametersModel.gammaAntibody * (antibodyLN - model.antibodyTissueVessels) * (float)(model.parametersModel.V_BV/model.parametersModel.V_LN);
     result[5] = antibodyProduction - antibodyMigration - antibodyDecayment;
 
     return result;
@@ -446,8 +444,8 @@ void SavingData(structModel model){
         fprintf(file, "micDiffusion  = %f, antibodyDiffusion = %f, cDcDiffusion = %f, aDcDiffusion = %f, tCytoDiffusion = %f, chi = %f, muCDc = %f, muMic = %f, \
         rM = %f, rT = %f, lambAntMic = %f, bD = %f, gammaD = %f, gammaAntibody = %f, gammaT = %f,  avgT = %f, avgDc = %f, avgMic = %f, avgOdc = %f,  cMic = %f, \
         cCDc = %f, cADc = %f, cDl = %f, cF = %f, alphaTHelper = %f, alphaTCytotoxic = %f, alphaB = %f, alphaP = %f, bTHelper = %f, bTCytotoxic = %f, bRho = %f, \
-        bRhoB = %f, bRhoP = %f, rhoTHelper = %f, rhoTCytotoxic = %f, rhoB = %f, rhoP = %f, rhoAntibody = %f, estableTHelper = %f, estableTCytotoxic = %f, \
-        estableB = %f, estableP = %f, V_LN = %d, V_BV = %f, V_PV = %f\n",
+        bRhoB = %f, bRhoP = %f, rhoTHelper = %f, rhoTCytotoxic = %f, rhoB = %f, rhoP = %f, rhoAntibody = %f, stableTHelper = %f, stableTCytotoxic = %f, \
+        stableB = %f, stableP = %f, V_LN = %d, V_BV = %f, V_PV = %f\n",
         model.parametersModel.micDiffusion, model.parametersModel.antibodyDiffusion, model.parametersModel.cDcDiffusion, model.parametersModel.aDcDiffusion, \
         model.parametersModel.tCytoDiffusion, model.parametersModel.chi, model.parametersModel.muCDc, model.parametersModel.muMic, model.parametersModel.rM, \
         model.parametersModel.rT, model.parametersModel.lambAntMic, model.parametersModel.bD, model.parametersModel.gammaD, model.parametersModel.gammaAntibody, \
@@ -456,8 +454,8 @@ void SavingData(structModel model){
         model.parametersModel.alphaTHelper, model.parametersModel.alphaTCytotoxic, model.parametersModel.alphaB, model.parametersModel.alphaP, \
         model.parametersModel.bTHelper, model.parametersModel.bTCytotoxic, model.parametersModel.bRho, model.parametersModel.bRhoB, model.parametersModel.bRhoP,\
         model.parametersModel.rhoTHelper, model.parametersModel.rhoTCytotoxic, model.parametersModel.rhoB, model.parametersModel.rhoP,\
-        model.parametersModel.rhoAntibody, model.parametersModel.estableTHelper, model.parametersModel.estableTCytotoxic, model.parametersModel.estableB,\
-        model.parametersModel.estableP, model.parametersModel.V_LN, model.parametersModel.V_BV, model.parametersModel.V_PV);
+        model.parametersModel.rhoAntibody, model.parametersModel.stableTHelper, model.parametersModel.stableTCytotoxic, model.parametersModel.stableB,\
+        model.parametersModel.stableP, model.parametersModel.V_LN, model.parametersModel.V_BV, model.parametersModel.V_PV);
         fclose(file);
     }
 }
@@ -519,7 +517,7 @@ __global__ void kernelPDE(int kTime, float *tCytoSumVessel, float *activatedDCSu
         CalculateDiffusion(constHx, valJPlus, valJMinus, valIPlus, valIMinus, devMicrogliaKMinusThrIdx, &microgliaDiffusion);
         CalculateChemottaxis(constHx, valJPlus, valJMinus, valIPlus, valIMinus, devMicrogliaKMinusThrIdx,
                              modelParams.avgMic, gradientOdcI, gradientOdcJ, &microgliaChemotaxis);
-        microgliaChemotaxis += diffusionODC * devMicrogliaKMinusThrIdx / (devMicrogliaKMinusThrIdx + modelParams.avgMic);
+        microgliaChemotaxis += diffusionODC * PreventionOverCrowdingTerm(devMicrogliaKMinusThrIdx, model->parametersModel.avgMic);
         microgliaChemotaxis *= modelParams.chi;
         microgliaDiffusion *= modelParams.micDiffusion;
         // Diffusion and Chemotaxis CDC
@@ -534,7 +532,7 @@ __global__ void kernelPDE(int kTime, float *tCytoSumVessel, float *activatedDCSu
         CalculateDiffusion(constHx, valJPlus, valJMinus, valIPlus, valIMinus, devConventionalDCKMinusThrIdx, &conventionalDcDiffusion);
         CalculateChemottaxis(constHx, valJPlus, valJMinus, valIPlus, valIMinus, devConventionalDCKMinusThrIdx,
                              modelParams.avgDc, gradientOdcI, gradientOdcJ, &conventionalDcChemotaxis);
-        conventionalDcChemotaxis += diffusionODC * devConventionalDCKMinusThrIdx / (devConventionalDCKMinusThrIdx + modelParams.avgDc);
+        conventionalDcChemotaxis += diffusionODC * PreventionOverCrowdingTerm(devConventionalDCKMinusThrIdx, model->parametersModel.avgDc);
         conventionalDcChemotaxis *= modelParams.chi;
         conventionalDcDiffusion *= modelParams.cDcDiffusion;
 
@@ -550,7 +548,7 @@ __global__ void kernelPDE(int kTime, float *tCytoSumVessel, float *activatedDCSu
         CalculateDiffusion(constHx, valJPlus, valJMinus, valIPlus, valIMinus, devTCytotoxicKMinusThrIdx, &tCytotoxicDiffusion);
         CalculateChemottaxis(constHx, valJPlus, valJMinus, valIPlus, valIMinus, devTCytotoxicKMinusThrIdx,
                              modelParams.avgT, gradientOdcI, gradientOdcJ, &tCytotoxicChemotaxis);
-        tCytotoxicChemotaxis += diffusionODC * devTCytotoxicKMinusThrIdx / (devTCytotoxicKMinusThrIdx + modelParams.avgDc);
+        tCytotoxicChemotaxis += diffusionODC * PreventionOverCrowdingTerm(devTCytotoxicKMinusThrIdx, model->parametersModel.avgT);
         tCytotoxicChemotaxis *= modelParams.chi;
         tCytotoxicDiffusion *= modelParams.tCytoDiffusion;
 

@@ -9,9 +9,9 @@ sns.set()
 L = int(sys.argv[1])
 h_x = float(sys.argv[2])
 finalTime = int(sys.argv[3])
-numPlots = int(sys.argv[3])
+numPlots = int(sys.argv[4])
 timesPlots = np.linspace(0, finalTime, numPlots+1)
-x = np.linspace(0, L, int(L/h_x))#+1)
+x = np.linspace(0, L, int(L/h_x))
 
 populationTitle = {
     "odc": "Destroyed oligodendrocytes",
@@ -30,7 +30,7 @@ def printMesh(time, population, type):
         max_population += 1
     levels = np.linspace(0, max_population, 50)
 
-    cp = plt.contourf(x_pts, y_pts,population, levels=levels)
+    cp = plt.contourf(x_pts, y_pts, population, levels=levels)
     plt.title(populationTitle[type], fontsize=20)
     matplotlib.rc('xtick', labelsize=15) 
     matplotlib.rc('ytick', labelsize=16)
