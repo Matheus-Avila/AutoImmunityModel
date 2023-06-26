@@ -463,8 +463,8 @@ void SavingData(structModel model){
 __device__ __constant__ float upperNeumannBC, lowerNeumannBC, leftNeumannBC, rightNeumannBC, constHx, constHt, consthx2;
 __device__ __constant__ int constXSize;
 __device__ __constant__ structParameters modelParams;
-const int threadsPerBlock = 256;
-const int numBlocks = 128;
+const int threadsPerBlock = 64;
+const int numBlocks = 16;
 
 __global__ void kernelPDE(int kTime, float *tCytoSumVessel, float *activatedDCSumVessel, float *antibodySumVessel, float *devActivatedDCLymphNode, float *devAntibodyLymphNode, float *devTCytotoxicLymphNode, float *devThetaPV, float *devThetaBV, float *devMicrogliaKMinus, float *devMicrogliaKPlus, float *devTCytotoxicKMinus, float *devTCytotoxicKPlus, float *devAntibodyKMinus, float *devAntibodyKPlus, float *devConventionalDCKMinus, float *devConventionalDCKPlus, float *devActivatedDCKMinus, float *devActivatedDCKPlus, float *devOligodendrocyteKMinus, float *devOligodendrocyteKPlus)
 {
