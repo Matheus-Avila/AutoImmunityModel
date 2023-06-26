@@ -11,7 +11,7 @@ h_x = float(sys.argv[2])
 finalTime = int(sys.argv[3])
 numPlots = int(sys.argv[4])
 timesPlots = np.linspace(0, finalTime, numPlots+1)
-x = np.linspace(0, L, int(L/h_x))#+1)
+x = np.linspace(0, L, int(L/h_x))
 
 populationTitle = {
     "odc": "Destroyed oligodendrocytes",
@@ -30,18 +30,15 @@ def printMesh(time, population, type):
         max_population += 1
     levels = np.linspace(0, max_population, 50)
 
-    cp = plt.contourf(x_pts, y_pts,population, levels=levels)
+    cp = plt.contourf(x_pts, y_pts, population, levels=levels)
     plt.title(populationTitle[type], fontsize=20)
-    matplotlib.rc('xtick', labelsize=12) 
-    matplotlib.rc('ytick', labelsize=13)
-    plt.rc('axes', labelsize=13)
-    plt.rc('font', size=12)
+    matplotlib.rc('xtick', labelsize=15) 
+    matplotlib.rc('ytick', labelsize=16)
+    plt.rc('axes', labelsize=16)
+    plt.rc('font', size=15)
     plt.xlabel("Millimeters")
     plt.ylabel("Millimeters")
-    if type == "ant":
-        plt.colorbar(cp, label="Concentration (molecules/$mm^2$)")
-    else:
-        plt.colorbar(cp, label="Concentration (cells/$mm^2$)")
+    plt.colorbar(cp, label="Concentration (cells/$mm^2$)")
     plt.savefig('result/'+type+'/fig'+'{:.1f}'.format(time)+type+'.png', dpi = 300)
     plt.clf()
 
@@ -53,7 +50,6 @@ dendritica_conv_atual = np.zeros(((int(L/h_x)), (int(L/h_x))))
 dendritica_ativ_atual = np.zeros(((int(L/h_x)), (int(L/h_x))))
 
 for t in timesPlots:
-    print(t)
     with open("./result/matrix/oligo"+str(t)+".txt", 'r') as f:
         lista = [line.split(' ')  for line in f]
         for line in range(len(lista[0])-1):

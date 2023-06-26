@@ -11,7 +11,7 @@ L = int(sys.argv[1])
 h_x = float(sys.argv[2])
 x = np.linspace(0, L, int(L/h_x))
 
-def printMesh(population):
+def printMesh(type, population):
 
     x_pts, y_pts = np.meshgrid(x, x)
     levels = np.linspace(0, 1, 3)
@@ -24,7 +24,7 @@ def printMesh(population):
     plt.xlabel("Millimeters")
     plt.ylabel("Millimeters")
     plt.colorbar(cp)
-    plt.show()
+    plt.savefig('result/' + type + 'fig.png', dpi = 300)
     plt.clf()
 
 perivascularSpace = np.zeros(((int(L/h_x)), (int(L/h_x))))
@@ -35,11 +35,11 @@ with open("./result/bv.txt", 'r') as f:
     for line in range(len(lista[0])-1):
         for column in range(len(lista[0])-1):
             bloodVessel[line][column] = lista[line][column]
-    printMesh(bloodVessel)
+    printMesh("bv", bloodVessel)
 
 with open("./result/pv.txt", 'r') as f:
     lista = [line.split(' ')  for line in f]
     for line in range(len(lista[0])-1):
         for column in range(len(lista[0])-1):
             perivascularSpace[line][column] = lista[line][column]
-    printMesh(perivascularSpace)
+    printMesh("pv", perivascularSpace)
