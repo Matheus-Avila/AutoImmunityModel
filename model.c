@@ -231,8 +231,8 @@ void DefineBVPV(structModel *model){
                 model->thetaPV[k-model->xSize+1] = 1;
         }
     }
-    model->parametersModel.V_BV = 40;//model->parametersModel.V_BV * model->hx * model->hx;
-    model->parametersModel.V_PV = 40;//model->parametersModel.V_PV * model->hx * model->hx;
+    model->parametersModel.V_BV = model->parametersModel.V_BV * model->hx * model->hx;
+    model->parametersModel.V_PV = model->parametersModel.V_PV * model->hx * model->hx;
     printf("bv = %f, pv = %f \n", model->parametersModel.V_BV, model->parametersModel.V_PV);
     WriteBVPV(model, model->thetaBV, model->thetaPV);
 }
