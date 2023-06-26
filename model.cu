@@ -140,7 +140,7 @@ void PlotResults(structModel model)
     snprintf(buffer, sizeof(buffer), "%d", model.tFinal);
     strcat(command, buffer);
     strcat(command, " ");
-    snprintf(buffer, sizeof(buffer), "%d", model.intervalFigures);
+    snprintf(buffer, sizeof(buffer), "%d", model.tSize/model.intervalFigures);
     strcat(command, buffer);
     system(command);
 }
