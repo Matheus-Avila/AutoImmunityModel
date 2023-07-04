@@ -11,7 +11,7 @@ structParameters ParametersInitialize(){
     params.cDcDiffusion = 9.6*24*6.6*pow(10,-6);
     params.aDcDiffusion = 9.6*24*6.6*pow(10,-6);
     params.tCytoDiffusion = 9.6*24*6.6*pow(10,-6);
-    params.chi = 0.033;
+    params.chi = 0.33;
     
     params.muCDc = 60*24*3*pow(10,-5);
     params.muMic = 60*24*3*pow(10,-6);
