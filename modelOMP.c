@@ -628,13 +628,13 @@ void RunModel(structModel *model){
                 auxAdcPV += model->activatedDc[stepKPlus][kPos];
             }
         }
-        if(sumDcPlus - (sumDcMinus + sumProdTermsDc) != 0)
+        if(tid == 0 && sumDcPlus - (sumDcMinus + sumProdTermsDc) != 0)
             printf("TEMPO = %f -- Diferenca total DC de um passo de tempo para outro = %f\n", model->ht * kTime, sumDcPlus - (sumDcMinus + sumProdTermsDc));
-        if(sumMicPlus - (sumMicMinus + sumProdTermsMic) != 0)
+        if(tid == 0 && sumMicPlus - (sumMicMinus + sumProdTermsMic) != 0)
             printf("TEMPO = %f -- Diferenca total Mic de um passo de tempo para outro = %f\n", model->ht * kTime, sumMicPlus - (sumMicMinus + sumProdTermsMic));
-        if(sumTCytoPlus - (sumTCytoMinus + sumProdTermsTC) != 0)
+        if(tid == 0 && sumTCytoPlus - (sumTCytoMinus + sumProdTermsTC) != 0)
             printf("TEMPO = %f -- Diferenca total TCyto de um passo de tempo para outro = %f\n", model->ht * kTime, sumTCytoPlus - (sumTCytoMinus + sumProdTermsTC));
-        if(model->saveFigs && (kTime%model->intervalFigures == 0 || kTime == model->tSize))
+        if(tid == 0 && model->saveFigs && (kTime%model->intervalFigures == 0 || kTime == model->tSize))
             WriteFiles(*model, model->oligodendrocyte[stepKPlus], model->microglia[stepKPlus], model->tCytotoxic[stepKPlus], model->antibody[stepKPlus], model->conventionalDc[stepKPlus], model->activatedDc[stepKPlus], kTime);
         stepKMinus += 1;
         stepKMinus = stepKMinus%2;
