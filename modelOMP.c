@@ -27,7 +27,7 @@ void InitialConditionLymphNode(structModel* model, float dendriticLN, float thel
 }
 
 int VerifyCFL(structParameters parametersModel, float ht, float hx){
-    if(parametersModel.micDiffusion*ht/(hx*hx) < 0.25 && parametersModel.cDcDiffusion*ht/(hx*hx) < 0.25 && parametersModel.aDcDiffusion*ht/(hx*hx) < 0.25 && parametersModel.tCytoDiffusion*ht/(hx*hx) < 0.25 && parametersModel.chi*ht/hx < 0.5 && parametersModel.chi*ht/(hx*hx) < 0.25)
+    if(parametersModel.micDiffusion*ht/(hx*hx) < 0.25 && parametersModel.cDcDiffusion*ht/(hx*hx) < 0.25 && parametersModel.aDcDiffusion*ht/(hx*hx) < 0.25 && parametersModel.tCytoDiffusion*ht/(hx*hx) < 0.25 && parametersModel.chi*(parametersModel.avgOdc/(2*hx))*ht/hx < 0.5 && parametersModel.chi*ht/(hx*hx) < 0.25)
         return 1;
     return 0;
 }
@@ -628,11 +628,11 @@ void RunModel(structModel *model){
                 auxAdcPV += model->activatedDc[stepKPlus][kPos];
             }
         }
-        if(tid == 0 && sumDcPlus - (sumDcMinus + sumProdTermsDc) != 0)
+        if(tid == 0 && kTime%model->intervalFigures == 0 && sumDcPlus - (sumDcMinus + sumProdTermsDc) != 0)
             printf("TEMPO = %f -- Diferenca total DC de um passo de tempo para outro = %f\n", model->ht * kTime, sumDcPlus - (sumDcMinus + sumProdTermsDc));
-        if(tid == 0 && sumMicPlus - (sumMicMinus + sumProdTermsMic) != 0)
+        if(tid == 0 && kTime%model->intervalFigures == 0 && sumMicPlus - (sumMicMinus + sumProdTermsMic) != 0)
             printf("TEMPO = %f -- Diferenca total Mic de um passo de tempo para outro = %f\n", model->ht * kTime, sumMicPlus - (sumMicMinus + sumProdTermsMic));
-        if(tid == 0 && sumTCytoPlus - (sumTCytoMinus + sumProdTermsTC) != 0)
+        if(tid == 0 && kTime%model->intervalFigures == 0 && sumTCytoPlus - (sumTCytoMinus + sumProdTermsTC) != 0)
             printf("TEMPO = %f -- Diferenca total TCyto de um passo de tempo para outro = %f\n", model->ht * kTime, sumTCytoPlus - (sumTCytoMinus + sumProdTermsTC));
         if(tid == 0 && model->saveFigs && (kTime%model->intervalFigures == 0 || kTime == model->tSize))
             WriteFiles(*model, model->oligodendrocyte[stepKPlus], model->microglia[stepKPlus], model->tCytotoxic[stepKPlus], model->antibody[stepKPlus], model->conventionalDc[stepKPlus], model->activatedDc[stepKPlus], kTime);

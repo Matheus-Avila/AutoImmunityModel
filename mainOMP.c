@@ -6,12 +6,12 @@
 
 structParameters ParametersInitialize(){
     structParameters params;
-    params.micDiffusion = 9.6*24*6.6*pow(10,-6);
-    params.antibodyDiffusion = 9.6*24*6.6*pow(10,-4);
-    params.cDcDiffusion = 9.6*24*6.6*pow(10,-6);
-    params.aDcDiffusion = 9.6*24*6.6*pow(10,-6);
-    params.tCytoDiffusion = 9.6*24*6.6*pow(10,-6);
-    params.chi = 0.33;
+    params.micDiffusion = 0.015206;
+    params.antibodyDiffusion = 0.15206;
+    params.cDcDiffusion = 0.015206;
+    params.aDcDiffusion = 0.015206;
+    params.tCytoDiffusion = 0.015206;
+    params.chi = 0.033;
     
     params.muCDc = 60*24*3*pow(10,-5);
     params.muMic = 60*24*3*pow(10,-6);
@@ -89,7 +89,7 @@ int main(int argc, char* argv[]){
     clearPhgTxt();
     int tot_thr = strtol(argv[1], NULL, 10);
     float ht = 0.0002, hx = 0.5;
-    int numFigs = 28, numPointsLN = 1000, time = 28, space = 20, numStepsLN = 100, saveFigs = 1;
+    int numFigs = 28, numPointsLN = 1000, time = 28, space = 20, numStepsLN = 1, saveFigs = 1;
     structParameters parameters = ParametersInitialize();
     structModel model = ModelInitialize(parameters, tot_thr, ht, hx, time, space, numFigs, numPointsLN, numStepsLN, saveFigs);
     printf("Inicializacao feita!!\n\n");
