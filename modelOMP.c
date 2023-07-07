@@ -27,7 +27,14 @@ void InitialConditionLymphNode(structModel* model, float dendriticLN, float thel
 }
 
 int VerifyCFL(structParameters parametersModel, float ht, float hx){
-    if(parametersModel.micDiffusion*ht/(hx*hx) < 0.25 && parametersModel.cDcDiffusion*ht/(hx*hx) < 0.25 && parametersModel.aDcDiffusion*ht/(hx*hx) < 0.25 && parametersModel.tCytoDiffusion*ht/(hx*hx) < 0.25 && parametersModel.chi*(parametersModel.avgOdc/(2*hx))*ht/hx < 0.5 && parametersModel.chi*ht/(hx*hx) < 0.25)
+    printf("MIC Diffusion CFl = %f\n", parametersModel.micDiffusion*ht/(hx*hx));
+    printf("CDC Diffusion CFl = %f\n", parametersModel.cDcDiffusion*ht/(hx*hx));
+    printf("ADC Diffusion CFl = %f\n", parametersModel.aDcDiffusion*ht/(hx*hx));
+    printf("TC8 Diffusion CFl = %f\n", parametersModel.tCytoDiffusion*ht/(hx*hx));
+    printf("IGG Diffusion CFl = %f\n", parametersModel.antibodyDiffusion*ht/(hx*hx));
+    printf("Chemo Diffusion CFl = %f\n", parametersModel.chi*ht/(hx*hx));
+    printf("Chemotaxis CFl = %f\n", parametersModel.chi*(parametersModel.avgOdc/(2*hx))*ht/hx);
+    if(parametersModel.antibodyDiffusion*ht/(hx*hx) < 0.25 && parametersModel.micDiffusion*ht/(hx*hx) < 0.25 && parametersModel.cDcDiffusion*ht/(hx*hx) < 0.25 && parametersModel.aDcDiffusion*ht/(hx*hx) < 0.25 && parametersModel.tCytoDiffusion*ht/(hx*hx) < 0.25 && parametersModel.chi*(parametersModel.avgOdc/(2*hx))*ht/hx < 0.5 && parametersModel.chi*ht/(hx*hx) < 0.25)
         return 1;
     return 0;
 }
@@ -465,11 +472,13 @@ void RunModel(structModel *model){
     float diffusionOdc;
 
     float sumMicMinus = 0.0, sumMicPlus = 0.0, sumDcMinus = 0.0, sumDcPlus = 0.0, sumTCytoMinus = 0.0, sumTCytoPlus = 0.0, sumProdTermsMic = 0.0, sumProdTermsDc = 0.0, sumProdTermsTC = 0.0;
-
+    
+    float maxMicDif = 0.0, maxCDCDif = 0.0, maxTCytoDif = 0.0;
+    
     int kTime;
     int tid;
     #pragma omp parallel num_threads(model->totalThreads) default(none) shared(model, auxTCytotoxicBV, auxAntibodyBV, auxAdcPV, lowerNeumannBC, rightNeumannBC, upperNeumannBC, leftNeumannBC,\
-    sumMicMinus, sumMicPlus, sumDcMinus, sumDcPlus, sumTCytoMinus, sumTCytoPlus, sumProdTermsMic, sumProdTermsDc, sumProdTermsTC)\
+    sumMicMinus, sumMicPlus, sumDcMinus, sumDcPlus, sumTCytoMinus, sumTCytoPlus, sumProdTermsMic, sumProdTermsDc, sumProdTermsTC, maxCDCDif, maxMicDif, maxTCytoDif)\
             private(tid, kTime, stepKMinus, stepKPlus, line, column, microgliaKMinus, conventionalDcKMinus, diffusionOdc,\
             activatedDcKMinus, tCytotoxicKMinus, antibodyKMinus, oligodendrocyteKMinus, valIPlus, valJPlus, valIMinus, valJMinus, gradientOdcI,\
             gradientOdcJ, microgliaDiffusion, microgliaChemotaxis, conventionalDcDiffusion, conventionalDcChemotaxis, tCytotoxicDiffusion, tCytotoxicChemotaxis,\
@@ -580,7 +589,7 @@ void RunModel(structModel *model){
 
             sumMicMinus += microgliaKMinus;
             sumMicPlus += model->microglia[stepKPlus][kPos];
-            sumProdTermsMic += model->ht * (microgliaReaction - microgliaClearance);
+            sumProdTermsMic += model->ht * (microgliaDiffusion + microgliaReaction - microgliaClearance);
 
             //Conventional DC update
             conventionalDcReaction = model->parametersModel.muCDc*oligodendrocyteKMinus*(model->parametersModel.avgDc - conventionalDcKMinus);
@@ -592,7 +601,7 @@ void RunModel(structModel *model){
 
             sumDcMinus += conventionalDcKMinus;
             sumDcPlus += model->conventionalDc[stepKPlus][kPos];
-            sumProdTermsDc += model->ht * (- conventionalDcClearance + conventionalDcReaction - conventionalDcActivation);
+            sumProdTermsDc += model->ht * (conventionalDcDiffusion - conventionalDcClearance + conventionalDcReaction - conventionalDcActivation);
 
             //Activated DC update
             activatedDcClearance = model->parametersModel.cADc*activatedDcKMinus;
@@ -607,7 +616,7 @@ void RunModel(structModel *model){
             
             sumTCytoMinus += tCytotoxicKMinus;
             sumTCytoPlus += model->tCytotoxic[stepKPlus][kPos];
-            sumProdTermsTC += model->ht* tCytotoxicMigration;
+            sumProdTermsTC += model->ht* (tCytotoxicDiffusion + tCytotoxicMigration);
 
             //Antibody update
             odcAntibodyMicrogliaFagocitosis = model->parametersModel.lambAntMic*antibodyKMinus*(model->parametersModel.avgOdc - oligodendrocyteKMinus)*fFunc(microgliaKMinus, model->parametersModel.avgMic);
@@ -628,18 +637,27 @@ void RunModel(structModel *model){
                 auxAdcPV += model->activatedDc[stepKPlus][kPos];
             }
         }
-        if(tid == 0 && kTime%model->intervalFigures == 0 && sumDcPlus - (sumDcMinus + sumProdTermsDc) != 0)
-            printf("TEMPO = %f -- Diferenca total DC de um passo de tempo para outro = %f\n", model->ht * kTime, sumDcPlus - (sumDcMinus + sumProdTermsDc));
-        if(tid == 0 && kTime%model->intervalFigures == 0 && sumMicPlus - (sumMicMinus + sumProdTermsMic) != 0)
-            printf("TEMPO = %f -- Diferenca total Mic de um passo de tempo para outro = %f\n", model->ht * kTime, sumMicPlus - (sumMicMinus + sumProdTermsMic));
-        if(tid == 0 && kTime%model->intervalFigures == 0 && sumTCytoPlus - (sumTCytoMinus + sumProdTermsTC) != 0)
-            printf("TEMPO = %f -- Diferenca total TCyto de um passo de tempo para outro = %f\n", model->ht * kTime, sumTCytoPlus - (sumTCytoMinus + sumProdTermsTC));
+        if(tid == 0 && sumDcPlus - (sumDcMinus + sumProdTermsDc) > maxCDCDif)
+            maxCDCDif = sumDcPlus - (sumDcMinus + sumProdTermsDc);
+        if(tid == 0 && sumMicPlus - (sumMicMinus + sumProdTermsMic) > maxMicDif)
+            maxMicDif = sumMicPlus - (sumMicMinus + sumProdTermsMic);
+        if(tid == 0 && sumTCytoPlus - (sumTCytoMinus + sumProdTermsTC) > maxTCytoDif)
+            maxTCytoDif = sumTCytoPlus - (sumTCytoMinus + sumProdTermsTC);
+        
+        // if(tid == 0 && kTime%model->intervalFigures == 0 && sumDcPlus - (sumDcMinus + sumProdTermsDc) != 0)
+        //     printf("TEMPO = %f -- Diferenca total DC de um passo de tempo para outro = %f\n", model->ht * kTime, sumDcPlus - (sumDcMinus + sumProdTermsDc));
+        // if(tid == 0 && kTime%model->intervalFigures == 0 && sumMicPlus - (sumMicMinus + sumProdTermsMic) != 0)
+        //     printf("TEMPO = %f -- Diferenca total Mic de um passo de tempo para outro = %f\n", model->ht * kTime, sumMicPlus - (sumMicMinus + sumProdTermsMic));
+        // if(tid == 0 && kTime%model->intervalFigures == 0 && sumTCytoPlus - (sumTCytoMinus + sumProdTermsTC) != 0)
+        //     printf("TEMPO = %f -- Diferenca total TCyto de um passo de tempo para outro = %f\n", model->ht * kTime, sumTCytoPlus - (sumTCytoMinus + sumProdTermsTC));
         if(tid == 0 && model->saveFigs && (kTime%model->intervalFigures == 0 || kTime == model->tSize))
             WriteFiles(*model, model->oligodendrocyte[stepKPlus], model->microglia[stepKPlus], model->tCytotoxic[stepKPlus], model->antibody[stepKPlus], model->conventionalDc[stepKPlus], model->activatedDc[stepKPlus], kTime);
         stepKMinus += 1;
         stepKMinus = stepKMinus%2;
     }
-        
+    printf("maxdif mic = %f\n", maxMicDif);
+    printf("maxdif dc = %f\n", maxCDCDif);
+    printf("maxdif tcd8 = %f\n", maxTCytoDif);
     printf("Computation Done!!\n");
     SavingData(*model);
     for(int index=0;index<BUFFER;++index){
