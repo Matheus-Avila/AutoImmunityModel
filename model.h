@@ -5,6 +5,7 @@
 
 typedef struct structParameters
 {
+    float epslon_x;
     float muMic;
     float rM;
 
@@ -117,6 +118,9 @@ typedef struct structModel
 
 }structModel;
 
+//void FreeMemory(structModel* model);
+
+
 int VerifyCFL(structParameters parametersModel, float ht, float hx);
 
 float AdvectionTerm(float populationPoint, float avgValue);
@@ -142,7 +146,9 @@ void InitialConditionTissueMicroglia(structModel* model);
 
 void InitialConditionLymphNode(structModel* model, float dendriticLN, float thelperLN, float tcytotoxicLN, float bcellLN, float plasmacellLN, float antibodyLN);
 
-void RunModel(structModel *model);
+int isIn(int ktime, int vec[], int size); 
+
+float* RunModel(structModel *model, int* save_times, int size);
 
 void WritePopulation(structModel model, float *population, char* fileName, char* bufferTime);
 

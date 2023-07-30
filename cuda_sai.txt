@@ -1,0 +1,10 @@
+Tempo de execução: 273151 milissegundos
+Tempo de execução: 274877 milissegundos
+Tempo de execução: 275311 milissegundos
+Tempo de execução: 282037 milissegundos
+Tempo de execução: 273278 milissegundos
+Tempo de execução: 281441 milissegundos
+Tempo de execução: 292665 milissegundos
+Tempo de execução: 281014 milissegundos
+Tempo de execução: 280466 milissegundos
+Tempo de execução: 287900 milissegundos

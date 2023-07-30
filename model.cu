@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+
 void InitialConditionTissueMicroglia(structModel* model){
     for(int k = 0; k < model->xSize*model->xSize; k++){
         int i = (int)k/model->xSize;
@@ -248,7 +249,7 @@ void DefineBVPV(structModel *model){
     }
     model->parametersModel.V_BV = 160;//model->parametersModel.V_BV * model->hx * model->hx;
     model->parametersModel.V_PV = 160;//model->parametersModel.V_PV * model->hx * model->hx;
-    printf("bv = %f, pv = %f \n", model->parametersModel.V_BV, model->parametersModel.V_PV);
+    //printf("bv = %f, pv = %f \n", model->parametersModel.V_BV, model->parametersModel.V_PV);
     WriteBVPV(model, model->thetaBV, model->thetaPV);
 }
 
@@ -461,8 +462,8 @@ void SavingData(structModel model){
 __device__ __constant__ float upperNeumannBC, lowerNeumannBC, leftNeumannBC, rightNeumannBC, constHx, constHt, consthx2;
 __device__ __constant__ int constXSize;
 __device__ __constant__ structParameters modelParams;
-const int threadsPerBlock = 256;
-const int numBlocks = 128;
+const int threadsPerBlock = 16;
+const int numBlocks = 16;
 
 __global__ void kernelPDE(int kTime, float *tCytoSumVessel, float *activatedDCSumVessel, float *antibodySumVessel, float *devActivatedDCLymphNode, float *devAntibodyLymphNode, float *devTCytotoxicLymphNode, float *devThetaPV, float *devThetaBV, float *devMicrogliaKMinus, float *devMicrogliaKPlus, float *devTCytotoxicKMinus, float *devTCytotoxicKPlus, float *devAntibodyKMinus, float *devAntibodyKPlus, float *devConventionalDCKMinus, float *devConventionalDCKPlus, float *devActivatedDCKMinus, float *devActivatedDCKPlus, float *devOligodendrocyteKMinus, float *devOligodendrocyteKPlus)
 {
@@ -644,8 +645,17 @@ __global__ void kernelPDE(int kTime, float *tCytoSumVessel, float *activatedDCSu
     }
 }
 
-void RunModel(structModel *model)
+int isIn(int ktime, int vec[], int size) {
+    for(int i = 0; i < size; i++) {
+        if(ktime == vec[i]) return 1;
+    }
+    return 0;
+}
+
+float* RunModel(structModel *model, int* save_times, int save_size)
 {
+    float* RESULT = (float*) malloc(save_size * sizeof(float));
+    int RESULT_INDEX = 0;
     // Save IC
     if(model->saveFigs)
         WriteFiles(*model, model->oligodendrocyte[0], model->microglia[0], model->tCytotoxic[0], model->antibody[0], model->conventionalDc[0], model->activatedDc[0], 0);
@@ -819,15 +829,45 @@ void RunModel(structModel *model)
                 if(model->saveFigs)
                     WriteFiles(*model, model->oligodendrocyte[stepKPlus], model->microglia[stepKPlus], model->tCytotoxic[stepKPlus], model->antibody[stepKPlus], model->conventionalDc[stepKPlus], model->activatedDc[stepKPlus], kTime);
             }
+            else {
+                if (stepKPlus % 2 == 1)
+                {
+                    cudaMemcpy(model->oligodendrocyte[stepKPlus], devOligodendrocytesDCKPlus, model->xSize * model->xSize * sizeof(float), cudaMemcpyDeviceToHost);
+                    cudaMemcpy(model->microglia[stepKPlus], devMicrogliaKPlus, model->xSize * model->xSize * sizeof(float), cudaMemcpyDeviceToHost);
+                    cudaMemcpy(model->tCytotoxic[stepKPlus], devTCytotoxicKPlus, model->xSize * model->xSize * sizeof(float), cudaMemcpyDeviceToHost);
+                    cudaMemcpy(model->antibody[stepKPlus], devAntibodyKPlus, model->xSize * model->xSize * sizeof(float), cudaMemcpyDeviceToHost);
+                    cudaMemcpy(model->conventionalDc[stepKPlus], devConventionalDCKPlus, model->xSize * model->xSize * sizeof(float), cudaMemcpyDeviceToHost);
+                    cudaMemcpy(model->activatedDc[stepKPlus], devActivatedDCKPlus, model->xSize * model->xSize * sizeof(float), cudaMemcpyDeviceToHost);
+                }
+                else
+                {
+                    cudaMemcpy(model->oligodendrocyte[stepKPlus], devOligodendrocytesDCKMinus, model->xSize * model->xSize * sizeof(float), cudaMemcpyDeviceToHost);
+                    cudaMemcpy(model->microglia[stepKPlus], devMicrogliaKMinus, model->xSize * model->xSize * sizeof(float), cudaMemcpyDeviceToHost);
+                    cudaMemcpy(model->tCytotoxic[stepKPlus], devTCytotoxicKMinus, model->xSize * model->xSize * sizeof(float), cudaMemcpyDeviceToHost);
+                    cudaMemcpy(model->antibody[stepKPlus], devAntibodyKMinus, model->xSize * model->xSize * sizeof(float), cudaMemcpyDeviceToHost);
+                    cudaMemcpy(model->conventionalDc[stepKPlus], devConventionalDCKMinus, model->xSize * model->xSize * sizeof(float), cudaMemcpyDeviceToHost);
+                    cudaMemcpy(model->activatedDc[stepKPlus], devActivatedDCKMinus, model->xSize * model->xSize * sizeof(float), cudaMemcpyDeviceToHost);
+                }
+                if(isIn(kTime, save_times, save_size)) {
+                    float sum = 0.0;
+                    for(int i = 0; i < model->xSize; i++) {
+                        for(int j = 0; j < model->xSize; j++) {
+                            sum += model->tCytotoxic[0][i * model->xSize + j];
+                        }
+                    }
+                    RESULT[RESULT_INDEX] = sum;
+                    RESULT_INDEX++;
+                }
+            }
         }
         stepKMinus += 1;
         stepKMinus = stepKMinus % 2;
     }
+    return RESULT;
     model->elapsedTimeLymphNode = elapsedTimeLymphNode;
     model->elapsedTimeCopiesDeviceToHost = elapsedTimeCopiesDeviceToHost;
     model->elapsedTimeCopiesHostToDevice = elapsedTimeCopiesHostToDevice;
     model->execTimeKernel = elapsedTimeKernel/1000;
-    printf("Computation Done!!\n");
     SavingData(*model);
     if(model->saveFigs){
         printf("Saving results...\n\n");
