@@ -460,13 +460,13 @@ void SavingData(structModel model){
     }
 }
 
-__device__ __constant__ float upperNeumannBC, lowerNeumannBC, leftNeumannBC, rightNeumannBC, constHx, constHt, consthx2;
-__device__ __constant__ int constXSize;
-__device__ __constant__ structParameters modelParams;
+// __device__ __constant__ float upperNeumannBC, lowerNeumannBC, leftNeumannBC, rightNeumannBC, constHx, constHt, consthx2;
+// __device__ __constant__ int constXSize;
+// __device__ __constant__ structParameters modelParams;
 const int threadsPerBlock = 64;
 const int numBlocks = 16;
 
-__global__ void kernelPDE(int kTime, float *tCytoSumVessel, float *activatedDCSumVessel, float *antibodySumVessel, float *devActivatedDCLymphNode, float *devAntibodyLymphNode, float *devTCytotoxicLymphNode, float *devThetaPV, float *devThetaBV, float *devMicrogliaKMinus, float *devMicrogliaKPlus, float *devTCytotoxicKMinus, float *devTCytotoxicKPlus, float *devAntibodyKMinus, float *devAntibodyKPlus, float *devConventionalDCKMinus, float *devConventionalDCKPlus, float *devActivatedDCKMinus, float *devActivatedDCKPlus, float *devOligodendrocyteKMinus, float *devOligodendrocyteKPlus)
+__global__ void kernelPDE(int kTime, float *tCytoSumVessel, float *activatedDCSumVessel, float *antibodySumVessel, float *devActivatedDCLymphNode, float *devAntibodyLymphNode, float *devTCytotoxicLymphNode, float *devThetaPV, float *devThetaBV, float *devMicrogliaKMinus, float *devMicrogliaKPlus, float *devTCytotoxicKMinus, float *devTCytotoxicKPlus, float *devAntibodyKMinus, float *devAntibodyKPlus, float *devConventionalDCKMinus, float *devConventionalDCKPlus, float *devActivatedDCKMinus, float *devActivatedDCKPlus, float *devOligodendrocyteKMinus, float *devOligodendrocyteKPlus, structParameters *modelParams, float *upperNeumannBC, float *lowerNeumannBC, float *leftNeumannBC, float *rightNeumannBC, float *constHx, float *constHt, int *constXSize)
 {
     int thrIdx = blockIdx.x * blockDim.x + threadIdx.x;
     int vesselIdx = threadIdx.x;
@@ -714,16 +714,38 @@ void RunModel(structModel *model)
     float bc = 0.0;
     float hx2 = model->hx * 2;
 
-    cudaMemcpyToSymbol(upperNeumannBC, &bc, sizeof(float));
-    cudaMemcpyToSymbol(lowerNeumannBC, &bc, sizeof(float));
-    cudaMemcpyToSymbol(leftNeumannBC, &bc, sizeof(float));
-    cudaMemcpyToSymbol(rightNeumannBC, &bc, sizeof(float));
-    cudaMemcpyToSymbol(constHt, &model->ht, sizeof(float));
-    cudaMemcpyToSymbol(constHx, &model->hx, sizeof(float));
-    cudaMemcpyToSymbol(consthx2, &hx2, sizeof(float));
+    structParameters *devmodelParams;
+    float* devupperNeumannBC, devlowerNeumannBC, devleftNeumannBC, devrightNeumannBC, devconstHx, devconstHt;
+    int *devconstXSize;
+
+    cudaMalloc((void **)&devupperNeumannBC, sizeof(float));
+    cudaMalloc((void **)&devlowerNeumannBC, sizeof(float));
+    cudaMalloc((void **)&devleftNeumannBC, sizeof(float));
+    cudaMalloc((void **)&devrightNeumannBC, sizeof(float));
+    cudaMalloc((void **)&devconstHx, sizeof(float));
+    cudaMalloc((void **)&devconstHt, sizeof(float));
+    cudaMalloc((void **)&devconstXSize, sizeof(int));
+    cudaMalloc((void **)&devmodelParams, sizeof(structParameters));
     
-    cudaMemcpyToSymbol(constXSize, &model->xSize, sizeof(float));
-    cudaMemcpyToSymbol(modelParams, &model->parametersModel, sizeof(structParameters));
+    cudaMemcpy(devupperNeumannBC, &bc, sizeof(float), cudaMemcpyHostToDevice);
+    cudaMemcpy(devlowerNeumannBC, &bc, sizeof(float), cudaMemcpyHostToDevice);
+    cudaMemcpy(devleftNeumannBC, &bc, sizeof(float), cudaMemcpyHostToDevice);
+    cudaMemcpy(devrightNeumannBC, &bc, sizeof(float), cudaMemcpyHostToDevice);
+    cudaMemcpy(devconstHx, &model->hx, sizeof(float), cudaMemcpyHostToDevice);
+    cudaMemcpy(devconstHt, &model->ht, sizeof(float), cudaMemcpyHostToDevice);
+    cudaMemcpy(devconstXSize, &model->xSize, sizeof(int), cudaMemcpyHostToDevice);
+    cudaMemcpy(devmodelParams, &model->hx, sizeof(structParameters), cudaMemcpyHostToDevice);
+
+    // cudaMemcpyToSymbol(upperNeumannBC, &bc, sizeof(float));
+    // cudaMemcpyToSymbol(lowerNeumannBC, &bc, sizeof(float));
+    // cudaMemcpyToSymbol(leftNeumannBC, &bc, sizeof(float));
+    // cudaMemcpyToSymbol(rightNeumannBC, &bc, sizeof(float));
+    // cudaMemcpyToSymbol(constHt, &model->ht, sizeof(float));
+    // cudaMemcpyToSymbol(constHx, &model->hx, sizeof(float));
+    // cudaMemcpyToSymbol(consthx2, &hx2, sizeof(float));
+    
+    // cudaMemcpyToSymbol(constXSize, &model->xSize, sizeof(float));
+    // cudaMemcpyToSymbol(modelParams, &model->parametersModel, sizeof(structParameters));
 
     int devKTime;
     cudaMalloc((void **)&devKTime, sizeof(int));
@@ -775,9 +797,9 @@ void RunModel(structModel *model)
 
         cudaEventRecord(startKernel, 0);
         if (stepKPlus % 2 == 1)
-            kernelPDE<<<numBlocks, threadsPerBlock>>>(devKTime, devTCytotoxicVessel, devActivatedDCVessel, devAntibodyVessel, devActivatedDCLymphNode, devAntibodyLymphNode, devTCytotoxicLymphNode, devThetaPV, devThetaBV, devMicrogliaKMinus, devMicrogliaKPlus, devTCytotoxicKMinus, devTCytotoxicKPlus, devAntibodyKMinus, devAntibodyKPlus, devConventionalDCKMinus, devConventionalDCKPlus, devActivatedDCKMinus, devActivatedDCKPlus, devOligodendrocytesDCKMinus, devOligodendrocytesDCKPlus);
+            kernelPDE<<<numBlocks, threadsPerBlock>>>(devKTime, devTCytotoxicVessel, devActivatedDCVessel, devAntibodyVessel, devActivatedDCLymphNode, devAntibodyLymphNode, devTCytotoxicLymphNode, devThetaPV, devThetaBV, devMicrogliaKMinus, devMicrogliaKPlus, devTCytotoxicKMinus, devTCytotoxicKPlus, devAntibodyKMinus, devAntibodyKPlus, devConventionalDCKMinus, devConventionalDCKPlus, devActivatedDCKMinus, devActivatedDCKPlus, devOligodendrocytesDCKMinus, devOligodendrocytesDCKPlus, devmodelParams, devupperNeumannBC, devlowerNeumannBC, devleftNeumannBC, devrightNeumannBC, devconstHx, devconstHt, devconstXSize);
         else
-            kernelPDE<<<numBlocks, threadsPerBlock>>>(devKTime, devTCytotoxicVessel, devActivatedDCVessel, devAntibodyVessel, devActivatedDCLymphNode, devAntibodyLymphNode, devTCytotoxicLymphNode, devThetaPV, devThetaBV, devMicrogliaKPlus, devMicrogliaKMinus, devTCytotoxicKPlus, devTCytotoxicKMinus, devAntibodyKPlus, devAntibodyKMinus, devConventionalDCKPlus, devConventionalDCKMinus, devActivatedDCKPlus, devActivatedDCKMinus, devOligodendrocytesDCKPlus, devOligodendrocytesDCKMinus);
+            kernelPDE<<<numBlocks, threadsPerBlock>>>(devKTime, devTCytotoxicVessel, devActivatedDCVessel, devAntibodyVessel, devActivatedDCLymphNode, devAntibodyLymphNode, devTCytotoxicLymphNode, devThetaPV, devThetaBV, devMicrogliaKPlus, devMicrogliaKMinus, devTCytotoxicKPlus, devTCytotoxicKMinus, devAntibodyKPlus, devAntibodyKMinus, devConventionalDCKPlus, devConventionalDCKMinus, devActivatedDCKPlus, devActivatedDCKMinus, devOligodendrocytesDCKPlus, devOligodendrocytesDCKMinus, devmodelParams, devupperNeumannBC, devlowerNeumannBC, devleftNeumannBC, devrightNeumannBC, devconstHx, devconstHt, devconstXSize);
         cudaEventRecord(stopKernel, 0);
         cudaEventSynchronize(stopKernel);
         cudaEventElapsedTime(&elapsedTimeKernelAux, startKernel, stopKernel);
