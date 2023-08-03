@@ -471,8 +471,8 @@ __global__ void kernelPDE(int kTime, float *tCytoSumVessel, float *activatedDCSu
 {
     int thrIdx = blockIdx.x * blockDim.x + threadIdx.x;
     int vesselIdx = threadIdx.x;
-    int line = (int)thrIdx / constXSize;
-    int column = thrIdx % constXSize;
+    int line = (int)thrIdx / *constXSize;
+    int column = thrIdx % *constXSize;
     float devOligodendrocyteKMinusThrIdx, devMicrogliaKMinusThrIdx, devConventionalDCKMinusThrIdx, devTCytotoxicKMinusThrIdx, devActivatedDCKMinusThrIdx, devAntibodyKMinusThrIdx;
     float avgOdcMinusODC, diffusionODC;
     __shared__ float tCytoSumVesselBlock[threadsPerBlock];
@@ -484,7 +484,7 @@ __global__ void kernelPDE(int kTime, float *tCytoSumVessel, float *activatedDCSu
         activatedDCSumVesselBlock[i] = 0;
         antibodySumVesselBlock[i] = 0;
     }
-    while (thrIdx < constXSize * constXSize)
+    while (thrIdx < *constXSize * *constXSize)
     {
         devOligodendrocyteKMinusThrIdx = devOligodendrocyteKMinus[thrIdx];
         devMicrogliaKMinusThrIdx = devMicrogliaKMinus[thrIdx];
@@ -492,13 +492,13 @@ __global__ void kernelPDE(int kTime, float *tCytoSumVessel, float *activatedDCSu
         devTCytotoxicKMinusThrIdx = devTCytotoxicKMinus[thrIdx];
         devActivatedDCKMinusThrIdx = devActivatedDCKMinus[thrIdx];
         devAntibodyKMinusThrIdx = devAntibodyKMinus[thrIdx];
-        line = (int)thrIdx / constXSize;
-        column = thrIdx % constXSize;
+        line = (int)thrIdx / *constXSize;
+        column = thrIdx % *constXSize;
 
         // Define gradient ODCs
-        float valIPlus = (line != constXSize - 1) ? devOligodendrocyteKMinus[thrIdx + constXSize] : devOligodendrocyteKMinus[thrIdx - constXSize];
-        float valJPlus = (column != constXSize - 1) ? devOligodendrocyteKMinus[thrIdx + 1] : devOligodendrocyteKMinus[thrIdx - 1];
-        float valIMinus = (line != 0) ? devOligodendrocyteKMinus[thrIdx - constXSize] : devOligodendrocyteKMinus[thrIdx + constXSize];
+        float valIPlus = (line != *constXSize - 1) ? devOligodendrocyteKMinus[thrIdx + *constXSize] : devOligodendrocyteKMinus[thrIdx - *constXSize];
+        float valJPlus = (column != *constXSize - 1) ? devOligodendrocyteKMinus[thrIdx + 1] : devOligodendrocyteKMinus[thrIdx - 1];
+        float valIMinus = (line != 0) ? devOligodendrocyteKMinus[thrIdx - *constXSize] : devOligodendrocyteKMinus[thrIdx + *constXSize];
         float valJMinus = (column != 0) ? devOligodendrocyteKMinus[thrIdx - 1] : devOligodendrocyteKMinus[thrIdx + 1];
 
         float gradientOdcI = (float)(valIPlus - valIMinus) / (float)(constHx*2);
@@ -508,9 +508,9 @@ __global__ void kernelPDE(int kTime, float *tCytoSumVessel, float *activatedDCSu
 
         // Diffusion and Chemotaxis Mic
 
-        valIPlus = (line != constXSize - 1) ? devMicrogliaKMinus[thrIdx + constXSize] : devMicrogliaKMinus[thrIdx - constXSize] - (float)(constHx*2 * lowerNeumannBC);
-        valJPlus = (column != constXSize - 1) ? devMicrogliaKMinus[thrIdx + 1] : devMicrogliaKMinus[thrIdx - 1] - (float)(constHx*2 * rightNeumannBC);
-        valIMinus = (line != 0) ? devMicrogliaKMinus[thrIdx - constXSize] : devMicrogliaKMinus[thrIdx + constXSize] - (float)(constHx*2 * upperNeumannBC);
+        valIPlus = (line != *constXSize - 1) ? devMicrogliaKMinus[thrIdx + *constXSize] : devMicrogliaKMinus[thrIdx - *constXSize] - (float)(constHx*2 * lowerNeumannBC);
+        valJPlus = (column != *constXSize - 1) ? devMicrogliaKMinus[thrIdx + 1] : devMicrogliaKMinus[thrIdx - 1] - (float)(constHx*2 * rightNeumannBC);
+        valIMinus = (line != 0) ? devMicrogliaKMinus[thrIdx - *constXSize] : devMicrogliaKMinus[thrIdx + *constXSize] - (float)(constHx*2 * upperNeumannBC);
         valJMinus = (column != 0) ? devMicrogliaKMinus[thrIdx - 1] : devMicrogliaKMinus[thrIdx + 1] - (float)(constHx*2 * leftNeumannBC);
 
         float microgliaDiffusion = 0;
