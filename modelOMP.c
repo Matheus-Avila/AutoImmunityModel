@@ -292,7 +292,7 @@ structModel ModelInitialize(structParameters params, int totThr, float ht, float
     //definir BV e PV
     model.thetaPV = (float*)calloc(model.xSize*model.xSize, sizeof(float));
     model.thetaBV = (float*)calloc(model.xSize*model.xSize, sizeof(float));
-    DefineBVPV(&model);
+    // DefineBVPV(&model);
     //definir lymph node
     model.dendriticLymphNodeSavedPoints = (float*)calloc(model.numPointsLN, sizeof(float));
     model.tCytotoxicLymphNodeSavedPoints = (float*)calloc(model.numPointsLN, sizeof(float));
@@ -486,14 +486,14 @@ void RunModel(structModel *model){
             activatedDcClearance, activatedDcMigration, tCytotoxicMigration, odcAntibodyMicrogliaFagocitosis, antibodyMigration, odcMicrogliaFagocitosis, odcTCytotoxicApoptosis)
     for(kTime = 1; kTime <= model->tSize; kTime++){
         tid = omp_get_thread_num();
-        if(kTime%model->numStepsLN == 0){
-            if(tid == 0){
-                model->tCytotoxicTissueVessels = auxTCytotoxicBV * model->hx * model->hx / model->parametersModel.V_BV;
-                model->antibodyTissueVessels = auxAntibodyBV * model->hx * model->hx / model->parametersModel.V_BV;
-                model->activatedDCTissueVessels = auxAdcPV * model->hx * model->hx / model->parametersModel.V_PV;
-                SolverLymphNode(model, kTime);
-            }
-        }
+        // if(kTime%model->numStepsLN == 0){
+        //     if(tid == 0){
+        //         model->tCytotoxicTissueVessels = auxTCytotoxicBV * model->hx * model->hx / model->parametersModel.V_BV;
+        //         model->antibodyTissueVessels = auxAntibodyBV * model->hx * model->hx / model->parametersModel.V_BV;
+        //         model->activatedDCTissueVessels = auxAdcPV * model->hx * model->hx / model->parametersModel.V_PV;
+        //         SolverLymphNode(model, kTime);
+        //     }
+        // }
         #pragma omp barrier
         auxAdcPV = 0.0, auxAntibodyBV = 0.0, auxTCytotoxicBV = 0.0, sumMicMinus = 0.0, sumMicPlus = 0.0, sumDcMinus = 0.0, sumDcPlus = 0.0, sumTCytoMinus = 0.0, sumTCytoPlus = 0.0, sumProdTermsMic = 0.0, sumProdTermsDc = 0.0, sumProdTermsTC = 0.0;
         #pragma omp barrier
@@ -535,7 +535,7 @@ void RunModel(structModel *model){
             + model->parametersModel.chi * diffusionOdc * PreventionOverCrowdingTerm(microgliaKMinus, model->parametersModel.avgMic);
 
             //Diffusion and Chemotaxis CDC
-
+/*
             valIPlus  = (line != model->xSize-1)? model->conventionalDc[stepKMinus][kPos + model->xSize]: model->conventionalDc[stepKMinus][kPos - model->xSize] - (float)(2*model->hx*lowerNeumannBC);
             valJPlus  = (column != model->xSize-1)? model->conventionalDc[stepKMinus][kPos + 1]: model->conventionalDc[stepKMinus][kPos - 1] - (float)(2*model->hx*rightNeumannBC);
             valIMinus = (line != 0)? model->conventionalDc[stepKMinus][kPos - model->xSize]: model->conventionalDc[stepKMinus][kPos + model->xSize] - (float)(2*model->hx*upperNeumannBC);
@@ -577,7 +577,7 @@ void RunModel(structModel *model){
             valJMinus = (column != 0)? model->antibody[stepKMinus][kPos - 1]: model->antibody[stepKMinus][kPos + 1] - (float)(2*model->hx*leftNeumannBC);
 
             antibodyDiffusion = model->parametersModel.antibodyDiffusion*CalculateDiffusion(*model, valJPlus, valJMinus, valIPlus, valIMinus, model->antibody[stepKMinus][kPos]);
-
+*/
             //*******************************************Solving Tissue equations*****************************************************
 
             //Microglia update
@@ -586,7 +586,7 @@ void RunModel(structModel *model){
 
             model->microglia[stepKPlus][kPos] = microgliaKMinus + \
             model->ht*(microgliaDiffusion - microgliaChemotaxis + microgliaReaction - microgliaClearance);
-
+/*
             sumMicMinus += microgliaKMinus;
             sumMicPlus += model->microglia[stepKPlus][kPos];
             sumProdTermsMic += model->ht * (microgliaDiffusion + microgliaReaction - microgliaClearance);
@@ -623,12 +623,12 @@ void RunModel(structModel *model){
             antibodyMigration = model->thetaBV[kPos]*model->parametersModel.gammaAntibody*(model->antibodyLymphNode[stepKPlus] - antibodyKMinus);
             
             model->antibody[stepKPlus][kPos] = antibodyKMinus + model->ht*(antibodyDiffusion + antibodyMigration - odcAntibodyMicrogliaFagocitosis);
-            
+            */
             //Oligodendrocytes update
             odcMicrogliaFagocitosis = model->parametersModel.rM*fFunc(microgliaKMinus, model->parametersModel.avgMic)*(model->parametersModel.avgOdc - oligodendrocyteKMinus);
-            odcTCytotoxicApoptosis = model->parametersModel.rT*fFunc(tCytotoxicKMinus, model->parametersModel.avgT)*(model->parametersModel.avgOdc - oligodendrocyteKMinus);
+            // odcTCytotoxicApoptosis = model->parametersModel.rT*fFunc(tCytotoxicKMinus, model->parametersModel.avgT)*(model->parametersModel.avgOdc - oligodendrocyteKMinus);
 
-            model->oligodendrocyte[stepKPlus][kPos] = oligodendrocyteKMinus + model->ht*(odcAntibodyMicrogliaFagocitosis + odcMicrogliaFagocitosis + odcTCytotoxicApoptosis);
+            model->oligodendrocyte[stepKPlus][kPos] = oligodendrocyteKMinus + model->ht*(odcMicrogliaFagocitosis);
             if(model->thetaBV[kPos] == 1){
                 auxTCytotoxicBV += model->tCytotoxic[stepKPlus][kPos];
                 auxAntibodyBV += model->antibody[stepKPlus][kPos];
