@@ -196,28 +196,6 @@ __device__ void fFunc(float valuePopulation, float avgPopulation, float *result)
     *result = valuePopulation * valuePopulation / (float)(valuePopulation + avgPopulation);
 }
 
-void DefineBVPV(structModel *model){
-    int randomVal;
-    for(int k = 0; k < model->xSize*model->xSize; k++){
-        int i = (int)k/model->xSize;
-        int j = k%model->xSize;
-        randomVal = rand() % 100;
-        if(randomVal <10){
-            model->parametersModel.V_BV++;
-            model->parametersModel.V_PV++;
-            model->thetaBV[k] = 1;
-            if(j != model->xSize-1)
-                model->thetaPV[k+1] = 1;
-            else
-                model->thetaPV[k-model->xSize+1] = 1;
-        }
-    }
-    model->parametersModel.V_BV = model->parametersModel.V_BV * model->hx * model->hx;
-    model->parametersModel.V_PV = model->parametersModel.V_PV * model->hx * model->hx;
-    printf("bv = %f, pv = %f \n", model->parametersModel.V_BV, model->parametersModel.V_PV);
-    WriteBVPV(model, model->thetaBV, model->thetaPV);
-}
-
 void WriteBVPV(structModel *model, float *thetaBV, float *thetaPV){
     FILE *fileBV;
     fileBV = fopen("./result/bv.txt", "w");
@@ -252,6 +230,29 @@ void WriteBVPV(structModel *model, float *thetaBV, float *thetaPV){
     strcat(command, buffer);
     // system(command);
 }
+
+void DefineBVPV(structModel *model){
+    int randomVal;
+    for(int k = 0; k < model->xSize*model->xSize; k++){
+        int i = (int)k/model->xSize;
+        int j = k%model->xSize;
+        randomVal = rand() % 100;
+        if(randomVal <10){
+            model->parametersModel.V_BV++;
+            model->parametersModel.V_PV++;
+            model->thetaBV[k] = 1;
+            if(j != model->xSize-1)
+                model->thetaPV[k+1] = 1;
+            else
+                model->thetaPV[k-model->xSize+1] = 1;
+        }
+    }
+    model->parametersModel.V_BV = model->parametersModel.V_BV * model->hx * model->hx;
+    model->parametersModel.V_PV = model->parametersModel.V_PV * model->hx * model->hx;
+    printf("bv = %f, pv = %f \n", model->parametersModel.V_BV, model->parametersModel.V_PV);
+    WriteBVPV(model, model->thetaBV, model->thetaPV);
+}
+
 
 structModel ModelInitialize(structParameters params, float ht, float hx, float time, float space, int numFigs, int numPointsLN, int numStepsLN, int saveFigs){
     structModel model;
