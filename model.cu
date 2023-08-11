@@ -352,24 +352,24 @@ float* EquationsLymphNode(structModel model, float* populationLN, int stepPos){
 
     //T Cytotoxic
     float tCytoActivation = model.parametersModel.bTCytotoxic * (model.parametersModel.rhoTCytotoxic*tCytoLN*dcLN - tCytoLN*dcLN);
-    float tCytoHomeostasis = model.parametersModel.alphaTCytotoxic * (model.parametersModel.estableTCytotoxic - tCytoLN);
+    float tCytoHomeostasis = model.parametersModel.alphaTCytotoxic * (model.parametersModel.stableTCytotoxic - tCytoLN);
     float tCytoMigration = model.parametersModel.gammaT * (tCytoLN - model.tCytotoxicTissueVessels) * (float)(model.parametersModel.V_BV/model.parametersModel.V_LN);
     result[1] = tCytoActivation + tCytoHomeostasis - tCytoMigration;
 
     //T Helper
     float tHelperActivation = model.parametersModel.bTHelper * (model.parametersModel.rhoTHelper * tHelperLN * dcLN - tHelperLN * dcLN);
-    float tHelperHomeostasis = model.parametersModel.alphaTHelper * (model.parametersModel.estableTHelper - tHelperLN);
+    float tHelperHomeostasis = model.parametersModel.alphaTHelper * (model.parametersModel.stableTHelper - tHelperLN);
     float tHelperDispendure = model.parametersModel.bRho * dcLN * tHelperLN * bCellLN;
     result[2] = tHelperActivation + tHelperHomeostasis - tHelperDispendure;
 
     //B Cell
     float bCellActivation = model.parametersModel.bRhoB * (model.parametersModel.rhoB * tHelperLN * dcLN - tHelperLN * dcLN * bCellLN);
-    float bcellHomeostasis = model.parametersModel.alphaB * (model.parametersModel.estableB - bCellLN);
+    float bcellHomeostasis = model.parametersModel.alphaB * (model.parametersModel.stableB - bCellLN);
     result[3] = bcellHomeostasis + bCellActivation;
 
     //Plasma Cells
     float plasmaActivation = model.parametersModel.bRhoP * (model.parametersModel.rhoP * tHelperLN * dcLN * bCellLN);
-    float plasmaHomeostasis = model.parametersModel.alphaP * (model.parametersModel.estableP - plasmaCellLN);
+    float plasmaHomeostasis = model.parametersModel.alphaP * (model.parametersModel.stableP - plasmaCellLN);
     result[4] = plasmaHomeostasis + plasmaActivation;
 
     //Antibody
@@ -663,7 +663,11 @@ void RunModel(structModel *model)
     cudaEvent_t startKernel, stopKernel;
     cudaEventCreate(&startKernel);
     cudaEventCreate(&stopKernel);
-
+    
+    cudaStream_t stream1, stream2;
+    cudaStreamCreate(&stream1);
+    cudaStreamCreate(&stream2);
+    
     float *activatedDCVessel, *tCytotoxicVessel, *antibodyVessel;
 
     float *devThetaPV, *devThetaBV, *devActivatedDCVessel, *devTCytotoxicVessel, *devAntibodyVessel, *devActivatedDCLymphNode, *devAntibodyLymphNode, *devTCytotoxicLymphNode, *devMicrogliaKMinus, *devMicrogliaKPlus, *devTCytotoxicKMinus, *devTCytotoxicKPlus, *devAntibodyKMinus, *devAntibodyKPlus, *devConventionalDCKMinus, *devConventionalDCKPlus, *devActivatedDCKMinus, *devActivatedDCKPlus, *devOligodendrocytesDCKMinus, *devOligodendrocytesDCKPlus;
@@ -736,9 +740,9 @@ void RunModel(structModel *model)
         if(kTime%model->numStepsLN == 0){
             // Copia do device para o host as integrais do tecido
             start = clock(); 
-            cudaMemcpy(activatedDCVessel, devActivatedDCVessel, numBlocks * sizeof(float), cudaMemcpyDeviceToHost);
-            cudaMemcpy(antibodyVessel, devAntibodyVessel, numBlocks * sizeof(float), cudaMemcpyDeviceToHost);
-            cudaMemcpy(tCytotoxicVessel, devTCytotoxicVessel, numBlocks * sizeof(float), cudaMemcpyDeviceToHost);
+            cudaMemcpyAsync(activatedDCVessel, devActivatedDCVessel, numBlocks * sizeof(float), cudaMemcpyDeviceToHost, stream1);
+            cudaMemcpyAsync(antibodyVessel, devAntibodyVessel, numBlocks * sizeof(float), cudaMemcpyDeviceToHost, stream1);
+            cudaMemcpyAsync(tCytotoxicVessel, devTCytotoxicVessel, numBlocks * sizeof(float), cudaMemcpyDeviceToHost, stream1);
             end = clock();
 
             elapsedTimeCopiesDeviceToHost += ((float) (end - start)) / CLOCKS_PER_SEC;
@@ -765,9 +769,9 @@ void RunModel(structModel *model)
         // copiar LN pra GPU
         if(kTime%model->numStepsLN == 0){
             start = clock(); 
-            cudaMemcpy(devActivatedDCLymphNode, &model->dendriticLymphNode[stepKPlus], sizeof(float), cudaMemcpyHostToDevice);
-            cudaMemcpy(devAntibodyLymphNode, &model->antibodyLymphNode[stepKPlus], sizeof(float), cudaMemcpyHostToDevice);
-            cudaMemcpy(devTCytotoxicLymphNode, &model->tCytotoxicLymphNode[stepKPlus], sizeof(float), cudaMemcpyHostToDevice);
+            cudaMemcpyAsync(devActivatedDCLymphNode, &model->dendriticLymphNode[stepKPlus], sizeof(float), cudaMemcpyHostToDevice, stream1);
+            cudaMemcpyAsync(devAntibodyLymphNode, &model->antibodyLymphNode[stepKPlus], sizeof(float), cudaMemcpyHostToDevice, stream1);
+            cudaMemcpyAsync(devTCytotoxicLymphNode, &model->tCytotoxicLymphNode[stepKPlus], sizeof(float), cudaMemcpyHostToDevice, stream1);
             end = clock();
             elapsedTimeCopiesHostToDevice += ((float) (end - start)) / CLOCKS_PER_SEC;
         }
@@ -775,9 +779,9 @@ void RunModel(structModel *model)
 
         cudaEventRecord(startKernel, 0);
         if (stepKPlus % 2 == 1)
-            kernelPDE<<<numBlocks, threadsPerBlock>>>(devKTime, devTCytotoxicVessel, devActivatedDCVessel, devAntibodyVessel, devActivatedDCLymphNode, devAntibodyLymphNode, devTCytotoxicLymphNode, devThetaPV, devThetaBV, devMicrogliaKMinus, devMicrogliaKPlus, devTCytotoxicKMinus, devTCytotoxicKPlus, devAntibodyKMinus, devAntibodyKPlus, devConventionalDCKMinus, devConventionalDCKPlus, devActivatedDCKMinus, devActivatedDCKPlus, devOligodendrocytesDCKMinus, devOligodendrocytesDCKPlus);
+            kernelPDE<<<numBlocks, threadsPerBlock, stream2>>>(devKTime, devTCytotoxicVessel, devActivatedDCVessel, devAntibodyVessel, devActivatedDCLymphNode, devAntibodyLymphNode, devTCytotoxicLymphNode, devThetaPV, devThetaBV, devMicrogliaKMinus, devMicrogliaKPlus, devTCytotoxicKMinus, devTCytotoxicKPlus, devAntibodyKMinus, devAntibodyKPlus, devConventionalDCKMinus, devConventionalDCKPlus, devActivatedDCKMinus, devActivatedDCKPlus, devOligodendrocytesDCKMinus, devOligodendrocytesDCKPlus);
         else
-            kernelPDE<<<numBlocks, threadsPerBlock>>>(devKTime, devTCytotoxicVessel, devActivatedDCVessel, devAntibodyVessel, devActivatedDCLymphNode, devAntibodyLymphNode, devTCytotoxicLymphNode, devThetaPV, devThetaBV, devMicrogliaKPlus, devMicrogliaKMinus, devTCytotoxicKPlus, devTCytotoxicKMinus, devAntibodyKPlus, devAntibodyKMinus, devConventionalDCKPlus, devConventionalDCKMinus, devActivatedDCKPlus, devActivatedDCKMinus, devOligodendrocytesDCKPlus, devOligodendrocytesDCKMinus);
+            kernelPDE<<<numBlocks, threadsPerBlock, stream2>>>(devKTime, devTCytotoxicVessel, devActivatedDCVessel, devAntibodyVessel, devActivatedDCLymphNode, devAntibodyLymphNode, devTCytotoxicLymphNode, devThetaPV, devThetaBV, devMicrogliaKPlus, devMicrogliaKMinus, devTCytotoxicKPlus, devTCytotoxicKMinus, devAntibodyKPlus, devAntibodyKMinus, devConventionalDCKPlus, devConventionalDCKMinus, devActivatedDCKPlus, devActivatedDCKMinus, devOligodendrocytesDCKPlus, devOligodendrocytesDCKMinus);
         cudaEventRecord(stopKernel, 0);
         cudaEventSynchronize(stopKernel);
         cudaEventElapsedTime(&elapsedTimeKernelAux, startKernel, stopKernel);
