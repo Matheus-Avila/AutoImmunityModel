@@ -517,7 +517,6 @@ __global__ void kernelPDE(int kTime, float *tCytoSumVessel, float *activatedDCSu
         CalculateDiffusion(constHx, valJPlus, valJMinus, valIPlus, valIMinus, devMicrogliaKMinusThrIdx, &microgliaDiffusion);
         CalculateChemottaxis(constHx, valJPlus, valJMinus, valIPlus, valIMinus, devMicrogliaKMinusThrIdx,
                              modelParams.avgMic, gradientOdcI, gradientOdcJ, &microgliaChemotaxis);
-        microgliaChemotaxis += diffusionODC * PreventionOverCrowdingTerm(devMicrogliaKMinusThrIdx, model->parametersModel.avgMic);
         microgliaChemotaxis *= modelParams.chi;
         microgliaDiffusion *= modelParams.micDiffusion;
         // Diffusion and Chemotaxis CDC
@@ -532,7 +531,6 @@ __global__ void kernelPDE(int kTime, float *tCytoSumVessel, float *activatedDCSu
         CalculateDiffusion(constHx, valJPlus, valJMinus, valIPlus, valIMinus, devConventionalDCKMinusThrIdx, &conventionalDcDiffusion);
         CalculateChemottaxis(constHx, valJPlus, valJMinus, valIPlus, valIMinus, devConventionalDCKMinusThrIdx,
                              modelParams.avgDc, gradientOdcI, gradientOdcJ, &conventionalDcChemotaxis);
-        conventionalDcChemotaxis += diffusionODC * PreventionOverCrowdingTerm(devConventionalDCKMinusThrIdx, model->parametersModel.avgDc);
         conventionalDcChemotaxis *= modelParams.chi;
         conventionalDcDiffusion *= modelParams.cDcDiffusion;
 
@@ -548,7 +546,6 @@ __global__ void kernelPDE(int kTime, float *tCytoSumVessel, float *activatedDCSu
         CalculateDiffusion(constHx, valJPlus, valJMinus, valIPlus, valIMinus, devTCytotoxicKMinusThrIdx, &tCytotoxicDiffusion);
         CalculateChemottaxis(constHx, valJPlus, valJMinus, valIPlus, valIMinus, devTCytotoxicKMinusThrIdx,
                              modelParams.avgT, gradientOdcI, gradientOdcJ, &tCytotoxicChemotaxis);
-        tCytotoxicChemotaxis += diffusionODC * PreventionOverCrowdingTerm(devTCytotoxicKMinusThrIdx, model->parametersModel.avgT);
         tCytotoxicChemotaxis *= modelParams.chi;
         tCytotoxicDiffusion *= modelParams.tCytoDiffusion;
 
