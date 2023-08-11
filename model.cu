@@ -517,7 +517,6 @@ __global__ void kernelPDE(int kTime, float *tCytoSumVessel, float *activatedDCSu
         CalculateDiffusion(constHx, valJPlus, valJMinus, valIPlus, valIMinus, devMicrogliaKMinusThrIdx, &microgliaDiffusion);
         CalculateChemottaxis(constHx, valJPlus, valJMinus, valIPlus, valIMinus, devMicrogliaKMinusThrIdx,
                              modelParams.avgMic, gradientOdcI, gradientOdcJ, &microgliaChemotaxis);
-        microgliaChemotaxis += diffusionODC * PreventionOverCrowdingTerm(devMicrogliaKMinusThrIdx, model->parametersModel.avgMic);
         microgliaChemotaxis *= modelParams.chi;
         microgliaDiffusion *= modelParams.micDiffusion;
         // Diffusion and Chemotaxis CDC
@@ -532,7 +531,6 @@ __global__ void kernelPDE(int kTime, float *tCytoSumVessel, float *activatedDCSu
         CalculateDiffusion(constHx, valJPlus, valJMinus, valIPlus, valIMinus, devConventionalDCKMinusThrIdx, &conventionalDcDiffusion);
         CalculateChemottaxis(constHx, valJPlus, valJMinus, valIPlus, valIMinus, devConventionalDCKMinusThrIdx,
                              modelParams.avgDc, gradientOdcI, gradientOdcJ, &conventionalDcChemotaxis);
-        conventionalDcChemotaxis += diffusionODC * PreventionOverCrowdingTerm(devConventionalDCKMinusThrIdx, model->parametersModel.avgDc);
         conventionalDcChemotaxis *= modelParams.chi;
         conventionalDcDiffusion *= modelParams.cDcDiffusion;
 
@@ -548,7 +546,6 @@ __global__ void kernelPDE(int kTime, float *tCytoSumVessel, float *activatedDCSu
         CalculateDiffusion(constHx, valJPlus, valJMinus, valIPlus, valIMinus, devTCytotoxicKMinusThrIdx, &tCytotoxicDiffusion);
         CalculateChemottaxis(constHx, valJPlus, valJMinus, valIPlus, valIMinus, devTCytotoxicKMinusThrIdx,
                              modelParams.avgT, gradientOdcI, gradientOdcJ, &tCytotoxicChemotaxis);
-        tCytotoxicChemotaxis += diffusionODC * PreventionOverCrowdingTerm(devTCytotoxicKMinusThrIdx, model->parametersModel.avgT);
         tCytotoxicChemotaxis *= modelParams.chi;
         tCytotoxicDiffusion *= modelParams.tCytoDiffusion;
 
@@ -779,9 +776,9 @@ void RunModel(structModel *model)
 
         cudaEventRecord(startKernel, 0);
         if (stepKPlus % 2 == 1)
-            kernelPDE<<<numBlocks, threadsPerBlock, stream2>>>(devKTime, devTCytotoxicVessel, devActivatedDCVessel, devAntibodyVessel, devActivatedDCLymphNode, devAntibodyLymphNode, devTCytotoxicLymphNode, devThetaPV, devThetaBV, devMicrogliaKMinus, devMicrogliaKPlus, devTCytotoxicKMinus, devTCytotoxicKPlus, devAntibodyKMinus, devAntibodyKPlus, devConventionalDCKMinus, devConventionalDCKPlus, devActivatedDCKMinus, devActivatedDCKPlus, devOligodendrocytesDCKMinus, devOligodendrocytesDCKPlus);
+            kernelPDE<<<numBlocks, threadsPerBlock, 0, stream2>>>(devKTime, devTCytotoxicVessel, devActivatedDCVessel, devAntibodyVessel, devActivatedDCLymphNode, devAntibodyLymphNode, devTCytotoxicLymphNode, devThetaPV, devThetaBV, devMicrogliaKMinus, devMicrogliaKPlus, devTCytotoxicKMinus, devTCytotoxicKPlus, devAntibodyKMinus, devAntibodyKPlus, devConventionalDCKMinus, devConventionalDCKPlus, devActivatedDCKMinus, devActivatedDCKPlus, devOligodendrocytesDCKMinus, devOligodendrocytesDCKPlus);
         else
-            kernelPDE<<<numBlocks, threadsPerBlock, stream2>>>(devKTime, devTCytotoxicVessel, devActivatedDCVessel, devAntibodyVessel, devActivatedDCLymphNode, devAntibodyLymphNode, devTCytotoxicLymphNode, devThetaPV, devThetaBV, devMicrogliaKPlus, devMicrogliaKMinus, devTCytotoxicKPlus, devTCytotoxicKMinus, devAntibodyKPlus, devAntibodyKMinus, devConventionalDCKPlus, devConventionalDCKMinus, devActivatedDCKPlus, devActivatedDCKMinus, devOligodendrocytesDCKPlus, devOligodendrocytesDCKMinus);
+            kernelPDE<<<numBlocks, threadsPerBlock, 0, stream2>>>(devKTime, devTCytotoxicVessel, devActivatedDCVessel, devAntibodyVessel, devActivatedDCLymphNode, devAntibodyLymphNode, devTCytotoxicLymphNode, devThetaPV, devThetaBV, devMicrogliaKPlus, devMicrogliaKMinus, devTCytotoxicKPlus, devTCytotoxicKMinus, devAntibodyKPlus, devAntibodyKMinus, devConventionalDCKPlus, devConventionalDCKMinus, devActivatedDCKPlus, devActivatedDCKMinus, devOligodendrocytesDCKPlus, devOligodendrocytesDCKMinus);
         cudaEventRecord(stopKernel, 0);
         cudaEventSynchronize(stopKernel);
         cudaEventElapsedTime(&elapsedTimeKernelAux, startKernel, stopKernel);
