@@ -253,7 +253,7 @@ structModel ModelInitialize(structParameters params, int totThr, float ht, float
     model.parametersModel = params;
     if(!VerifyCFL(model.parametersModel, ht, hx)){
         printf("Falhou CFL!!\n");
-        exit(0);
+        // exit(0);
     }        
     model.parametersModel = params;
     model.numFigs = numFigs;
