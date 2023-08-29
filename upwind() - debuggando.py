@@ -18,6 +18,7 @@ def initialConditionMicroglia(L, hx, xSize, microglia):
     print(tot)
     return microglia
 
+from sympy import Derivative, Max, Min
 from skfdiff import Model, Simulation
 import pylab as pl
 import numpy as np
