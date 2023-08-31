@@ -3,6 +3,12 @@
 
 #define BUFFER 2
 
+typedef struct derivatives
+{
+    float** derivativesTissue;
+    float* derivativesLymphNode;
+}derivatives;
+
 typedef struct structParameters
 {
     float muMic;
@@ -107,6 +113,11 @@ typedef struct structModel
     float *bCellLymphNodeSavedPoints;
     float *plasmaCellLymphNodeSavedPoints;
     float *antibodyLymphNodeSavedPoints;
+
+    derivatives k1;
+    derivatives k2;
+    derivatives k3;
+    derivatives k4;
 
     structParameters parametersModel;
 
