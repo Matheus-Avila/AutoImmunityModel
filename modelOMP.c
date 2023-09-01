@@ -664,6 +664,10 @@ void Euler(int kTime, structModel *model){
 
 }
 
+void RungeKutta(int kTime, structModel *model){
+
+}
+
 /*
  * Central Nervous System - PDEs - Finite Differences
  */
