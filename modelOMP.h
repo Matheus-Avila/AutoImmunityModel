@@ -114,11 +114,6 @@ typedef struct structModel
     float *plasmaCellLymphNodeSavedPoints;
     float *antibodyLymphNodeSavedPoints;
 
-    derivatives k1;
-    derivatives k2;
-    derivatives k3;
-    derivatives k4;
-
     structParameters parametersModel;
 
 }structModel;
@@ -136,7 +131,7 @@ float CalculateDiffusion(structModel model, float ponto_posterior_j, float ponto
 
 float fFunc(float valuePopulation, float avgPopulation);
 
-float* EquationsLymphNode(structModel model, float* populationLN, int stepPos);
+float* EquationsLymphNode(structModel* model, int stepPos);
 
 void SolverLymphNode(structModel *model, int stepPos);
 
