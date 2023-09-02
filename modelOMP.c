@@ -441,7 +441,7 @@ void SavingData(structModel model){
     }
 }
 
-derivatives* SlopePDEs(float time, float ht, structModel* model){
+derivatives* SlopePDEs(float time, float ht, structModel* model, float auxAdcPV, float auxAntibodyBV, float auxTCytotoxicBV){
     derivatives* slopes = calloc(1, sizeof(derivatives));
     slopes->derivativesLymphNode = (float*)calloc(6, sizeof(float));
     slopes->derivativesTissue = (float**)calloc(6, sizeof(float*));
@@ -466,20 +466,11 @@ derivatives* SlopePDEs(float time, float ht, structModel* model){
 
     float microgliaKMinus = 0.0, conventionalDcKMinus = 0.0, activatedDcKMinus = 0.0, tCytotoxicKMinus = 0.0, antibodyKMinus = 0.0, oligodendrocyteKMinus = 0.0;
 
-    float auxAdcPV = 0.0, auxAntibodyBV = 0.0, auxTCytotoxicBV = 0.0;
-
     float diffusionOdc;
 
     int kTime = (time + ht)/model->ht;
     int tid;
 
-    #pragma omp parallel num_threads(model->totalThreads) default(none) shared(model, auxTCytotoxicBV, auxAntibodyBV, auxAdcPV, lowerNeumannBC, rightNeumannBC, upperNeumannBC, leftNeumannBC)\
-        private(tid, kTime, stepKMinus, stepKPlus, line, column, microgliaKMinus, conventionalDcKMinus, diffusionOdc,\
-        activatedDcKMinus, tCytotoxicKMinus, antibodyKMinus, oligodendrocyteKMinus, valIPlus, valJPlus, valIMinus, valJMinus, gradientOdcI,\
-        gradientOdcJ, microgliaDiffusion, microgliaChemotaxis, conventionalDcDiffusion, conventionalDcChemotaxis, tCytotoxicDiffusion, tCytotoxicChemotaxis,\
-        activatedDCDiffusion, antibodyDiffusion, microgliaReaction, microgliaClearance, conventionalDcReaction, conventionalDcActivation, conventionalDcClearance,\
-        activatedDcClearance, activatedDcMigration, tCytotoxicMigration, odcAntibodyMicrogliaFagocitosis, antibodyMigration, odcMicrogliaFagocitosis, odcTCytotoxicApoptosis)
-    
     tid = omp_get_thread_num();
     if(kTime%model->numStepsLN == 0){
         if(tid == 0){
@@ -620,18 +611,17 @@ derivatives* SlopePDEs(float time, float ht, structModel* model){
     return slopes;
 }
 
-void Euler(int kTime, structModel *model){
+void Euler(int kTime, structModel *model, float auxAdcPV, float auxAntibodyBV, float auxTCytotoxicBV){
     derivatives* k;
     // k.derivativesLymphNode = (float*)calloc(6, sizeof(float));
     // k.derivativesTissue = (float**)calloc(6, sizeof(float*));
 
     // for(int i = 0; i < 6; i++)
     //     k.derivativesTissue[i] = (float*)calloc(model->xSize*model->xSize, sizeof(float));
-    k = SlopePDEs(kTime, model->ht, model);
+    k = SlopePDEs(kTime, model->ht, model, auxAdcPV, auxAntibodyBV, auxTCytotoxicBV);
     int stepKPlus, stepKMinus;
     stepKMinus = kTime%2;
     stepKPlus = (stepKMinus + 1) % 2;
-
 
     for(int spacePoint = 0; spacePoint < model->xSize * model->xSize; spacePoint++){
         model->microglia[stepKPlus][spacePoint] = model->microglia[stepKMinus][spacePoint] + model->ht * k->derivativesTissue[0][spacePoint];
@@ -674,12 +664,15 @@ void RungeKutta(int kTime, structModel *model){
 void RunModel(structModel *model){
 
     int stepKPlus = 1, stepKMinus = 0;
+    float auxAdcPV = 0.0, auxAntibodyBV = 0.0, auxTCytotoxicBV = 0.0;
 
     //Save IC
     if(model->saveFigs)
         WriteFiles(*model, model->oligodendrocyte[0], model->microglia[0], model->tCytotoxic[0], model->antibody[0], model->conventionalDc[0], model->activatedDc[0], 0);
+
+    #pragma omp parallel num_threads(model->totalThreads) default(none) shared(model, auxAdcPV, auxAntibodyBV, auxTCytotoxicBV) private(stepKMinus, stepKPlus)
     for(int kTime = 0; kTime < model->tSize; kTime++){//TODO corrigir para int kTime = 1; kTime <= model->tSize; kTime++
-        Euler(kTime, model); // Fazer com Euler primeiro SolveRungeKutta(model);
+        Euler(kTime, model, auxAdcPV, auxAntibodyBV, auxTCytotoxicBV); // Fazer com Euler primeiro SolveRungeKutta(model);
         if(model->saveFigs && (kTime%model->intervalFigures == 0 || kTime == model->tSize))
             WriteFiles(*model, model->oligodendrocyte[stepKPlus], model->microglia[stepKPlus], model->tCytotoxic[stepKPlus], model->antibody[stepKPlus], model->conventionalDc[stepKPlus], model->activatedDc[stepKPlus], kTime * model->ht);
         stepKMinus += 1;
