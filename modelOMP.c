@@ -613,11 +613,7 @@ derivatives* SlopePDEs(float time, float ht, structModel* model, float auxAdcPV,
 
 void Euler(int kTime, structModel *model, float auxAdcPV, float auxAntibodyBV, float auxTCytotoxicBV){
     derivatives* k;
-    // k.derivativesLymphNode = (float*)calloc(6, sizeof(float));
-    // k.derivativesTissue = (float**)calloc(6, sizeof(float*));
-
-    // for(int i = 0; i < 6; i++)
-    //     k.derivativesTissue[i] = (float*)calloc(model->xSize*model->xSize, sizeof(float));
+    
     k = SlopePDEs(kTime, model->ht, model, auxAdcPV, auxAntibodyBV, auxTCytotoxicBV);
     int stepKPlus, stepKMinus;
     stepKMinus = kTime%2;
