@@ -306,6 +306,9 @@ structModel ModelInitialize(structParameters params, int totThr, float ht, float
     InitialConditionTissueMicroglia(&model);
     return model;
 }
+float auxAdcPV = 0.0;
+float auxAntibodyBV = 0.0;
+float auxTCytotoxicBV = 0.0;
 
 /*
 * Lymphnode
@@ -442,9 +445,9 @@ void SavingData(structModel model){
 }
 
 derivatives* SlopePDEs(float time, float ht, structModel* model){
-    float auxAdcPV = 0.0;
-    float auxAntibodyBV = 0.0;
-    float auxTCytotoxicBV = 0.0;
+    // float auxAdcPV = 0.0;
+    // float auxAntibodyBV = 0.0;
+    // float auxTCytotoxicBV = 0.0;
 
     derivatives* slopes = calloc(1, sizeof(derivatives));
     slopes->derivativesLymphNode = (float*)calloc(6, sizeof(float));
@@ -456,7 +459,8 @@ derivatives* SlopePDEs(float time, float ht, structModel* model){
     /*
      * Solve slope PDEs
     */
-    int stepKMinus = time / model->ht , stepKPlus, line, column, stepKPlusLN = 0;
+    int stepKMinus = time / model->ht , stepKPlus = !(stepKMinus && 1), line, column, stepKPlusLN = 0;
+    
 
     float upperNeumannBC = 0.0, lowerNeumannBC = 0.0, leftNeumannBC = 0.0, rightNeumannBC = 0.0;
     
@@ -486,8 +490,7 @@ derivatives* SlopePDEs(float time, float ht, structModel* model){
             slopes->derivativesLymphNode = slopeLN;
         }
     }
-    #pragma omp barrier
-    #pragma omp parallel for reduction(+:auxTCytotoxicBV, auxAntibodyBV, auxAdcPV)
+    #pragma omp for reduction(+:auxTCytotoxicBV, auxAntibodyBV, auxAdcPV)
     for(int kPos = 0; kPos < model->xSize*model->xSize; kPos++){
         line = (int)kPos/model->xSize;
         column = kPos%model->xSize;
@@ -668,6 +671,7 @@ void RunModel(structModel *model){
     //Save IC
     if(model->saveFigs)
         WriteFiles(*model, model->oligodendrocyte[0], model->microglia[0], model->tCytotoxic[0], model->antibody[0], model->conventionalDc[0], model->activatedDc[0], 0);
+    #pragma omp parallel num_threads(model->totalThreads) default(none) shared(model) private(stepKMinus, stepKPlus)
     for(int kTime = 0; kTime < model->tSize; kTime++){//TODO corrigir para int kTime = 1; kTime <= model->tSize; kTime++
         Euler(kTime, model); // Fazer com Euler primeiro SolveRungeKutta(model);
         if(model->saveFigs && (kTime%model->intervalFigures == 0 || kTime == model->tSize))
