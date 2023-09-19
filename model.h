@@ -3,6 +3,12 @@
 
 #define BUFFER 2
 
+typedef struct derivatives
+{
+    float** derivativesTissue;
+    float* derivativesLymphNode;
+}derivatives;
+
 typedef struct structParameters
 {
     float muMic;
@@ -51,10 +57,10 @@ typedef struct structParameters
     float rhoB;
     float rhoP;
     float rhoAntibody;
-    float estableTHelper;
-    float estableTCytotoxic;
-    float estableB;
-    float estableP;
+    float stableTHelper;
+    float stableTCytotoxic;
+    float stableB;
+    float stableP;
     float V_PV;
     float V_BV;
     int V_LN;
@@ -122,7 +128,7 @@ float CalculateDiffusion(structModel model, float ponto_posterior_j, float ponto
 
 float fFunc(float valuePopulation, float avgPopulation);
 
-float* EquationsLymphNode(structModel model, float* populationLN, int stepPos);
+float* EquationsLymphNode(structModel* model, int stepPos);
 
 void SolverLymphNode(structModel *model, int stepPos);
 
