@@ -476,10 +476,10 @@ float auxAdcPV = 0.0;
 float auxAntibodyBV = 0.0;
 float auxTCytotoxicBV = 0.0;
 
-derivatives* SlopePDEs(int time, float ht, structModel* model){
-    // float auxAdcPV = 0.0;
-    // float auxAntibodyBV = 0.0;
-    // float auxTCytotoxicBV = 0.0;
+derivatives* SlopePDEs(int kTime, float ht, structModel* model){
+    auxAdcPV = 0.0;
+    auxAntibodyBV = 0.0;
+    auxTCytotoxicBV = 0.0;
 
     derivatives* slopes = calloc(1, sizeof(derivatives));
     slopes->derivativesLymphNode = (float*)calloc(6, sizeof(float));
@@ -491,7 +491,7 @@ derivatives* SlopePDEs(int time, float ht, structModel* model){
     /*
      * Solve slope PDEs
     */
-    int stepKPlus = time%2;
+    int stepKPlus = kTime%2;
     int stepKMinus = !(stepKPlus && 1), line, column;
     
     float upperNeumannBC = 0.0, lowerNeumannBC = 0.0, leftNeumannBC = 0.0, rightNeumannBC = 0.0;
@@ -509,15 +509,6 @@ derivatives* SlopePDEs(int time, float ht, structModel* model){
 
     float diffusionOdc;
 
-    int kTime = (time + ht)/model->ht;
-    if(kTime%model->numStepsLN == 0){
-        model->tCytotoxicTissueVessels = auxTCytotoxicBV * model->hx * model->hx / model->parametersModel.V_BV;
-        model->antibodyTissueVessels = auxAntibodyBV * model->hx * model->hx / model->parametersModel.V_BV;
-        model->activatedDCTissueVessels = auxAdcPV * model->hx * model->hx / model->parametersModel.V_PV;
-        float* slopeLN = EquationsLymphNode(model, kTime);
-        slopes->derivativesLymphNode = slopeLN;
-        
-    }
     for(int kPos = 0; kPos < model->xSize*model->xSize; kPos++){
         line = (int)kPos/model->xSize;
         column = kPos%model->xSize;
@@ -647,12 +638,30 @@ derivatives* SlopePDEs(int time, float ht, structModel* model){
 
 void Euler(int kTime, structModel *model){
     derivatives* slopeK;
+
+    int stepKPlus, stepKMinus;
     
     slopeK = SlopePDEs(kTime, model->ht, model);
-    int stepKPlus, stepKMinus;
+    if(kTime%model->numStepsLN == 0){
+        
+        stepKPlus = kTime%2;
+        stepKMinus = (stepKPlus + 1) % 2;
+        model->tCytotoxicTissueVessels = auxTCytotoxicBV * model->hx * model->hx / model->parametersModel.V_BV;
+        model->antibodyTissueVessels = auxAntibodyBV * model->hx * model->hx / model->parametersModel.V_BV;
+        model->activatedDCTissueVessels = auxAdcPV * model->hx * model->hx / model->parametersModel.V_PV;
+        float* slopeLN = EquationsLymphNode(model, kTime);
+        slopeK->derivativesLymphNode = slopeLN;
+
+        model->dendriticLymphNode[stepKPlus] = model->dendriticLymphNode[stepKMinus] + model->ht * slopeK->derivativesLymphNode[0];
+        model->tCytotoxicLymphNode[stepKPlus] = model->tCytotoxicLymphNode[stepKMinus] + model->ht * slopeK->derivativesLymphNode[1];
+        model->tHelperLymphNode[stepKPlus] = model->tHelperLymphNode[stepKMinus] + model->ht * slopeK->derivativesLymphNode[2];
+        model->bCellLymphNode[stepKPlus] = model->bCellLymphNode[stepKMinus] + model->ht * slopeK->derivativesLymphNode[3];
+        model->plasmaCellLymphNode[stepKPlus] = model->plasmaCellLymphNode[stepKMinus] + model->ht * slopeK->derivativesLymphNode[4];
+        model->antibodyLymphNode[stepKPlus] = model->antibodyLymphNode[stepKMinus] + model->ht * slopeK->derivativesLymphNode[5];
+    }
+    
     stepKPlus = kTime%2;
     stepKMinus = (stepKPlus + 1) % 2;
-
     for(int spacePoint = 0; spacePoint < model->xSize * model->xSize; spacePoint++){
         model->microglia[stepKPlus][spacePoint] = model->microglia[stepKMinus][spacePoint] + model->ht * slopeK->derivativesTissue[0][spacePoint];
         model->conventionalDc[stepKPlus][spacePoint] = model->conventionalDc[stepKMinus][spacePoint] + model->ht * slopeK->derivativesTissue[1][spacePoint];
@@ -661,13 +670,6 @@ void Euler(int kTime, structModel *model){
         model->antibody[stepKPlus][spacePoint] = model->antibody[stepKMinus][spacePoint] + model->ht * slopeK->derivativesTissue[4][spacePoint];
         model->oligodendrocyte[stepKPlus][spacePoint] = model->oligodendrocyte[stepKMinus][spacePoint] + model->ht * slopeK->derivativesTissue[5][spacePoint];
     }
-
-    model->dendriticLymphNode[stepKPlus] = model->dendriticLymphNode[stepKMinus] + model->ht * slopeK->derivativesLymphNode[0];
-    model->tCytotoxicLymphNode[stepKPlus] = model->tCytotoxicLymphNode[stepKMinus] + model->ht * slopeK->derivativesLymphNode[1];
-    model->tHelperLymphNode[stepKPlus] = model->tHelperLymphNode[stepKMinus] + model->ht * slopeK->derivativesLymphNode[2];
-    model->bCellLymphNode[stepKPlus] = model->bCellLymphNode[stepKMinus] + model->ht * slopeK->derivativesLymphNode[3];
-    model->plasmaCellLymphNode[stepKPlus] = model->plasmaCellLymphNode[stepKMinus] + model->ht * slopeK->derivativesLymphNode[4];
-    model->antibodyLymphNode[stepKPlus] = model->antibodyLymphNode[stepKMinus] + model->ht * slopeK->derivativesLymphNode[5];
 
     free(slopeK);
 
@@ -698,7 +700,7 @@ void RunModel(structModel *model){
     //Save IC
     if(model->saveFigs)
         WriteFiles(*model, model->oligodendrocyte[0], model->microglia[0], model->tCytotoxic[0], model->antibody[0], model->conventionalDc[0], model->activatedDc[0], 0);
-    for(int kTime = 1; kTime <= model->tSize; kTime++){//TODO corrigir para int kTime = 1; kTime <= model->tSize; kTime++
+    for(int kTime = 1; kTime <= model->tSize; kTime++){
         Euler(kTime, model); // Fazer com Euler primeiro SolveRungeKutta(model);
         if(model->saveFigs && (kTime%model->intervalFigures == 0 || kTime == model->tSize)){
             WriteFiles(*model, model->oligodendrocyte[stepKPlus], model->microglia[stepKPlus], model->tCytotoxic[stepKPlus], model->antibody[stepKPlus], model->conventionalDc[stepKPlus], model->activatedDc[stepKPlus], kTime);
