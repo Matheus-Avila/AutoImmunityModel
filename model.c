@@ -5,6 +5,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+float auxAdcPV = 0.0;
+float auxAntibodyBV = 0.0;
+float auxTCytotoxicBV = 0.0;
+
 void InitialConditionTissueMicroglia(structModel* model){
     for(int k = 0; k < model->xSize*model->xSize; k++){
         int i = (int)k/model->xSize;
@@ -472,14 +476,7 @@ void SolverLymphNode(structModel *model, int stepPos){
 }
 */
 
-float auxAdcPV = 0.0;
-float auxAntibodyBV = 0.0;
-float auxTCytotoxicBV = 0.0;
-
 derivatives* SlopePDEs(int kTime, float ht, structModel* model){
-    auxAdcPV = 0.0;
-    auxAntibodyBV = 0.0;
-    auxTCytotoxicBV = 0.0;
 
     derivatives* slopes = calloc(1, sizeof(derivatives));
     slopes->derivativesLymphNode = (float*)calloc(6, sizeof(float));
@@ -640,12 +637,18 @@ void Euler(int kTime, structModel *model){
     derivatives* slopeK;
 
     int stepKPlus, stepKMinus;
-    
+    if(kTime%model->numStepsLN == 0){
+        auxAdcPV = 0.0;
+        auxAntibodyBV = 0.0;
+        auxTCytotoxicBV = 0.0;
+    }
     slopeK = SlopePDEs(kTime, model->ht, model);
     if(kTime%model->numStepsLN == 0){
-        
-        stepKPlus = kTime%2;
-        stepKMinus = (stepKPlus + 1) % 2;
+        // printf("Entrou!\n");
+        stepKPlus = (kTime%(2*model->numStepsLN))/model->numStepsLN;
+        stepKMinus = !(stepKPlus && 1);
+        // stepKPlus = kTime%2;
+        // stepKMinus = (stepKPlus + 1) % 2;
         model->tCytotoxicTissueVessels = auxTCytotoxicBV * model->hx * model->hx / model->parametersModel.V_BV;
         model->antibodyTissueVessels = auxAntibodyBV * model->hx * model->hx / model->parametersModel.V_BV;
         model->activatedDCTissueVessels = auxAdcPV * model->hx * model->hx / model->parametersModel.V_PV;
