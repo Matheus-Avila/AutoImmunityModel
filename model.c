@@ -635,6 +635,7 @@ derivatives* SlopePDEs(int kTime, float ht, structModel* model){
 
 void Euler(int kTime, structModel *model){
     derivatives* slopeK;
+    float htLymphNode = model->ht * model->numStepsLN;
 
     int stepKPlus, stepKMinus;
     if(kTime%model->numStepsLN == 0){
@@ -655,12 +656,12 @@ void Euler(int kTime, structModel *model){
         float* slopeLN = EquationsLymphNode(model, kTime);
         slopeK->derivativesLymphNode = slopeLN;
 
-        model->dendriticLymphNode[stepKPlus] = model->dendriticLymphNode[stepKMinus] + model->ht * slopeK->derivativesLymphNode[0];
-        model->tCytotoxicLymphNode[stepKPlus] = model->tCytotoxicLymphNode[stepKMinus] + model->ht * slopeK->derivativesLymphNode[1];
-        model->tHelperLymphNode[stepKPlus] = model->tHelperLymphNode[stepKMinus] + model->ht * slopeK->derivativesLymphNode[2];
-        model->bCellLymphNode[stepKPlus] = model->bCellLymphNode[stepKMinus] + model->ht * slopeK->derivativesLymphNode[3];
-        model->plasmaCellLymphNode[stepKPlus] = model->plasmaCellLymphNode[stepKMinus] + model->ht * slopeK->derivativesLymphNode[4];
-        model->antibodyLymphNode[stepKPlus] = model->antibodyLymphNode[stepKMinus] + model->ht * slopeK->derivativesLymphNode[5];
+        model->dendriticLymphNode[stepKPlus] = model->dendriticLymphNode[stepKMinus] + htLymphNode * slopeK->derivativesLymphNode[0];
+        model->tCytotoxicLymphNode[stepKPlus] = model->tCytotoxicLymphNode[stepKMinus] + htLymphNode * slopeK->derivativesLymphNode[1];
+        model->tHelperLymphNode[stepKPlus] = model->tHelperLymphNode[stepKMinus] + htLymphNode * slopeK->derivativesLymphNode[2];
+        model->bCellLymphNode[stepKPlus] = model->bCellLymphNode[stepKMinus] + htLymphNode * slopeK->derivativesLymphNode[3];
+        model->plasmaCellLymphNode[stepKPlus] = model->plasmaCellLymphNode[stepKMinus] + htLymphNode * slopeK->derivativesLymphNode[4];
+        model->antibodyLymphNode[stepKPlus] = model->antibodyLymphNode[stepKMinus] + htLymphNode * slopeK->derivativesLymphNode[5];
     }
     
     stepKPlus = kTime%2;
