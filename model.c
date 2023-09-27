@@ -694,6 +694,11 @@ void RungeKutta(int kTime, structModel *model){
     derivatives* slopeK1, *slopeK2, *slopeK3 , *slopeK4;
     float htLymphNode = model->ht * model->numStepsLN;
 
+    float** yK;
+    yK = (float**) calloc(6, sizeof(float*));
+    for(int i = 0; i < 6; i++)
+        yK[i] = (float*) calloc(model->xSize * model->xSize, sizeof(float));
+
     int stepKPlus, stepKMinus;
     if(kTime%model->numStepsLN == 0){
         auxAdcPV = 0.0;
@@ -721,16 +726,16 @@ void RungeKutta(int kTime, structModel *model){
     stepKPlus = kTime%2;
     stepKMinus = (stepKPlus + 1) % 2;
 
-    for(int spacePoint = 0; spacePoint < model->xSize * model->xSize; spacePoint++){
-        model->microglia[stepKPlus][spacePoint] = model->microglia[stepKMinus][spacePoint] + model->ht * slopeK1->derivativesTissue[0][spacePoint] / 2;
-        model->conventionalDc[stepKPlus][spacePoint] = model->conventionalDc[stepKMinus][spacePoint] + model->ht * slopeK1->derivativesTissue[1][spacePoint] / 2;
-        model->activatedDc[stepKPlus][spacePoint] = model->activatedDc[stepKMinus][spacePoint] + model->ht * slopeK1->derivativesTissue[2][spacePoint] / 2;
-        model->tCytotoxic[stepKPlus][spacePoint] = model->tCytotoxic[stepKMinus][spacePoint] + model->ht * slopeK1->derivativesTissue[3][spacePoint] / 2;
-        model->antibody[stepKPlus][spacePoint] = model->antibody[stepKMinus][spacePoint] + model->ht * slopeK1->derivativesTissue[4][spacePoint] / 2;
-        model->oligodendrocyte[stepKPlus][spacePoint] = model->oligodendrocyte[stepKMinus][spacePoint] + model->ht * slopeK1->derivativesTissue[5][spacePoint] / 2;
-    }
+    //SAlvaro estado setpKminus para usar em cada k
 
     for(int spacePoint = 0; spacePoint < model->xSize * model->xSize; spacePoint++){
+        yK[0][spacePoint] = model->microglia[stepKMinus][spacePoint];
+        yK[1][spacePoint] = model->conventionalDc[stepKMinus][spacePoint];
+        yK[2][spacePoint] = model->activatedDc[stepKMinus][spacePoint];
+        yK[3][spacePoint] = model->tCytotoxic[stepKMinus][spacePoint];
+        yK[4][spacePoint] = model->antibody[stepKMinus][spacePoint];
+        yK[5][spacePoint] = model->oligodendrocyte[stepKMinus][spacePoint];
+
         model->microglia[stepKMinus][spacePoint] = model->microglia[stepKMinus][spacePoint] + model->ht * slopeK1->derivativesTissue[0][spacePoint] / 2;
         model->conventionalDc[stepKMinus][spacePoint] = model->conventionalDc[stepKMinus][spacePoint] + model->ht * slopeK1->derivativesTissue[1][spacePoint] / 2;
         model->activatedDc[stepKMinus][spacePoint] = model->activatedDc[stepKMinus][spacePoint] + model->ht * slopeK1->derivativesTissue[2][spacePoint] / 2;
@@ -738,25 +743,34 @@ void RungeKutta(int kTime, structModel *model){
         model->antibody[stepKMinus][spacePoint] = model->antibody[stepKMinus][spacePoint] + model->ht * slopeK1->derivativesTissue[4][spacePoint] / 2;
         model->oligodendrocyte[stepKMinus][spacePoint] = model->oligodendrocyte[stepKMinus][spacePoint] + model->ht * slopeK1->derivativesTissue[5][spacePoint] / 2;
     }
+
+    for(int spacePoint = 0; spacePoint < model->xSize * model->xSize; spacePoint++){
+        model->microglia[stepKMinus][spacePoint] = yK[0][spacePoint] + model->ht * slopeK1->derivativesTissue[0][spacePoint] / 2;
+        model->conventionalDc[stepKMinus][spacePoint] = yK[1][spacePoint] + model->ht * slopeK1->derivativesTissue[1][spacePoint] / 2;
+        model->activatedDc[stepKMinus][spacePoint] = yK[2][spacePoint] + model->ht * slopeK1->derivativesTissue[2][spacePoint] / 2;
+        model->tCytotoxic[stepKMinus][spacePoint] = yK[3][spacePoint] + model->ht * slopeK1->derivativesTissue[3][spacePoint] / 2;
+        model->antibody[stepKMinus][spacePoint] = yK[4][spacePoint] + model->ht * slopeK1->derivativesTissue[4][spacePoint] / 2;
+        model->oligodendrocyte[stepKMinus][spacePoint] = yK[5][spacePoint] + model->ht * slopeK1->derivativesTissue[5][spacePoint] / 2;
+    }
     
     slopeK2 = SlopePDEs(kTime, model->ht, model);
     for(int spacePoint = 0; spacePoint < model->xSize * model->xSize; spacePoint++){
-        model->microglia[stepKMinus][spacePoint] = model->microglia[stepKMinus][spacePoint] + model->ht * slopeK2->derivativesTissue[0][spacePoint] / 2;
-        model->conventionalDc[stepKMinus][spacePoint] = model->conventionalDc[stepKMinus][spacePoint] + model->ht * slopeK2->derivativesTissue[1][spacePoint] / 2;
-        model->activatedDc[stepKMinus][spacePoint] = model->activatedDc[stepKMinus][spacePoint] + model->ht * slopeK2->derivativesTissue[2][spacePoint] / 2;
-        model->tCytotoxic[stepKMinus][spacePoint] = model->tCytotoxic[stepKMinus][spacePoint] + model->ht * slopeK2->derivativesTissue[3][spacePoint] / 2;
-        model->antibody[stepKMinus][spacePoint] = model->antibody[stepKMinus][spacePoint] + model->ht * slopeK2->derivativesTissue[4][spacePoint] / 2;
-        model->oligodendrocyte[stepKMinus][spacePoint] = model->oligodendrocyte[stepKMinus][spacePoint] + model->ht * slopeK2->derivativesTissue[5][spacePoint] / 2;
+        model->microglia[stepKMinus][spacePoint] = yK[0][spacePoint] + model->ht * slopeK2->derivativesTissue[0][spacePoint] / 2;
+        model->conventionalDc[stepKMinus][spacePoint] = yK[1][spacePoint] + model->ht * slopeK2->derivativesTissue[1][spacePoint] / 2;
+        model->activatedDc[stepKMinus][spacePoint] = yK[2][spacePoint] + model->ht * slopeK2->derivativesTissue[2][spacePoint] / 2;
+        model->tCytotoxic[stepKMinus][spacePoint] = yK[3][spacePoint] + model->ht * slopeK2->derivativesTissue[3][spacePoint] / 2;
+        model->antibody[stepKMinus][spacePoint] = yK[4][spacePoint] + model->ht * slopeK2->derivativesTissue[4][spacePoint] / 2;
+        model->oligodendrocyte[stepKMinus][spacePoint] = yK[5][spacePoint] + model->ht * slopeK2->derivativesTissue[5][spacePoint] / 2;
     }
 
     slopeK3 = SlopePDEs(kTime, model->ht, model);
     for(int spacePoint = 0; spacePoint < model->xSize * model->xSize; spacePoint++){
-        model->microglia[stepKMinus][spacePoint] = model->microglia[stepKMinus][spacePoint] + model->ht * slopeK3->derivativesTissue[0][spacePoint];
-        model->conventionalDc[stepKMinus][spacePoint] = model->conventionalDc[stepKMinus][spacePoint] + model->ht * slopeK3->derivativesTissue[1][spacePoint];
-        model->activatedDc[stepKMinus][spacePoint] = model->activatedDc[stepKMinus][spacePoint] + model->ht * slopeK3->derivativesTissue[2][spacePoint];
-        model->tCytotoxic[stepKMinus][spacePoint] = model->tCytotoxic[stepKMinus][spacePoint] + model->ht * slopeK3->derivativesTissue[3][spacePoint];
-        model->antibody[stepKMinus][spacePoint] = model->antibody[stepKMinus][spacePoint] + model->ht * slopeK3->derivativesTissue[4][spacePoint];
-        model->oligodendrocyte[stepKMinus][spacePoint] = model->oligodendrocyte[stepKMinus][spacePoint] + model->ht * slopeK3->derivativesTissue[5][spacePoint];
+        model->microglia[stepKMinus][spacePoint] = yK[0][spacePoint] + model->ht * slopeK3->derivativesTissue[0][spacePoint];
+        model->conventionalDc[stepKMinus][spacePoint] = yK[1][spacePoint] + model->ht * slopeK3->derivativesTissue[1][spacePoint];
+        model->activatedDc[stepKMinus][spacePoint] = yK[2][spacePoint] + model->ht * slopeK3->derivativesTissue[2][spacePoint];
+        model->tCytotoxic[stepKMinus][spacePoint] = yK[3][spacePoint] + model->ht * slopeK3->derivativesTissue[3][spacePoint];
+        model->antibody[stepKMinus][spacePoint] = yK[4][spacePoint] + model->ht * slopeK3->derivativesTissue[4][spacePoint];
+        model->oligodendrocyte[stepKMinus][spacePoint] = yK[5][spacePoint] + model->ht * slopeK3->derivativesTissue[5][spacePoint];
     }
 
     slopeK4 = SlopePDEs(kTime, model->ht, model);
@@ -779,16 +793,13 @@ void RungeKutta(int kTime, structModel *model){
     }
 
     for(int spacePoint = 0; spacePoint < model->xSize * model->xSize; spacePoint++){
-        model->microglia[stepKPlus][spacePoint] = model->microglia[stepKMinus][spacePoint] + (model->ht / 6) * ( slopeK1->derivativesTissue[0][spacePoint] + 2 * slopeK2->derivativesTissue[0][spacePoint] + 2 * slopeK3->derivativesTissue[0][spacePoint] + slopeK4->derivativesTissue[0][spacePoint]);
-        model->conventionalDc[stepKPlus][spacePoint] = model->conventionalDc[stepKMinus][spacePoint] + (model->ht / 6) * ( slopeK1->derivativesTissue[1][spacePoint] + 2 * slopeK2->derivativesTissue[1][spacePoint] + 2 * slopeK3->derivativesTissue[1][spacePoint] + slopeK4->derivativesTissue[1][spacePoint]);
-        model->activatedDc[stepKPlus][spacePoint] = model->activatedDc[stepKMinus][spacePoint] + (model->ht / 6) * ( slopeK1->derivativesTissue[2][spacePoint] + 2 * slopeK2->derivativesTissue[2][spacePoint] + 2 * slopeK3->derivativesTissue[2][spacePoint] + slopeK4->derivativesTissue[2][spacePoint]);
-        model->tCytotoxic[stepKPlus][spacePoint] = model->tCytotoxic[stepKMinus][spacePoint] + (model->ht / 6) * ( slopeK1->derivativesTissue[3][spacePoint] + 2 * slopeK2->derivativesTissue[3][spacePoint] + 2 * slopeK3->derivativesTissue[3][spacePoint] + slopeK4->derivativesTissue[3][spacePoint]);
-        model->antibody[stepKPlus][spacePoint] = model->antibody[stepKMinus][spacePoint] + (model->ht / 6) * ( slopeK1->derivativesTissue[4][spacePoint] + 2 * slopeK2->derivativesTissue[4][spacePoint] + 2 * slopeK3->derivativesTissue[4][spacePoint] + slopeK4->derivativesTissue[4][spacePoint]);
-        model->oligodendrocyte[stepKPlus][spacePoint] = model->oligodendrocyte[stepKMinus][spacePoint] + (model->ht / 6) * ( slopeK1->derivativesTissue[5][spacePoint] + 2 * slopeK2->derivativesTissue[5][spacePoint] + 2 * slopeK3->derivativesTissue[5][spacePoint] + slopeK4->derivativesTissue[5][spacePoint]);
+        model->microglia[stepKPlus][spacePoint] = yK[0][spacePoint] + (model->ht / 6) * ( slopeK1->derivativesTissue[0][spacePoint] + 2 * slopeK2->derivativesTissue[0][spacePoint] + 2 * slopeK3->derivativesTissue[0][spacePoint] + slopeK4->derivativesTissue[0][spacePoint]);
+        model->conventionalDc[stepKPlus][spacePoint] = yK[1][spacePoint] + (model->ht / 6) * ( slopeK1->derivativesTissue[1][spacePoint] + 2 * slopeK2->derivativesTissue[1][spacePoint] + 2 * slopeK3->derivativesTissue[1][spacePoint] + slopeK4->derivativesTissue[1][spacePoint]);
+        model->activatedDc[stepKPlus][spacePoint] = yK[2][spacePoint] + (model->ht / 6) * ( slopeK1->derivativesTissue[2][spacePoint] + 2 * slopeK2->derivativesTissue[2][spacePoint] + 2 * slopeK3->derivativesTissue[2][spacePoint] + slopeK4->derivativesTissue[2][spacePoint]);
+        model->tCytotoxic[stepKPlus][spacePoint] = yK[3][spacePoint] + (model->ht / 6) * ( slopeK1->derivativesTissue[3][spacePoint] + 2 * slopeK2->derivativesTissue[3][spacePoint] + 2 * slopeK3->derivativesTissue[3][spacePoint] + slopeK4->derivativesTissue[3][spacePoint]);
+        model->antibody[stepKPlus][spacePoint] = yK[4][spacePoint] + (model->ht / 6) * ( slopeK1->derivativesTissue[4][spacePoint] + 2 * slopeK2->derivativesTissue[4][spacePoint] + 2 * slopeK3->derivativesTissue[4][spacePoint] + slopeK4->derivativesTissue[4][spacePoint]);
+        model->oligodendrocyte[stepKPlus][spacePoint] = yK[5][spacePoint] + (model->ht / 6) * ( slopeK1->derivativesTissue[5][spacePoint] + 2 * slopeK2->derivativesTissue[5][spacePoint] + 2 * slopeK3->derivativesTissue[5][spacePoint] + slopeK4->derivativesTissue[5][spacePoint]);
     }
-    
-    
-    
     
     
     free(slopeK1->derivativesLymphNode);
@@ -824,7 +835,10 @@ void RungeKutta(int kTime, structModel *model){
     free(slopeK4->derivativesTissue[4]);
     free(slopeK4->derivativesTissue[5]);
     
+    for(int i = 0; i < 6; i++)
+        free(yK[i]);
     
+    free(yK);
     free(slopeK1);
     free(slopeK2);
     free(slopeK3);
