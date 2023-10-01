@@ -490,6 +490,8 @@ derivatives* SlopePDEs(int kTime, float ht, structModel* model){
     */
     int stepKPlus = kTime%2;
     int stepKMinus = !(stepKPlus && 1), line, column;
+
+    float odcIPlusHalf, odcIMinusHalf, odcJPlusHalf, odcJMinusHalf; 
     
     float upperNeumannBC = 0.0, lowerNeumannBC = 0.0, leftNeumannBC = 0.0, rightNeumannBC = 0.0;
     
@@ -525,8 +527,13 @@ derivatives* SlopePDEs(int kTime, float ht, structModel* model){
 
         diffusionOdc = CalculateDiffusion(*model, valJPlus, valJMinus, valIPlus, valIMinus, model->oligodendrocyte[stepKMinus][kPos]);
 
-        gradientOdcI = (float)(valIPlus - valIMinus)/(float)(2*model->hx);
-        gradientOdcJ = (float)(valJPlus - valJMinus)/(float)(2*model->hx);
+        odcIPlusHalf = (oligodendrocyteKMinus + valIPlus) / 2;
+        odcIMinusHalf = (oligodendrocyteKMinus + valIMinus) / 2;
+        odcJPlusHalf = (oligodendrocyteKMinus + valJPlus) / 2;
+        odcJPlusHalf = (oligodendrocyteKMinus + valJMinus) / 2;
+
+        gradientOdcI = (float)(odcIPlusHalf - odcIMinusHalf)/(float)(2*model->hx);
+        gradientOdcJ = (float)(odcJPlusHalf - odcJPlusHalf)/(float)(2*model->hx);
 
         //Diffusion and Chemotaxis Mic
 
