@@ -875,7 +875,7 @@ void RunModel(structModel *model){
     if(model->saveFigs)
         WriteFiles(*model, model->oligodendrocyte[0], model->microglia[0], model->tCytotoxic[0], model->antibody[0], model->conventionalDc[0], model->activatedDc[0], 0);
     for(int kTime = 1; kTime <= model->tSize; kTime++){
-        RungeKutta(kTime, model); 
+        Euler(kTime, model); 
         if(model->saveFigs && (kTime%model->intervalFigures == 0 || kTime == model->tSize)){
             WriteFiles(*model, model->oligodendrocyte[stepKPlus], model->microglia[stepKPlus], model->tCytotoxic[stepKPlus], model->antibody[stepKPlus], model->conventionalDc[stepKPlus], model->activatedDc[stepKPlus], kTime);
             printf("%d!!\n", (int)(kTime * model->ht));
