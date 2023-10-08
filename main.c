@@ -6,12 +6,12 @@
 
 structParameters ParametersInitialize(){
     structParameters params;
-    params.micDiffusion = 3*24*6.6*pow(10,-5); //Difusao
+    params.micDiffusion = 3*24*6.6*pow(10,-5); //Difusao 0,004752
     params.antibodyDiffusion = 9.6*24*6.6*pow(10,-4);
     params.cDcDiffusion = 9.6*24*6.6*pow(10,-6);
     params.aDcDiffusion = 9.6*24*6.6*pow(10,-5);
     params.tCytoDiffusion = 6.6*24*6.6*pow(10,-5);
-    params.chi = 3.033; //Quimiotaxia
+    params.chi = 0.33; //Quimiotaxia
     
     params.muCDc = 60*24*3*pow(10,-5);
     params.muMic = 60*24*3*pow(10,-6);
@@ -89,8 +89,8 @@ int main(){
     clock_t start, end;
     float cpu_time_used;
     clearPhgTxt();
-    float ht = 0.0002, hx = 0.5;
-    int numFigs = 28, numPointsLN = 1000, time = 28, space = 20, numStepsLN = 100, saveFigs = 1;
+    float ht = 0.00001, hx = 0.05;
+    int numFigs = 10, numPointsLN = 1000, time = 10, space = 20, numStepsLN = 100, saveFigs = 1;
     structParameters parameters = ParametersInitialize();
     structModel model = ModelInitialize(parameters, ht, hx, time, space, numFigs, numPointsLN, numStepsLN, saveFigs);
     start = clock();
