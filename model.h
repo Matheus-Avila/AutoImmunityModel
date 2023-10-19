@@ -82,7 +82,7 @@ typedef struct structModel
     // int *timeVec;
     // int *spaceVec;
 
-    int tSize;
+    long int tSize;
     int xSize;
 
     float *thetaBV;
