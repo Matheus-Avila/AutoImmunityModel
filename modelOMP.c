@@ -511,10 +511,10 @@ void RunModel(structModel *model){
             oligodendrocyteKMinus = model->oligodendrocyte[stepKMinus][kPos];
 
             //Define gradient ODCs
-            valIPlus = (line != model->xSize-1)? model->oligodendrocyte[stepKMinus][kPos + model->xSize]: model->oligodendrocyte[stepKMinus][kPos];
-            valJPlus = (column != model->xSize-1)? model->oligodendrocyte[stepKMinus][kPos + 1]: model->oligodendrocyte[stepKMinus][kPos];
-            valIMinus = (line != 0)? model->oligodendrocyte[stepKMinus][kPos - model->xSize]: model->oligodendrocyte[stepKMinus][kPos];
-            valJMinus = (column != 0)? model->oligodendrocyte[stepKMinus][kPos - 1]: model->oligodendrocyte[stepKMinus][kPos];
+            valIPlus = (line != model->xSize-1)? model->oligodendrocyte[stepKMinus][kPos + model->xSize]: model->oligodendrocyte[stepKMinus][kPos - model->xSize];
+            valJPlus = (column != model->xSize-1)? model->oligodendrocyte[stepKMinus][kPos + 1]: model->oligodendrocyte[stepKMinus][kPos - 1];
+            valIMinus = (line != 0)? model->oligodendrocyte[stepKMinus][kPos - model->xSize]: model->oligodendrocyte[stepKMinus][kPos + model->xSize];
+            valJMinus = (column != 0)? model->oligodendrocyte[stepKMinus][kPos - 1]: model->oligodendrocyte[stepKMinus][kPos + 1];
 
             diffusionOdc = CalculateDiffusion(*model, valJPlus, valJMinus, valIPlus, valIMinus, model->oligodendrocyte[stepKMinus][kPos]);
 
@@ -523,10 +523,10 @@ void RunModel(structModel *model){
 
             //Diffusion and Chemotaxis Mic
 
-            valIPlus  = (line != model->xSize-1)? model->microglia[stepKMinus][kPos + model->xSize]: model->microglia[stepKMinus][kPos];// + PreventionOverCrowdingTerm(model->microglia[stepKMinus][kPos], model->parametersModel.avgMic) * model->hx * gradientOdcI/model->parametersModel.micDiffusion;
-            valJPlus  = (column != model->xSize-1)? model->microglia[stepKMinus][kPos + 1]: model->microglia[stepKMinus][kPos];// + PreventionOverCrowdingTerm(model->microglia[stepKMinus][kPos], model->parametersModel.avgMic) * model->hx * gradientOdcJ/model->parametersModel.micDiffusion;
-            valIMinus = (line != 0)? model->microglia[stepKMinus][kPos - model->xSize]: model->microglia[stepKMinus][kPos];// - PreventionOverCrowdingTerm(model->microglia[stepKMinus][kPos], model->parametersModel.avgMic) * model->hx * gradientOdcI/model->parametersModel.micDiffusion;
-            valJMinus = (column != 0)? model->microglia[stepKMinus][kPos - 1]: model->microglia[stepKMinus][kPos];// - PreventionOverCrowdingTerm(model->microglia[stepKMinus][kPos], model->parametersModel.avgMic) * model->hx * gradientOdcJ/model->parametersModel.micDiffusion;
+            valIPlus  = (line != model->xSize-1)? model->microglia[stepKMinus][kPos + model->xSize]: model->microglia[stepKMinus][kPos] + PreventionOverCrowdingTerm(model->microglia[stepKMinus][kPos], model->parametersModel.avgMic) * model->hx * gradientOdcI/model->parametersModel.micDiffusion;
+            valJPlus  = (column != model->xSize-1)? model->microglia[stepKMinus][kPos + 1]: model->microglia[stepKMinus][kPos] + PreventionOverCrowdingTerm(model->microglia[stepKMinus][kPos], model->parametersModel.avgMic) * model->hx * gradientOdcJ/model->parametersModel.micDiffusion;
+            valIMinus = (line != 0)? model->microglia[stepKMinus][kPos - model->xSize]: model->microglia[stepKMinus][kPos] - PreventionOverCrowdingTerm(model->microglia[stepKMinus][kPos], model->parametersModel.avgMic) * model->hx * gradientOdcI/model->parametersModel.micDiffusion;
+            valJMinus = (column != 0)? model->microglia[stepKMinus][kPos - 1]: model->microglia[stepKMinus][kPos] - PreventionOverCrowdingTerm(model->microglia[stepKMinus][kPos], model->parametersModel.avgMic) * model->hx * gradientOdcJ/model->parametersModel.micDiffusion;
             
             microgliaDiffusion = model->parametersModel.micDiffusion*CalculateDiffusion(*model, valJPlus, valJMinus, valIPlus, valIMinus, model->microglia[stepKMinus][kPos]);
             
@@ -536,10 +536,10 @@ void RunModel(structModel *model){
 
             //Diffusion and Chemotaxis CDC
 
-            valIPlus  = (line != model->xSize-1)? model->conventionalDc[stepKMinus][kPos + model->xSize]: model->conventionalDc[stepKMinus][kPos] ;//+ PreventionOverCrowdingTerm(model->conventionalDc[stepKMinus][kPos], model->parametersModel.avgDc) * model->hx * gradientOdcI/model->parametersModel.cDcDiffusion;
-            valJPlus  = (column != model->xSize-1)? model->conventionalDc[stepKMinus][kPos + 1]: model->conventionalDc[stepKMinus][kPos] ;//+ PreventionOverCrowdingTerm(model->conventionalDc[stepKMinus][kPos], model->parametersModel.avgDc) * model->hx * gradientOdcJ/model->parametersModel.cDcDiffusion;
-            valIMinus = (line != 0)? model->conventionalDc[stepKMinus][kPos - model->xSize]: model->conventionalDc[stepKMinus][kPos] ;//- PreventionOverCrowdingTerm(model->conventionalDc[stepKMinus][kPos], model->parametersModel.avgDc) * model->hx * gradientOdcI/model->parametersModel.cDcDiffusion;
-            valJMinus = (column != 0)? model->conventionalDc[stepKMinus][kPos - 1]: model->conventionalDc[stepKMinus][kPos] ;//- PreventionOverCrowdingTerm(model->conventionalDc[stepKMinus][kPos], model->parametersModel.avgDc) * model->hx * gradientOdcJ/model->parametersModel.cDcDiffusion;
+            valIPlus  = (line != model->xSize-1)? model->conventionalDc[stepKMinus][kPos + model->xSize]: model->conventionalDc[stepKMinus][kPos] + PreventionOverCrowdingTerm(model->conventionalDc[stepKMinus][kPos], model->parametersModel.avgDc) * model->hx * gradientOdcI/model->parametersModel.cDcDiffusion;
+            valJPlus  = (column != model->xSize-1)? model->conventionalDc[stepKMinus][kPos + 1]: model->conventionalDc[stepKMinus][kPos] + PreventionOverCrowdingTerm(model->conventionalDc[stepKMinus][kPos], model->parametersModel.avgDc) * model->hx * gradientOdcJ/model->parametersModel.cDcDiffusion;
+            valIMinus = (line != 0)? model->conventionalDc[stepKMinus][kPos - model->xSize]: model->conventionalDc[stepKMinus][kPos] - PreventionOverCrowdingTerm(model->conventionalDc[stepKMinus][kPos], model->parametersModel.avgDc) * model->hx * gradientOdcI/model->parametersModel.cDcDiffusion;
+            valJMinus = (column != 0)? model->conventionalDc[stepKMinus][kPos - 1]: model->conventionalDc[stepKMinus][kPos] - PreventionOverCrowdingTerm(model->conventionalDc[stepKMinus][kPos], model->parametersModel.avgDc) * model->hx * gradientOdcJ/model->parametersModel.cDcDiffusion;
 
             conventionalDcDiffusion = model->parametersModel.cDcDiffusion*CalculateDiffusion(*model, valJPlus, valJMinus, valIPlus, valIMinus, model->conventionalDc[stepKMinus][kPos]);
             
@@ -549,10 +549,10 @@ void RunModel(structModel *model){
 
             //Difussion and Chemotaxis CD8T
 
-            valIPlus  = (line != model->xSize-1)? model->tCytotoxic[stepKMinus][kPos + model->xSize]: model->tCytotoxic[stepKMinus][kPos];// + PreventionOverCrowdingTerm(model->tCytotoxic[stepKMinus][kPos], model->parametersModel.avgT) * model->hx * gradientOdcI/model->parametersModel.tCytoDiffusion;
-            valJPlus  = (column != model->xSize-1)? model->tCytotoxic[stepKMinus][kPos + 1]: model->tCytotoxic[stepKMinus][kPos];// + PreventionOverCrowdingTerm(model->tCytotoxic[stepKMinus][kPos], model->parametersModel.avgT) * model->hx * gradientOdcJ/model->parametersModel.tCytoDiffusion;
-            valIMinus = (line != 0)? model->tCytotoxic[stepKMinus][kPos - model->xSize]: model->tCytotoxic[stepKMinus][kPos];// - PreventionOverCrowdingTerm(model->tCytotoxic[stepKMinus][kPos], model->parametersModel.avgT) * model->hx * gradientOdcI/model->parametersModel.tCytoDiffusion;
-            valJMinus = (column != 0)? model->tCytotoxic[stepKMinus][kPos - 1]: model->tCytotoxic[stepKMinus][kPos];// - PreventionOverCrowdingTerm(model->tCytotoxic[stepKMinus][kPos], model->parametersModel.avgT) * model->hx * gradientOdcJ/model->parametersModel.tCytoDiffusion;
+            valIPlus  = (line != model->xSize-1)? model->tCytotoxic[stepKMinus][kPos + model->xSize]: model->tCytotoxic[stepKMinus][kPos] + PreventionOverCrowdingTerm(model->tCytotoxic[stepKMinus][kPos], model->parametersModel.avgT) * model->hx * gradientOdcI/model->parametersModel.tCytoDiffusion;
+            valJPlus  = (column != model->xSize-1)? model->tCytotoxic[stepKMinus][kPos + 1]: model->tCytotoxic[stepKMinus][kPos] + PreventionOverCrowdingTerm(model->tCytotoxic[stepKMinus][kPos], model->parametersModel.avgT) * model->hx * gradientOdcJ/model->parametersModel.tCytoDiffusion;
+            valIMinus = (line != 0)? model->tCytotoxic[stepKMinus][kPos - model->xSize]: model->tCytotoxic[stepKMinus][kPos] - PreventionOverCrowdingTerm(model->tCytotoxic[stepKMinus][kPos], model->parametersModel.avgT) * model->hx * gradientOdcI/model->parametersModel.tCytoDiffusion;
+            valJMinus = (column != 0)? model->tCytotoxic[stepKMinus][kPos - 1]: model->tCytotoxic[stepKMinus][kPos] - PreventionOverCrowdingTerm(model->tCytotoxic[stepKMinus][kPos], model->parametersModel.avgT) * model->hx * gradientOdcJ/model->parametersModel.tCytoDiffusion;
 
             tCytotoxicDiffusion = model->parametersModel.tCytoDiffusion*CalculateDiffusion(*model, valJPlus, valJMinus, valIPlus, valIMinus, model->tCytotoxic[stepKMinus][kPos]);
             
