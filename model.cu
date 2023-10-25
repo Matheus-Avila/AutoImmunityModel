@@ -507,9 +507,9 @@ __global__ void kernelPDE(int kTime, float *tCytoSumVessel, float *activatedDCSu
         // Diffusion and Chemotaxis Mic
 
         valIPlus = (line != constXSize - 1) ? devMicrogliaKMinus[thrIdx + constXSize] : devMicrogliaKMinus[thrIdx] + ( devMicrogliaKMinus[thrIdx] / (devMicrogliaKMinus[thrIdx] + modelParams.avgMic) ) * constHx * gradientOdcI/modelParams.micDiffusion;
-        valJPlus = (column != constXSize - 1) ? devMicrogliaKMinus[thrIdx + 1] : devMicrogliaKMinus[thrIdx] + ( devMicrogliaKMinus[thrIdx] / (devMicrogliaKMinus[thrIdx] + modelParams.avgMic) ) * constHx * gradientOdcI/modelParams.micDiffusion;
+        valJPlus = (column != constXSize - 1) ? devMicrogliaKMinus[thrIdx + 1] : devMicrogliaKMinus[thrIdx] + ( devMicrogliaKMinus[thrIdx] / (devMicrogliaKMinus[thrIdx] + modelParams.avgMic) ) * constHx * gradientOdcJ/modelParams.micDiffusion;
         valIMinus = (line != 0) ? devMicrogliaKMinus[thrIdx - constXSize] : devMicrogliaKMinus[thrIdx] - ( devMicrogliaKMinus[thrIdx] / (devMicrogliaKMinus[thrIdx] + modelParams.avgMic) ) * constHx * gradientOdcI/modelParams.micDiffusion;
-        valJMinus = (column != 0) ? devMicrogliaKMinus[thrIdx - 1] : devMicrogliaKMinus[thrIdx] - ( devMicrogliaKMinus[thrIdx] / (devMicrogliaKMinus[thrIdx] + modelParams.avgMic) ) * constHx * gradientOdcI/modelParams.micDiffusion;
+        valJMinus = (column != 0) ? devMicrogliaKMinus[thrIdx - 1] : devMicrogliaKMinus[thrIdx] - ( devMicrogliaKMinus[thrIdx] / (devMicrogliaKMinus[thrIdx] + modelParams.avgMic) ) * constHx * gradientOdcJ/modelParams.micDiffusion;
 
         float microgliaDiffusion = 0;
         float microgliaChemotaxis = 0;
@@ -522,9 +522,9 @@ __global__ void kernelPDE(int kTime, float *tCytoSumVessel, float *activatedDCSu
         // Diffusion and Chemotaxis CDC
 
         valIPlus = (line != constXSize - 1) ? devConventionalDCKMinus[thrIdx + constXSize] : devConventionalDCKMinus[thrIdx] + ( devConventionalDCKMinus[thrIdx] / (devConventionalDCKMinus[thrIdx] + modelParams.avgDc) ) * constHx * gradientOdcI/modelParams.cDcDiffusion;
-        valJPlus = (column != constXSize - 1) ? devConventionalDCKMinus[thrIdx + 1] : devConventionalDCKMinus[thrIdx] + ( devConventionalDCKMinus[thrIdx] / (devConventionalDCKMinus[thrIdx] + modelParams.avgDc) ) * constHx * gradientOdcI/modelParams.cDcDiffusion;
+        valJPlus = (column != constXSize - 1) ? devConventionalDCKMinus[thrIdx + 1] : devConventionalDCKMinus[thrIdx] + ( devConventionalDCKMinus[thrIdx] / (devConventionalDCKMinus[thrIdx] + modelParams.avgDc) ) * constHx * gradientOdcJ/modelParams.cDcDiffusion;
         valIMinus = (line != 0) ? devConventionalDCKMinus[thrIdx - constXSize] : devConventionalDCKMinus[thrIdx] - ( devConventionalDCKMinus[thrIdx] / (devConventionalDCKMinus[thrIdx] + modelParams.avgDc) ) * constHx * gradientOdcI/modelParams.cDcDiffusion;
-        valJMinus = (column != 0) ? devConventionalDCKMinus[thrIdx - 1] : devConventionalDCKMinus[thrIdx] - ( devConventionalDCKMinus[thrIdx] / (devConventionalDCKMinus[thrIdx] + modelParams.avgDc) ) * constHx * gradientOdcI/modelParams.cDcDiffusion;
+        valJMinus = (column != 0) ? devConventionalDCKMinus[thrIdx - 1] : devConventionalDCKMinus[thrIdx] - ( devConventionalDCKMinus[thrIdx] / (devConventionalDCKMinus[thrIdx] + modelParams.avgDc) ) * constHx * gradientOdcJ/modelParams.cDcDiffusion;
 
         float conventionalDcDiffusion = 0;
         float conventionalDcChemotaxis = 0;
@@ -538,9 +538,9 @@ __global__ void kernelPDE(int kTime, float *tCytoSumVessel, float *activatedDCSu
         // Difussion and Chemotaxis CD8T
 
         valIPlus = (line != constXSize - 1) ? devTCytotoxicKMinus[thrIdx + constXSize] : devTCytotoxicKMinus[thrIdx] + ( devTCytotoxicKMinus[thrIdx] / (devTCytotoxicKMinus[thrIdx] + modelParams.avgT) ) * constHx * gradientOdcI/modelParams.tCytoDiffusion;
-        valJPlus = (column != constXSize - 1) ? devTCytotoxicKMinus[thrIdx + 1] : devTCytotoxicKMinus[thrIdx] + ( devTCytotoxicKMinus[thrIdx] / (devTCytotoxicKMinus[thrIdx] + modelParams.avgT) ) * constHx * gradientOdcI/modelParams.tCytoDiffusion;
+        valJPlus = (column != constXSize - 1) ? devTCytotoxicKMinus[thrIdx + 1] : devTCytotoxicKMinus[thrIdx] + ( devTCytotoxicKMinus[thrIdx] / (devTCytotoxicKMinus[thrIdx] + modelParams.avgT) ) * constHx * gradientOdcJ/modelParams.tCytoDiffusion;
         valIMinus = (line != 0) ? devTCytotoxicKMinus[thrIdx - constXSize] : devTCytotoxicKMinus[thrIdx] - ( devTCytotoxicKMinus[thrIdx] / (devTCytotoxicKMinus[thrIdx] + modelParams.avgT) ) * constHx * gradientOdcI/modelParams.tCytoDiffusion;
-        valJMinus = (column != 0) ? devTCytotoxicKMinus[thrIdx - 1] : devTCytotoxicKMinus[thrIdx] - ( devTCytotoxicKMinus[thrIdx] / (devTCytotoxicKMinus[thrIdx] + modelParams.avgT) ) * constHx * gradientOdcI/modelParams.tCytoDiffusion;
+        valJMinus = (column != 0) ? devTCytotoxicKMinus[thrIdx - 1] : devTCytotoxicKMinus[thrIdx] - ( devTCytotoxicKMinus[thrIdx] / (devTCytotoxicKMinus[thrIdx] + modelParams.avgT) ) * constHx * gradientOdcJ/modelParams.tCytoDiffusion;
 
         float tCytotoxicDiffusion = 0;
         float tCytotoxicChemotaxis = 0;
