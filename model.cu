@@ -518,7 +518,7 @@ __global__ void kernelPDE(int kTime, float *tCytoSumVessel, float *activatedDCSu
         CalculateDiffusion(*constHx, valJPlus, valJMinus, valIPlus, valIMinus, devMicrogliaKMinusThrIdx, &microgliaDiffusion);
         CalculateChemottaxis(*constHx, valJPlus, valJMinus, valIPlus, valIMinus, devMicrogliaKMinusThrIdx,
                              modelParams->avgMic, gradientOdcI, gradientOdcJ, &microgliaChemotaxis);
-        microgliaChemotaxis += diffusionODC * (devMicrogliaKMinusThrIdx/ (devMicrogliaKMinusThrIdx +350));
+        microgliaChemotaxis += diffusionODC * (devMicrogliaKMinusThrIdx/ (devMicrogliaKMinusThrIdx +modelParams->avgMic));
         microgliaChemotaxis *= modelParams->chi;
         microgliaDiffusion *= modelParams->micDiffusion;
         // Diffusion and Chemotaxis CDC
@@ -533,7 +533,7 @@ __global__ void kernelPDE(int kTime, float *tCytoSumVessel, float *activatedDCSu
         CalculateDiffusion(*constHx, valJPlus, valJMinus, valIPlus, valIMinus, devConventionalDCKMinusThrIdx, &conventionalDcDiffusion);
         CalculateChemottaxis(*constHx, valJPlus, valJMinus, valIPlus, valIMinus, devConventionalDCKMinusThrIdx,
                              modelParams->avgDc, gradientOdcI, gradientOdcJ, &conventionalDcChemotaxis);
-        conventionalDcChemotaxis += diffusionODC * (devConventionalDCKMinusThrIdx/ (devConventionalDCKMinusThrIdx + 33));
+        conventionalDcChemotaxis += diffusionODC * (devConventionalDCKMinusThrIdx/ (devConventionalDCKMinusThrIdx + modelParams->avgDc));
         conventionalDcChemotaxis *= modelParams->chi;
         conventionalDcDiffusion *= modelParams->cDcDiffusion;
 
@@ -549,7 +549,7 @@ __global__ void kernelPDE(int kTime, float *tCytoSumVessel, float *activatedDCSu
         CalculateDiffusion(*constHx, valJPlus, valJMinus, valIPlus, valIMinus, devTCytotoxicKMinusThrIdx, &tCytotoxicDiffusion);
         CalculateChemottaxis(*constHx, valJPlus, valJMinus, valIPlus, valIMinus, devTCytotoxicKMinusThrIdx,
                              modelParams->avgT, gradientOdcI, gradientOdcJ, &tCytotoxicChemotaxis);
-        tCytotoxicChemotaxis += diffusionODC * (devTCytotoxicKMinusThrIdx/ (devTCytotoxicKMinusThrIdx + 37));
+        tCytotoxicChemotaxis += diffusionODC * (devTCytotoxicKMinusThrIdx/ (devTCytotoxicKMinusThrIdx + modelParams->avgT));
         tCytotoxicChemotaxis *= modelParams->chi;
         tCytotoxicDiffusion *= modelParams->tCytoDiffusion;
 
