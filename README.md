@@ -10,7 +10,7 @@ Compile: gcc -O3 -o main main.c model.c
 # omp
 
 Stable parallel version of the code in OMP. 
-Compile: gcc -O3 -fopenmp -o main mainOMP.c modelOMP.c
+Compile: gcc -O3 -fopenmp -o main mainOMP.c modelOMP.c -lm
 Execute: ./main [ThreadsNum]
 
 # mpi
