@@ -6,12 +6,12 @@
 
 structParameters ParametersInitialize(){
     structParameters params;
-    params.micDiffusion = 3*24*6.6*pow(10,-5); //Difusao
-    params.antibodyDiffusion = 9.6*24*6.6*pow(10,-4);
-    params.cDcDiffusion = 9.6*24*6.6*pow(10,-6);
-    params.aDcDiffusion = 9.6*24*6.6*pow(10,-5);
-    params.tCytoDiffusion = 6.6*24*6.6*pow(10,-5);
-    params.chi = 0.033; //Quimiotaxia
+    params.micDiffusion = 0.015206;
+    params.antibodyDiffusion = 0.15206;
+    params.cDcDiffusion = 0.015206;
+    params.aDcDiffusion = 0.015206;
+    params.tCytoDiffusion = 0.015206;
+    params.chi = 0.03;
     
     params.muCDc = 60*24*3*pow(10,-5);
     params.muMic = 60*24*3*pow(10,-6);
