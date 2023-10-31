@@ -3,6 +3,9 @@ import numpy as np
 import sys
 # sns.set()
 
+t_exp = [0, 14, 28, 56]
+y_exp = [58.99657719329848, 1.883624572149165, 3.355791749234345, 1.4491082687803782]
+
 T_final = int(sys.argv[1])
 h_t = float(sys.argv[2])
 
@@ -47,10 +50,12 @@ for i in range(0,len(TL_c)):
     FL_vetor[i] = FL[i]
     PL_vetor[i] = PL[i]
     DL_vetor[i] = DL[i]
-plt.plot(t,TL_c_vetor, "-r")
+plt.plot(t,TL_c_vetor, "-r", label= "model")
 plt.title("Lymph node - T $CD8^+$")
 plt.xlabel("Time (days)")
 plt.ylabel("Concentration (Cells/$mm^2$)")
+plt.plot(t_exp, y_exp, "*", label= "experimental data")
+plt.legend()
 plt.savefig('result/t_cito_linfonodo.png', dpi = 300)
 plt.clf()
 
