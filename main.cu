@@ -48,7 +48,7 @@ structParameters ParametersInitialize(){
     params.rhoP = 3;
     params.rhoAntibody = 5.1*pow(10,-2);
     params.stableTHelper = 70;
-    params.stableTCytotoxic = 40;
+    params.stableTCytotoxic = 58.9;
     params.stableB = 25;
     params.stableP = 2.5;
     params.V_LN = 40;
