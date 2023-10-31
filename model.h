@@ -24,6 +24,8 @@ typedef struct structParameters
     float gammaD;
     float gammaAntibody;
     float gammaT;
+    
+    float epslon_x;
 
     float avgT;
     float avgDc;

@@ -21,7 +21,7 @@ structParameters ParametersInitialize(){
     
     params.gammaD = 0.1;
     params.gammaAntibody = 0.3;
-    params.gammaT = 0.1;
+    params.gammaT = 0.540581;
 
     params.avgT = 37;
     params.avgDc = 33;
@@ -34,11 +34,11 @@ structParameters ParametersInitialize(){
     params.cDl = 0.1;
     params.cF = 0.1;
     params.alphaTHelper = 0.1;
-    params.alphaTCytotoxic = 0.1;
+    params.alphaTCytotoxic = 0.00501558;
     params.alphaB = 0.1;
     params.alphaP = 1;
     params.bTHelper = 0.17;
-    params.bTCytotoxic = 0.001;
+    params.bTCytotoxic = 0.230716;
     params.bRho = 0.6;
     params.bRhoB = 3.02;
     params.bRhoP = 1.02;
@@ -48,15 +48,18 @@ structParameters ParametersInitialize(){
     params.rhoP = 3;
     params.rhoAntibody = 5.1*pow(10,-2);
     params.stableTHelper = 70;
-    params.stableTCytotoxic = 40;
+    params.stableTCytotoxic = 28.4;
     params.stableB = 25;
     params.stableP = 2.5;
     params.V_LN = 40;
     params.V_BV = 0;
     params.V_PV = 0;
 
+    params.epslon_x = 0.306096;
+
     return params;
 }
+
 
 void WriteTime(float ExecTime){
     FILE *fileTime;
@@ -86,7 +89,7 @@ void clearPhgTxt(){
 int main(){
     clearPhgTxt();
     float ht = 0.0002, hx = 0.5;
-    int numFigs = 28, numPointsLN = 1000, time = 28, space = 20, numStepsLN = 1, saveFigs = 1;
+    int numFigs = 56, numPointsLN = 1000, time = 56, space = 20, numStepsLN = 1, saveFigs = 1;
     structParameters parameters = ParametersInitialize();
     structModel model = ModelInitialize(parameters, ht, hx, time, space, numFigs, numPointsLN, numStepsLN, saveFigs);
     RunModel(&model);

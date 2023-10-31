@@ -1,0 +1,14 @@
+g++ -O3 -DNDEBUG -std=c++17 main.cpp -pthread -lpagmo -lboost_serialization -ltbb  -I /opt/ohpc/pub/libs/gnu12/openmpi4/boost/1.80.0/include/ -L /usr/local/lib64 -L /opt/ohpc/pub/libs/gnu12/openmpi4/boost/1.80.0/lib -Wl,-rpath,/usr/local/lib64 -L. -l model -o main
+export LD_LIBRARY_PATH=/opt/ohpc/pub/libs/gnu12/openmpi4/boost/1.80.0/lib:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=/usr/local/lib64:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=/usr/local/lib64:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=/opt/ohpc/pub/libs/gnu12/openmpi4/boost/1.80.0/lib:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=/opt/ohpc/pub/libs/gnu12/openmpi4/boost/1.80.0/lib:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=/opt/ohpc/pub/libs/pagmo2:/opt/ohpc/pub/libs/gnu12/openmpi14/boost/1.80.0/lib/:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$(pwd)
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/ohpc/pub/utils/oneTBB/libs
+
+nvcc -c -O3 -use_fast_math -o model.o model.cu -Xcompiler -fPIC &&
+nvcc -shared -o libmodel.so model.o
+
+
