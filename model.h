@@ -14,6 +14,8 @@ typedef struct structParameters
     float aDcDiffusion;
     float tCytoDiffusion;
     float antibodyDiffusion;
+
+    float epslon_x;
     
     float lambAntMic;
     float bD;
@@ -24,8 +26,6 @@ typedef struct structParameters
     float gammaD;
     float gammaAntibody;
     float gammaT;
-    
-    float epslon_x;
 
     float avgT;
     float avgDc;
@@ -144,7 +144,9 @@ void InitialConditionTissueMicroglia(structModel* model);
 
 void InitialConditionLymphNode(structModel* model, float dendriticLN, float thelperLN, float tcytotoxicLN, float bcellLN, float plasmacellLN, float antibodyLN);
 
-void RunModel(structModel *model);
+int isIn(int ktime, int vec[], int size); 
+
+float* RunModel(structModel *model, int* save_times, int size);
 
 void WritePopulation(structModel model, float *population, char* fileName, char* bufferTime);
 

@@ -353,7 +353,7 @@ float* EquationsLymphNode(structModel model, float* populationLN, int stepPos){
     //T Cytotoxic
     float tCytoActivation = model.parametersModel.bTCytotoxic * (model.parametersModel.rhoTCytotoxic*tCytoLN*dcLN - tCytoLN*dcLN);
     float tCytoHomeostasis = model.parametersModel.alphaTCytotoxic * (model.parametersModel.stableTCytotoxic - tCytoLN);
-    float tCytoMigration = model.parametersModel.gammaT * (tCytoLN - model.tCytotoxicTissueVessels) * (float)(model.parametersModel.V_BV/model.parametersModel.V_LN) - (1 * model.parametersModel.epslon_x);
+    float tCytoMigration = model.parametersModel.gammaT * (tCytoLN - model.tCytotoxicTissueVessels) * (float)(model.parametersModel.V_BV/model.parametersModel.V_LN) * (1 - model.parametersModel.epslon_x);
     result[1] = tCytoActivation + tCytoHomeostasis - tCytoMigration;
 
     //T Helper
@@ -463,8 +463,8 @@ void SavingData(structModel model){
 __device__ __constant__ float upperNeumannBC, lowerNeumannBC, leftNeumannBC, rightNeumannBC, constHx, constHt, consthx2;
 __device__ __constant__ int constXSize;
 __device__ __constant__ structParameters modelParams;
-const int threadsPerBlock = 64;
-const int numBlocks = 16;
+const int threadsPerBlock = 32;
+const int numBlocks = 32;
 
 __global__ void kernelPDE(int kTime, float *tCytoSumVessel, float *activatedDCSumVessel, float *antibodySumVessel, float *devActivatedDCLymphNode, float *devAntibodyLymphNode, float *devTCytotoxicLymphNode, float *devThetaPV, float *devThetaBV, float *devMicrogliaKMinus, float *devMicrogliaKPlus, float *devTCytotoxicKMinus, float *devTCytotoxicKPlus, float *devAntibodyKMinus, float *devAntibodyKPlus, float *devConventionalDCKMinus, float *devConventionalDCKPlus, float *devActivatedDCKMinus, float *devActivatedDCKPlus, float *devOligodendrocyteKMinus, float *devOligodendrocyteKPlus)
 {
@@ -597,7 +597,7 @@ __global__ void kernelPDE(int kTime, float *tCytoSumVessel, float *activatedDCSu
         devActivatedDCKPlus[thrIdx] = devActivatedDCKMinusThrIdx + constHt * (activatedDCDiffusion + conventionalDcActivation + activatedDcMigration - activatedDcClearance);
 
         // CD8 T update
-        float tCytotoxicMigration = devThetaBV[thrIdx] * modelParams.gammaT * (*devTCytotoxicLymphNode - devTCytotoxicKMinusThrIdx);
+        float tCytotoxicMigration = devThetaBV[thrIdx] * modelParams.gammaT * (*devTCytotoxicLymphNode - devTCytotoxicKMinusThrIdx) * (1 - modelParams.epslon_x);
 
         devTCytotoxicKPlus[thrIdx] = devTCytotoxicKMinusThrIdx + constHt * (tCytotoxicDiffusion - tCytotoxicChemotaxis + tCytotoxicMigration);
 
@@ -650,9 +650,22 @@ __global__ void kernelPDE(int kTime, float *tCytoSumVessel, float *activatedDCSu
     }
 }
 
-void RunModel(structModel *model)
+
+int isIn(int ktime, int vec[], int size) {
+    for(int i = 0; i < size; i++) {
+        if(ktime == vec[i]) return 1;
+    }
+    return 0;
+}
+
+float* RunModel(structModel *model, int* save_times, int size)
 {
     // Save IC
+    float* RESULT = (float*) malloc(size * sizeof(float));
+    for(int i = 0; i < size; i++) {
+        RESULT[i] = 0;
+    }
+    int RESULT_INDEX = 0;
     if(model->saveFigs)
         WriteFiles(*model, model->oligodendrocyte[0], model->microglia[0], model->tCytotoxic[0], model->antibody[0], model->conventionalDc[0], model->activatedDc[0], 0);
 
@@ -729,6 +742,7 @@ void RunModel(structModel *model)
     activatedDCVessel = (float *)calloc(numBlocks, sizeof(float));
     antibodyVessel = (float *)calloc(numBlocks, sizeof(float));
     tCytotoxicVessel = (float *)calloc(numBlocks, sizeof(float));
+    printf("T SIZE: %d", model->tSize);
     for (int kTime = 1; kTime <= model->tSize; kTime++)
     {	
         // solve lymphnode
@@ -803,6 +817,7 @@ void RunModel(structModel *model)
             }
             WriteFiles(*model, model->oligodendrocyte[stepKPlus], model->microglia[stepKPlus], model->tCytotoxic[stepKPlus], model->antibody[stepKPlus], model->conventionalDc[stepKPlus], model->activatedDc[stepKPlus], kTime);
         }else{
+
             if (kTime == model->tSize){
                 if (stepKPlus % 2 == 1)
                 {
@@ -824,7 +839,13 @@ void RunModel(structModel *model)
                 }
                 if(model->saveFigs)
                     WriteFiles(*model, model->oligodendrocyte[stepKPlus], model->microglia[stepKPlus], model->tCytotoxic[stepKPlus], model->antibody[stepKPlus], model->conventionalDc[stepKPlus], model->activatedDc[stepKPlus], kTime);
+
+            
             }
+        }
+        if(isIn(kTime, save_times, size)) {
+            RESULT[RESULT_INDEX] = model->tCytotoxicLymphNode[stepKPlus];
+            RESULT_INDEX++;
         }
         stepKMinus += 1;
         stepKMinus = stepKMinus % 2;
@@ -833,6 +854,7 @@ void RunModel(structModel *model)
     model->elapsedTimeCopiesDeviceToHost = elapsedTimeCopiesDeviceToHost;
     model->elapsedTimeCopiesHostToDevice = elapsedTimeCopiesHostToDevice;
     model->execTimeKernel = elapsedTimeKernel/1000;
+    return RESULT;
     printf("Computation Done!!\n");
     SavingData(*model);
     if(model->saveFigs){
