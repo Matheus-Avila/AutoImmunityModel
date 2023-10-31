@@ -45,7 +45,7 @@ typedef struct structParameters
     float bRho;
     float bRhoB;
     float bRhoP;
-    float epsilonx
+    float epsilonx;
     float rhoTHelper;
     float rhoTCytotoxic;
     float rhoB;
