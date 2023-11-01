@@ -53,8 +53,8 @@ int main(){
     std::cout << prob << std::endl;
 
     algorithm algo{de1220(10)};
+    algo.set_verbosity(1);
     archipelago archi{8u, algo, prob, 10u};
-
     archi.evolve(5);
 
 

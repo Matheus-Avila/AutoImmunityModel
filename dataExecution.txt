@@ -1,10 +1,10 @@
 Execution Time of Kernel = 0.000000 secs
-Execution Time of Lymph Node = 0.315323 secs
-Execution Time of Copies Device to Host = 0.307936 secs
-Execution Time of Copies Host to Device = 0.308298 secs
-Days = 56 - Space = 20 - ht = 0.000200, hx = 0.500000, Ht_JumpStep = 1
+Execution Time of Lymph Node = 0.125849 secs
+Execution Time of Copies Device to Host = 0.124459 secs
+Execution Time of Copies Host to Device = 0.123778 secs
+Days = 28 - Space = 20 - ht = 0.000200, hx = 0.500000, Ht_JumpStep = 1
 Lymph node populations
-DC = 0.000000, TCD8 = 0.792918, TCD4 = 58.900002, B Cell = 25.000000, Plasma cell = 2.499404, IgG = 0.309775
+DC = 0.000000, TCD8 = 0.361825, TCD4 = 58.900002, B Cell = 25.000000, Plasma cell = 2.499404, IgG = 0.309775
 Tissue populations
 ODC = 0.000000, Microglia = 7116.663574, ConventionalDC = 0.000000, ActivatedDC = 0.000000, TCD8 = 0.000000, IgG = 0.000000
 Parameters

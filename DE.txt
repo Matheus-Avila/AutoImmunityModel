@@ -11,4 +11,8 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/ohpc/pub/utils/oneTBB/libs
 nvcc -c -O3 -use_fast_math -o model.o model.cu -Xcompiler -fPIC &&
 nvcc -shared -o libmodel.so model.o
 
-
+Gamma T 0.632192 Epslon: 0.183326 Alpha: 0.00250327 Result: 4.44784
+Gamma T 0.464534 Epslon: 0.402027 Alpha: 0.0258494 Result: 3.46744
+Gamma T 0.698194 Epslon: 0.541042 Alpha: 0.0111454 Result: 3.57103
+Gamma T 0.899015 Epslon: 0.402027 Alpha: 0.0258494 Result: 3.21472
+Gamma T 0.828149 Epslon: 0.359755 Alpha: 0.0458741 Result: 2.44899

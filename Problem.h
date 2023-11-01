@@ -4,6 +4,7 @@
 #include <fstream>
 #include <string>
 #include <float.h>
+#include <vector>
 #include "math.h"
 
 structParameters ParametersInitialize(){
@@ -37,11 +38,11 @@ structParameters ParametersInitialize(){
     params.cDl = 0.1;
     params.cF = 0.1;
     params.alphaTHelper = 0.1;
-    params.alphaTCytotoxic = 0.00995612;
+    params.alphaTCytotoxic = 0.1;
     params.alphaB = 0.1;
     params.alphaP = 1;
     params.bTHelper = 0.17;
-    params.bTCytotoxic = 0.00197612;
+    params.bTCytotoxic = 0.001;
     params.bRho = 0.6;
     params.bRhoB = 3.02;
     params.bRhoP = 1.02;
@@ -57,10 +58,12 @@ structParameters ParametersInitialize(){
     params.V_LN = 40;
     params.V_BV = 0;
     params.V_PV = 0;
-    params.epslon_x = 0.457328;
+
+    params.epslon_x = 0.1;
 
     return params;
 }
+
 
 float sumVector(float vector[], int sizeX, int sizeY) {
     float sum = 0.0;
@@ -124,33 +127,32 @@ class MSProblemTCytoParams : public pagmo::problem {
         std::pair<vector_double, vector_double> get_bounds() const
         {
             // 
-            return {{0.0001, 0.0001, 0.1, 0.05}, {0.5, 0.5, 0.99, 0.8}};
+            return {{0.0001, 0.01, 0.005}, {1.0, 0.99, 1.0}};
         }
 
-        vector_double fitness(const vector_double& variables) const {
+        std::vector<double> fitness(const vector_double& variables) const {
             double alpha = variables[0];
-            double beta = variables[1];
-            double epslon = variables[2];
-            double gammaT = variables[3];
+            double epslon = variables[1];
+            double gammaT = variables[2];
             float ht = 0.0002, hx = 0.5;
-            int numFigs = 28, numPointsLN = 1000, time = 56, space = 20, numStepsLN = 100, saveFigs = 0;
+            int numFigs = 56, numPointsLN = 1000, time = 56, space = 20, numStepsLN = 100, saveFigs = 0;
             structParameters parameters = ParametersInitialize();
-            parameters.alphaTHelper = alpha;
-            parameters.bTHelper = beta;
+            parameters.alphaTCytotoxic = alpha;
             parameters.epslon_x = epslon;
             parameters.gammaT = gammaT;
             structModel model = ModelInitialize(parameters, ht, hx, time, space, numFigs, numPointsLN, numStepsLN, saveFigs);
             int size = 3;
-            int save_times[3] = {70000, 140000 - 1, 280000 - 1};
-            float* result_ = RunModel(&model, save_times, size);
-            if(isnan(result_[0])) result_[0] = DBL_MAX;
-            if(isnan(result_[1])) result_[1] = DBL_MAX;
-            if(isnan(result_[2])) result_[2] = DBL_MAX;
-            //std::cout << std::endl << "Result 1: " << result_[0] << " Result 2: " << result_[1] << " Result 3: " << result_[2] << std::endl;
-            double result = (double)(pow(1.883 - result_[0], 2) + pow(3.35 - result_[1], 2) + pow(1.44 - result_[2], 2));
-            result = sqrt(result);
-            std::cout << "Gamma T " << gammaT << " Epslon: " << epslon << " Alpha: " << alpha << " Beta: " << beta << " Result: " << result << std::endl;
-            return {result};
+            int save_times[3] = {70000, 140000, 280000};
+            
+            std::cout << "Gamma T " << gammaT << " Epslon: " << epslon << " Alpha: " << alpha << std::endl;
+            float points[size] = {6.7, 9.7, 9.5};
+            float error = RunModel(&model, save_times, size, points);
+            vector_double _error = (vector_double) error;
+            std::vector<double> v;
+            v.resize(1);
+            std::cout << "Error: " << error << std::endl;
+            v[0] = (double)error;
+            return v;
         }   
 
             

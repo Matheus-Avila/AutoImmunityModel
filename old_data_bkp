@@ -1,0 +1,160 @@
+
+ realtype amax_l = 0;
+    realtype amax_h = 10;
+
+    realtype r_l = 0.3;
+    realtype r_h = 1;
+
+    realtype ti1_l = 0;
+    realtype ti1_h = arrlen(infected) - first_day - 14;
+
+    realtype delta_l = 2;
+    realtype delta_h = arrlen(infected) - first_day;
+
+    realtype e_l = 0.0;
+    realtype e_h = 1e-3;
+
+    realtype theta_l = 0.001;
+    realtype theta_h = 0.4;
+
+    realtype tau1_l = 2;
+    realtype tau1_h = 14;
+
+    realtype tau2_l = 6;
+    realtype tau2_h = 22;
+
+    realtype tau3_l = 7;
+    realtype tau3_h = 17;
+
+    realtype m_l = 0.01;
+    //	realtype m_h = 0.034;
+    realtype m_h = 0.02;
+
+
+    if(strcasecmp(country, "MG") == 0) {
+        for(int i = 0; i < 113; i++) {
+            mask[i] = 0.0;
+        }
+    }
+
+    if(strcasecmp(country, "JF") == 0) {
+        for(int i = 0; i < 115; i++) {
+            mask[i] = 0.0;
+        }
+    }
+
+
+
+    if(strcasecmp(country, "br") == 0) {
+        if(first_day == -1)
+            first_day = 55;
+        first_day_fit = 55;
+        country_full = strdup("Brazil");
+        total_population = 209.3e6;
+        sdsfree(country);
+        country = sdsnew("BR");
+        mask_path = sdsdup(data_dir);
+        mask_path = sdscatfmt(mask_path, "/brazil_mask.txt", country_full);
+        world_path = sdscat(world_path, "/active_world.txt");
+    } else if(strcasecmp(country, "it") == 0) {
+        if(first_day == -1)
+            first_day = 32;
+        country_full = strdup("Italy");
+        total_population = 60.48e6;
+        sdsfree(country);
+        country = sdsnew("IT");
+    } else if(strcasecmp(country, "ko") == 0) {
+        if(first_day == -1)
+            first_day = 29;
+        country_full = strdup("Korea");
+        total_population = 51.47e6;
+        sdsfree(country);
+        country = sdsnew("KO");
+    } else if(strcasecmp(country, "ge") == 0) {
+        if(first_day == -1)
+            first_day = 39;
+        country_full = strdup("Germany");
+        total_population = 83.02e6;
+        sdsfree(country);
+        country = sdsnew("GE");
+    } else if(strcasecmp(country, "au") == 0) {
+        if(first_day == -1)
+            first_day = 48;
+        country_full = strdup("Australia");
+        total_population = 25459367;
+        sdsfree(country);
+        country = sdsnew("AU");
+    } else if(strcasecmp(country, "nz") == 0) {
+        if(first_day == -1)
+            first_day = 60;
+        total_population = 4.886e6;
+        country_full = strdup("NewZealand");
+        sdsfree(country);
+        country = sdsnew("NZ");
+        best_path = sdscatprintf(sdsempty(), "params_new_zealand_%d.txt", opt_last);
+        mask_path = sdsdup(data_dir);
+        mask_path = sdscatfmt(mask_path, "/nz_mask.txt", country_full);
+    } else if(strcasecmp(country, "sp") == 0) {
+        if(first_day == -1)
+            first_day = 40;
+        total_population = 46752457;
+        country_full = strdup("Spain");
+        sdsfree(country);
+        country = sdsnew("SP");
+    } else if(strcasecmp(country, "at") == 0) {
+        if(first_day == -1)
+            first_day = 46;
+        total_population = 8999666;
+        country_full = strdup("Austria");
+        sdsfree(country);
+        country = sdsnew("AT");
+    } else if(strcasecmp(country, "cz") == 0) {
+        if(first_day == -1)
+            first_day = 51;
+        total_population = 10706419;
+        country_full = strdup("Czechia");
+        sdsfree(country);
+        country = sdsnew("CZ");
+    } else if(strcasecmp(country, "sw") == 0) {
+        if(first_day == -1)
+            first_day = 43;
+        total_population = 8646103;
+        country_full = strdup("Switzerland");
+        sdsfree(country);
+        country = sdsnew("SW");
+    } else if(strcasecmp(country, "tk") == 0) {
+        if(first_day == -1)
+            first_day = 57;
+        total_population = 84217684;
+        country_full = strdup("Turkey");
+        sdsfree(country);
+        country = sdsnew("TK");
+    } else if(strcasecmp(country, "mg") == 0) {
+        if(first_day == -1)
+            first_day = 113;
+        first_day_fit = 113;
+        total_population = 21168791;
+        country_full = strdup("MG");
+        sdsfree(country);
+        country = sdsnew("MG");
+        world_path = sdscat(world_path, "/active_Brazil.txt");
+    } else if(strcasecmp(country, "sj") == 0) {
+        if(first_day == -1)
+            first_day = 75;
+        first_day_fit = 47;
+        total_population = 90082;
+        country_full = strdup("SJ");
+        sdsfree(country);
+        country = sdsnew("SJ");
+        world_path = sdscat(world_path, "/active_MG.txt");
+    } else if(strcasecmp(country, "jf") == 0) {
+        if(first_day == -1)
+            first_day = 115;
+        first_day_fit = 115;
+        total_population = 568873;
+        country_full = strdup("JF");
+        sdsfree(country);
+        country = sdsnew("JF");
+        world_path = sdscat(world_path, "/active_MG.txt");
+    }
+

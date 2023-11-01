@@ -146,7 +146,7 @@ void InitialConditionLymphNode(structModel* model, float dendriticLN, float thel
 
 int isIn(int ktime, int vec[], int size); 
 
-float* RunModel(structModel *model, int* save_times, int size);
+float RunModel(structModel *model, int* save_times, int size, float* points_values);
 
 void WritePopulation(structModel model, float *population, char* fileName, char* bufferTime);
 
