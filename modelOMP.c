@@ -498,6 +498,7 @@ void RunModel(structModel *model){
         auxAdcPV = 0.0, auxAntibodyBV = 0.0, auxTCytotoxicBV = 0.0, sumMicMinus = 0.0, sumMicPlus = 0.0, sumDcMinus = 0.0, sumDcPlus = 0.0, sumTCytoMinus = 0.0, sumTCytoPlus = 0.0, sumProdTermsMic = 0.0, sumProdTermsDc = 0.0, sumProdTermsTC = 0.0;
         #pragma omp barrier
         stepKPlus = kTime%2;
+        stepKMinus = !(stepKPlus && 1);
         #pragma omp for reduction(+:auxTCytotoxicBV, auxAntibodyBV, auxAdcPV, sumMicMinus, sumMicPlus, sumDcMinus, sumDcPlus, sumTCytoMinus, sumTCytoPlus, sumProdTermsMic, sumProdTermsDc, sumProdTermsTC)
         for(int kPos = 0; kPos < model->xSize*model->xSize; kPos++){
             line = (int)kPos/model->xSize;

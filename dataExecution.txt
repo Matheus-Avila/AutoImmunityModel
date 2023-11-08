@@ -1,6 +1,6 @@
 Days = 28 - Space = 20 - ht = 0.000200, hx = 0.500000, Ht_JumpStep = 100
 Lymph node populations
-DC = 2.413522, TCD8 = 28.157188, TCD4 = 0.433359, B Cell = 11.429572, Plasma cell = 39.094524, IgG = 5.108579
+DC = 2.413522, TCD8 = 28.157190, TCD4 = 0.433359, B Cell = 11.429572, Plasma cell = 39.094524, IgG = 5.108579
 Tissue populations
 ODC = 392562.875000, Microglia = 465502.500000, ConventionalDC = 41974.910156, ActivatedDC = 10845.178711, TCD8 = 9354.572266, IgG = 206.614792
 Parameters
