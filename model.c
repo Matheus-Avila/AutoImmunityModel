@@ -859,7 +859,7 @@ void RunModel(structModel *model){
     double htDynamic = 0.0;
 
     while(time < model->tFinal){
-        htDynamic = Euler(time, model, stepKPlus);
+        htDynamic = Euler(time, model, stepKPlus) * .5;
         time += htDynamic;
         if(model->saveFigs && ( (int)time - kTime)){
             WriteFiles(*model, model->oligodendrocyte[stepKPlus], model->microglia[stepKPlus], model->tCytotoxic[stepKPlus], model->antibody[stepKPlus], model->conventionalDc[stepKPlus], model->activatedDc[stepKPlus], kTime);
