@@ -130,6 +130,8 @@ float fFunc(float valuePopulation, float avgPopulation);
 
 float* EquationsLymphNode(structModel* model, int stepPos);
 
+float CalculateHt(structModel model, float stepKMinus);
+
 void SolverLymphNode(structModel *model, int stepPos);
 
 structModel ModelInitialize(structParameters params, float ht, float hx, float time, float space, int numFigs, int numPointsLN, int numStepsLN, int saveFigs);
@@ -144,5 +146,5 @@ void RunModel(structModel *model);
 
 void WritePopulation(structModel model, float *population, char* fileName, char* bufferTime);
 
-void WriteFiles(structModel model, float *oligodendrocyte, float *microglia, float *tCytotoxic, float *antibody, float *conventionalDC, float  *activatedDC, float time);
+void WriteFiles(structModel model, float *oligodendrocyte, float *microglia, float *tCytotoxic, float *antibody, float *conventionalDC, float  *activatedDC, int time);
 #endif
