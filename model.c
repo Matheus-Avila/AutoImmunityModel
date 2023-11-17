@@ -5,12 +5,16 @@
 #include <stdlib.h>
 #include <string.h>
 
-float auxAdcPV = 0.0;
-float auxAntibodyBV = 0.0;
-float auxTCytotoxicBV = 0.0;
+double auxAdcPV = 0.0;
+double auxAntibodyBV = 0.0;
+double auxTCytotoxicBV = 0.0;
 
-float Min(float a, float b){
+double Min(double a, double b){
     return (a < b) ? a : b;
+}
+
+double Max(double a, double b){
+    return (a > b) ? a : b;
 }
 
 void InitialConditionTissueMicroglia(structModel* model){
@@ -18,12 +22,12 @@ void InitialConditionTissueMicroglia(structModel* model){
         int i = (int)k/model->xSize;
         int j = k%model->xSize;
         if(pow((i-(int)(model->xSize/2)),2) + pow((j-(int)(model->xSize/2)),2) < 5 / (model->hx * model->hx)){
-            model->microglia[0][k] = (float)model->parametersModel.avgMic/3;
+            model->microglia[0][k] = (double)model->parametersModel.avgMic/3;
         }
     }
 }
 
-void InitialConditionLymphNode(structModel* model, float dendriticLN, float thelperLN, float tcytotoxicLN, float bcellLN, float plasmacellLN, float antibodyLN){
+void InitialConditionLymphNode(structModel* model, double dendriticLN, double thelperLN, double tcytotoxicLN, double bcellLN, double plasmacellLN, double antibodyLN){
     model->dendriticLymphNode[0] = dendriticLN;
     model->tHelperLymphNode[0] = thelperLN;
     model->tCytotoxicLymphNode[0] = tcytotoxicLN;
@@ -32,14 +36,14 @@ void InitialConditionLymphNode(structModel* model, float dendriticLN, float thel
     model->antibodyLymphNode[0] = antibodyLN;
 }
 
-int VerifyCFL(structParameters parametersModel, float ht, float hx){
+int VerifyCFL(structParameters parametersModel, double ht, double hx){
     if(parametersModel.micDiffusion*ht/(hx*hx) < 0.25 && parametersModel.cDcDiffusion*ht/(hx*hx) < 0.25 && parametersModel.aDcDiffusion*ht/(hx*hx) < 0.25 && parametersModel.tCytoDiffusion*ht/(hx*hx) < 0.25 && parametersModel.chi*ht/hx < 0.5 && parametersModel.chi*ht/(hx*hx) < 0.25)
         return 1;
     return 0;
 }
 
-float CalculateMaxGradOdc(structModel model, int stepKMinus){
-    float max = 0.0;
+double CalculateMaxGradOdc(structModel model, int stepKMinus){
+    double max = 0.0;
     for(int kPos = 0; kPos < model.xSize*model.xSize; kPos++){
         if(model.oligodendrocyte[stepKMinus][kPos] > max)
             max = model.oligodendrocyte[stepKMinus][kPos];
@@ -47,12 +51,12 @@ float CalculateMaxGradOdc(structModel model, int stepKMinus){
     return max;
 }
 
-float CalculateHt(structModel model, float stepKMinus){
-    float maxGradOdc = CalculateMaxGradOdc(model, stepKMinus);
+double CalculateHt(structModel model, double stepKMinus){
+    double maxGradOdc = CalculateMaxGradOdc(model, stepKMinus);
     return Min(model.hx * model.hx / (4 * model.parametersModel.micDiffusion), (4 * model.parametersModel.micDiffusion) / (model.parametersModel.chi * model.parametersModel.chi * maxGradOdc));
 }
 
-void WritePopulation(structModel model, float *population, char* fileName, char* bufferTime){
+void WritePopulation(structModel model, double *population, char* fileName, char* bufferTime){
     FILE *file;
     file = fopen(fileName, "w");
     int k = 0;
@@ -60,7 +64,7 @@ void WritePopulation(structModel model, float *population, char* fileName, char*
         while (k < model.xSize*model.xSize){
             int i = k;
             while (i < k + model.xSize){
-                fprintf(file, "%f ", population[i]);
+                fprintf(file, "%lf ", population[i]);
                 i++;
             }
             fprintf(file,"\n");
@@ -73,12 +77,12 @@ void WritePopulation(structModel model, float *population, char* fileName, char*
     }
 }
 
-void WritePopulationLymphNode(structModel model, float *population, char* fileName){
+void WritePopulationLymphNode(structModel model, double *population, char* fileName){
     FILE *file;
     file = fopen(fileName, "w");
     if(file != NULL){
         for(int i=0;i<model.numPointsLN;i++){
-            fprintf(file, "%f\n", population[i]);
+            fprintf(file, "%lf\n", population[i]);
         }
         fclose(file);
     }else{
@@ -87,7 +91,7 @@ void WritePopulationLymphNode(structModel model, float *population, char* fileNa
     }
 }
 
-void WriteLymphNodeFiles(structModel model, float *dendritic, float *tHelper, float *tCytotoxic, float *bCell, float *plasmaCell, float *antibody){
+void WriteLymphNodeFiles(structModel model, double *dendritic, double *tHelper, double *tCytotoxic, double *bCell, double *plasmaCell, double *antibody){
     WritePopulationLymphNode(model, dendritic, "./result/dendritic.txt");
     WritePopulationLymphNode(model, tHelper, "./result/tHelper.txt");
     WritePopulationLymphNode(model, tCytotoxic, "./result/tCyto.txt");
@@ -100,12 +104,12 @@ void WriteLymphNodeFiles(structModel model, float *dendritic, float *tHelper, fl
     snprintf(buffer, sizeof(buffer), "%d", model.tFinal);
     strcat(command, buffer);
     strcat(command, " ");
-    snprintf(buffer, sizeof(buffer), "%f", (model.tSize/model.numPointsLN)*model.ht);
+    snprintf(buffer, sizeof(buffer), "%lf", (model.tSize/model.numPointsLN)*model.ht);
     strcat(command, buffer);
     system(command);
 }
 
-void WriteFiles(structModel model, float *oligodendrocyte, float *microglia, float *tCytotoxic, float *antibody, float *conventionalDC, float  *activatedDC, int time){
+void WriteFiles(structModel model, double *oligodendrocyte, double *microglia, double *tCytotoxic, double *antibody, double *conventionalDC, double  *activatedDC, int time){
     char buffer[10];
     int day = time;
     
@@ -161,7 +165,7 @@ void PlotResults(structModel model){
     snprintf(buffer, sizeof(buffer), "%d", model.xFinal);
     strcat(command, buffer);
     strcat(command, " ");
-    snprintf(buffer, sizeof(buffer), "%f", model.hx);
+    snprintf(buffer, sizeof(buffer), "%lf", model.hx);
     strcat(command, buffer);
     strcat(command, " ");
     snprintf(buffer, sizeof(buffer), "%d", model.tFinal);
@@ -173,34 +177,34 @@ void PlotResults(structModel model){
 }
 
 
-float PreventionOverCrowdingTerm(float populationPoint, float avgValue){
+double PreventionOverCrowdingTerm(double populationPoint, double avgValue){
     return populationPoint/(populationPoint + avgValue);
 }
 
-float UpDownWind(float frontPoint, float rearPoint, float avgValue){
+double UpDownWind(double frontPoint, double rearPoint, double avgValue){
     return PreventionOverCrowdingTerm(frontPoint, avgValue) - PreventionOverCrowdingTerm(rearPoint, avgValue);
 }
 
-float CalculateChemotaxis(structModel model, float frontJPoint, float rearJPoint, float frontIPoint, float rearIPoint, float ijPoint,\
- float avgValue, float gradientOdcI, float gradientOdcJ){
-    float gradientPopulationI, gradientPopulationJ;
+double CalculateChemotaxis(structModel model, double frontJPoint, double rearJPoint, double frontIPoint, double rearIPoint, double ijPoint,\
+ double avgValue, double gradientOdcI, double gradientOdcJ){
+    double gradientPopulationI, gradientPopulationJ;
     if(gradientOdcI<0)
-        gradientPopulationI = UpDownWind(frontIPoint, ijPoint, avgValue)/(float)model.hx;
+        gradientPopulationI = UpDownWind(frontIPoint, ijPoint, avgValue)/(double)model.hx;
     else
-        gradientPopulationI = UpDownWind(ijPoint, rearIPoint, avgValue)/(float)model.hx;
+        gradientPopulationI = UpDownWind(ijPoint, rearIPoint, avgValue)/(double)model.hx;
     if(gradientOdcJ<0)
-        gradientPopulationJ = UpDownWind(frontJPoint, ijPoint, avgValue)/(float)model.hx;
+        gradientPopulationJ = UpDownWind(frontJPoint, ijPoint, avgValue)/(double)model.hx;
     else
-        gradientPopulationJ = UpDownWind(ijPoint, rearJPoint, avgValue)/(float)model.hx;
+        gradientPopulationJ = UpDownWind(ijPoint, rearJPoint, avgValue)/(double)model.hx;
     return gradientOdcI*gradientPopulationI + gradientOdcJ*gradientPopulationJ;
 }
 
-float CalculateDiffusion(structModel model, float frontJPoint, float rearJPoint, float frontIPoint, float rearIPoint, float ijPoint){
-    return (float)(frontIPoint + frontJPoint - 4*ijPoint + rearIPoint + rearJPoint)/(float)(model.hx*model.hx);
+double CalculateDiffusion(structModel model, double frontJPoint, double rearJPoint, double frontIPoint, double rearIPoint, double ijPoint){
+    return (double)(frontIPoint + frontJPoint - 4*ijPoint + rearIPoint + rearJPoint)/(double)(model.hx*model.hx);
 }
 
-float fFunc(float valuePopulation, float avgPopulation){
-    return valuePopulation*valuePopulation/(float)(valuePopulation + avgPopulation);
+double fFunc(double valuePopulation, double avgPopulation){
+    return valuePopulation*valuePopulation/(double)(valuePopulation + avgPopulation);
 }
 
 void DefineBVPV(structModel *model){
@@ -221,11 +225,11 @@ void DefineBVPV(structModel *model){
     }
     model->parametersModel.V_BV = model->parametersModel.V_BV * model->hx * model->hx;
     model->parametersModel.V_PV = model->parametersModel.V_PV * model->hx * model->hx;
-    printf("bv = %f, pv = %f \n", model->parametersModel.V_BV, model->parametersModel.V_PV);
+    printf("bv = %lf, pv = %lf \n", model->parametersModel.V_BV, model->parametersModel.V_PV);
     WriteBVPV(model, model->thetaBV, model->thetaPV);
 }
 
-void WriteBVPV(structModel *model, float *thetaBV, float *thetaPV){
+void WriteBVPV(structModel *model, double *thetaBV, double *thetaPV){
     FILE *fileBV;
     fileBV = fopen("./result/bv.txt", "w");
     FILE *filePV;
@@ -235,8 +239,8 @@ void WriteBVPV(structModel *model, float *thetaBV, float *thetaPV){
         while (k < model->xSize*model->xSize){
             int i = k;
             while (i < k + model->xSize){
-                fprintf(fileBV, "%f ", thetaBV[i]);
-                fprintf(filePV, "%f ", thetaPV[i]);
+                fprintf(fileBV, "%lf ", thetaBV[i]);
+                fprintf(filePV, "%lf ", thetaPV[i]);
                 i++;
             }
             fprintf(fileBV,"\n");
@@ -255,13 +259,13 @@ void WriteBVPV(structModel *model, float *thetaBV, float *thetaPV){
     snprintf(buffer, sizeof(buffer), "%d", model->xFinal);
     strcat(command, buffer);
     strcat(command, " ");
-    snprintf(buffer, sizeof(buffer), "%f", model->hx);
+    snprintf(buffer, sizeof(buffer), "%lf", model->hx);
     strcat(command, buffer);
     // system(command);
 }
 
 void SavingData(structModel model){
-    float totalMic = 0, totalODC = 0, totalCDC = 0, totalADC = 0, totalIGG = 0, totalCD8 = 0;
+    double totalMic = 0, totalODC = 0, totalCDC = 0, totalADC = 0, totalIGG = 0, totalCD8 = 0;
     for(int kPos = 0; kPos < model.xSize*model.xSize; kPos++){
         totalMic += model.microglia[0][kPos];
         totalODC += model.oligodendrocyte[0][kPos];
@@ -273,17 +277,17 @@ void SavingData(structModel model){
     FILE *file;
     file = fopen("dataExecution.txt", "w");
     if(file != NULL){
-        fprintf(file, "Days = %d - Space = %d - ht = %f, hx = %f, Ht_JumpStep = %d\n", model.tFinal, model.xFinal, model.ht, model.hx, model.numStepsLN);
+        fprintf(file, "Days = %d - Space = %d - ht = %lf, hx = %lf, Ht_JumpStep = %d\n", model.tFinal, model.xFinal, model.ht, model.hx, model.numStepsLN);
         fprintf(file, "Lymph node populations\n");
-        fprintf(file, "DC = %f, TCD8 = %f, TCD4 = %f, B Cell = %f, Plasma cell = %f, IgG = %f\n", model.dendriticLymphNodeSavedPoints[model.numPointsLN-1], model.tCytotoxicLymphNodeSavedPoints[model.numPointsLN-1], model.tHelperLymphNodeSavedPoints[model.numPointsLN-1], model.bCellLymphNodeSavedPoints[model.numPointsLN-1], model.plasmaCellLymphNodeSavedPoints[model.numPointsLN-1], model.antibodyLymphNodeSavedPoints[model.numPointsLN-1]);
+        fprintf(file, "DC = %lf, TCD8 = %lf, TCD4 = %lf, B Cell = %lf, Plasma cell = %lf, IgG = %lf\n", model.dendriticLymphNodeSavedPoints[model.numPointsLN-1], model.tCytotoxicLymphNodeSavedPoints[model.numPointsLN-1], model.tHelperLymphNodeSavedPoints[model.numPointsLN-1], model.bCellLymphNodeSavedPoints[model.numPointsLN-1], model.plasmaCellLymphNodeSavedPoints[model.numPointsLN-1], model.antibodyLymphNodeSavedPoints[model.numPointsLN-1]);
         fprintf(file, "Tissue populations\n");
-        fprintf(file, "ODC = %f, Microglia = %f, ConventionalDC = %f, ActivatedDC = %f, TCD8 = %f, IgG = %f\n", totalODC, totalMic, totalCDC, totalADC, totalCD8, totalIGG);    
+        fprintf(file, "ODC = %lf, Microglia = %lf, ConventionalDC = %lf, ActivatedDC = %lf, TCD8 = %lf, IgG = %lf\n", totalODC, totalMic, totalCDC, totalADC, totalCD8, totalIGG);    
         fprintf(file, "Parameters\n");
-        fprintf(file, "micDiffusion  = %f, antibodyDiffusion = %f, cDcDiffusion = %f, aDcDiffusion = %f, tCytoDiffusion = %f, chi = %f, muCDc = %f, muMic = %f, \
-        rM = %f, rT = %f, lambAntMic = %f, bD = %f, gammaD = %f, gammaAntibody = %f, gammaT = %f,  avgT = %f, avgDc = %f, avgMic = %f, avgOdc = %f,  cMic = %f, \
-        cCDc = %f, cADc = %f, cDl = %f, cF = %f, alphaTHelper = %f, alphaTCytotoxic = %f, alphaB = %f, alphaP = %f, bTHelper = %f, bTCytotoxic = %f, bRho = %f, \
-        bRhoB = %f, bRhoP = %f, rhoTHelper = %f, rhoTCytotoxic = %f, rhoB = %f, rhoP = %f, rhoAntibody = %f, stableTHelper = %f, stableTCytotoxic = %f, \
-        stableB = %f, stableP = %f, V_LN = %d, V_BV = %f, V_PV = %f\n",
+        fprintf(file, "micDiffusion  = %lf, antibodyDiffusion = %lf, cDcDiffusion = %lf, aDcDiffusion = %lf, tCytoDiffusion = %lf, chi = %lf, muCDc = %lf, muMic = %lf, \
+        rM = %lf, rT = %lf, lambAntMic = %lf, bD = %lf, gammaD = %lf, gammaAntibody = %lf, gammaT = %lf,  avgT = %lf, avgDc = %lf, avgMic = %lf, avgOdc = %lf,  cMic = %lf, \
+        cCDc = %lf, cADc = %lf, cDl = %lf, cF = %lf, alphaTHelper = %lf, alphaTCytotoxic = %lf, alphaB = %lf, alphaP = %lf, bTHelper = %lf, bTCytotoxic = %lf, bRho = %lf, \
+        bRhoB = %lf, bRhoP = %lf, rhoTHelper = %lf, rhoTCytotoxic = %lf, rhoB = %lf, rhoP = %lf, rhoAntibody = %lf, stableTHelper = %lf, stableTCytotoxic = %lf, \
+        stableB = %lf, stableP = %lf, V_LN = %d, V_BV = %lf, V_PV = %lf\n",
         model.parametersModel.micDiffusion, model.parametersModel.antibodyDiffusion, model.parametersModel.cDcDiffusion, model.parametersModel.aDcDiffusion, \
         model.parametersModel.tCytoDiffusion, model.parametersModel.chi, model.parametersModel.muCDc, model.parametersModel.muMic, model.parametersModel.rM, \
         model.parametersModel.rT, model.parametersModel.lambAntMic, model.parametersModel.bD, model.parametersModel.gammaD, model.parametersModel.gammaAntibody, \
@@ -301,7 +305,7 @@ void SavingData(structModel model){
     }
 }
 
-structModel ModelInitialize(structParameters params, float ht, float hx, float time, float space, int numFigs, int numPointsLN, int numStepsLN, int saveFigs){
+structModel ModelInitialize(structParameters params, double ht, double hx, double time, double space, int numFigs, int numPointsLN, int numStepsLN, int saveFigs){
     structModel model;
     srand(2);
     model.parametersModel = params;
@@ -323,45 +327,45 @@ structModel ModelInitialize(structParameters params, float ht, float hx, float t
     model.intervalFigures = (int)model.tSize/numFigs;
     model.saveFigs = saveFigs;
 
-    model.microglia = (float**)malloc(BUFFER * sizeof(float*));
-    model.oligodendrocyte = (float**)malloc(BUFFER * sizeof(float*));
-    model.tCytotoxic = (float**)malloc(BUFFER * sizeof(float*));
-    model.antibody = (float**)malloc(BUFFER * sizeof(float*));
-    model.conventionalDc = (float**)malloc(BUFFER * sizeof(float*));
-    model.activatedDc = (float**)malloc(BUFFER * sizeof(float*));
+    model.microglia = (double**)malloc(BUFFER * sizeof(double*));
+    model.oligodendrocyte = (double**)malloc(BUFFER * sizeof(double*));
+    model.tCytotoxic = (double**)malloc(BUFFER * sizeof(double*));
+    model.antibody = (double**)malloc(BUFFER * sizeof(double*));
+    model.conventionalDc = (double**)malloc(BUFFER * sizeof(double*));
+    model.activatedDc = (double**)malloc(BUFFER * sizeof(double*));
 
     model.activatedDCTissueVessels = 0;
     model.tCytotoxicTissueVessels = 0;
     model.antibodyTissueVessels = 0;
 
     for (int index=0;index<BUFFER;++index){
-        model.microglia[index] = (float*)calloc(model.xSize*model.xSize, sizeof(float));
-        model.oligodendrocyte[index] = (float*)calloc(model.xSize*model.xSize, sizeof(float));
-        model.tCytotoxic[index] = (float*)calloc(model.xSize*model.xSize, sizeof(float));
-        model.conventionalDc[index] = (float*)calloc(model.xSize*model.xSize, sizeof(float));
-        model.activatedDc[index] = (float*)calloc(model.xSize*model.xSize, sizeof(float));
-        model.antibody[index] = (float*)calloc(model.xSize*model.xSize, sizeof(float));
+        model.microglia[index] = (double*)calloc(model.xSize*model.xSize, sizeof(double));
+        model.oligodendrocyte[index] = (double*)calloc(model.xSize*model.xSize, sizeof(double));
+        model.tCytotoxic[index] = (double*)calloc(model.xSize*model.xSize, sizeof(double));
+        model.conventionalDc[index] = (double*)calloc(model.xSize*model.xSize, sizeof(double));
+        model.activatedDc[index] = (double*)calloc(model.xSize*model.xSize, sizeof(double));
+        model.antibody[index] = (double*)calloc(model.xSize*model.xSize, sizeof(double));
     }
     //definir BV e PV
-    model.thetaPV = (float*)calloc(model.xSize*model.xSize, sizeof(float));
-    model.thetaBV = (float*)calloc(model.xSize*model.xSize, sizeof(float));
+    model.thetaPV = (double*)calloc(model.xSize*model.xSize, sizeof(double));
+    model.thetaBV = (double*)calloc(model.xSize*model.xSize, sizeof(double));
     DefineBVPV(&model);
     //definir lymph node
-    model.dendriticLymphNodeSavedPoints = (float*)calloc(model.numPointsLN, sizeof(float));
-    model.tCytotoxicLymphNodeSavedPoints = (float*)calloc(model.numPointsLN, sizeof(float));
-    model.tHelperLymphNodeSavedPoints = (float*)calloc(model.numPointsLN, sizeof(float));
-    model.antibodyLymphNodeSavedPoints = (float*)calloc(model.numPointsLN, sizeof(float));
-    model.bCellLymphNodeSavedPoints = (float*)calloc(model.numPointsLN, sizeof(float));
-    model.plasmaCellLymphNodeSavedPoints = (float*)calloc(model.numPointsLN, sizeof(float));
+    model.dendriticLymphNodeSavedPoints = (double*)calloc(model.numPointsLN, sizeof(double));
+    model.tCytotoxicLymphNodeSavedPoints = (double*)calloc(model.numPointsLN, sizeof(double));
+    model.tHelperLymphNodeSavedPoints = (double*)calloc(model.numPointsLN, sizeof(double));
+    model.antibodyLymphNodeSavedPoints = (double*)calloc(model.numPointsLN, sizeof(double));
+    model.bCellLymphNodeSavedPoints = (double*)calloc(model.numPointsLN, sizeof(double));
+    model.plasmaCellLymphNodeSavedPoints = (double*)calloc(model.numPointsLN, sizeof(double));
 
-    model.dendriticLymphNode = (float*)calloc(2, sizeof(float));
-    model.tCytotoxicLymphNode = (float*)calloc(2, sizeof(float));
-    model.tHelperLymphNode = (float*)calloc(2, sizeof(float));
-    model.antibodyLymphNode = (float*)calloc(2, sizeof(float));
-    model.bCellLymphNode = (float*)calloc(2, sizeof(float));
-    model.plasmaCellLymphNode = (float*)calloc(2, sizeof(float));    
+    model.dendriticLymphNode = (double*)calloc(2, sizeof(double));
+    model.tCytotoxicLymphNode = (double*)calloc(2, sizeof(double));
+    model.tHelperLymphNode = (double*)calloc(2, sizeof(double));
+    model.antibodyLymphNode = (double*)calloc(2, sizeof(double));
+    model.bCellLymphNode = (double*)calloc(2, sizeof(double));
+    model.plasmaCellLymphNode = (double*)calloc(2, sizeof(double));    
 
-    float dendriticLN = 0.0, thelperLN = params.stableTHelper, tcytotoxicLN = params.stableTCytotoxic, bcellLN = params.stableB, plasmacellLN = 0.0, antibodyLN = 0.0;
+    double dendriticLN = 0.0, thelperLN = params.stableTHelper, tcytotoxicLN = params.stableTCytotoxic, bcellLN = params.stableB, plasmacellLN = 0.0, antibodyLN = 0.0;
     InitialConditionLymphNode(&model, dendriticLN, thelperLN, tcytotoxicLN, bcellLN, plasmacellLN, antibodyLN);
     InitialConditionTissueMicroglia(&model);
     return model;
@@ -370,52 +374,52 @@ structModel ModelInitialize(structParameters params, float ht, float hx, float t
 /*
 * Lymphnode
 */
-float* EquationsLymphNode(structModel* model, int stepPos){
-    float* slopes =(float *)malloc(sizeof(float)*6);
+double* EquationsLymphNode(structModel* model, int stepPos){
+    double* slopes =(double *)malloc(sizeof(double)*6);
     
     int stepKPlus = (stepPos%(2*model->numStepsLN))/model->numStepsLN;
     int stepKMinus = !(stepKPlus && 1);
 
-    float dcLN = model->dendriticLymphNode[stepKMinus];
-    float tCytoLN = model->tCytotoxicLymphNode[stepKMinus];
-    float tHelperLN = model->tHelperLymphNode[stepKMinus];
-    float bCellLN = model->bCellLymphNode[stepKMinus];
-    float plasmaCellLN = model->plasmaCellLymphNode[stepKMinus];
-    float antibodyLN = model->antibodyLymphNode[stepKMinus];
+    double dcLN = model->dendriticLymphNode[stepKMinus];
+    double tCytoLN = model->tCytotoxicLymphNode[stepKMinus];
+    double tHelperLN = model->tHelperLymphNode[stepKMinus];
+    double bCellLN = model->bCellLymphNode[stepKMinus];
+    double plasmaCellLN = model->plasmaCellLymphNode[stepKMinus];
+    double antibodyLN = model->antibodyLymphNode[stepKMinus];
 
     //Describe equations
 
     //Dendritic cell
-    float activatedDcMigration = model->parametersModel.gammaD * (model->activatedDCTissueVessels - dcLN) * (float)(model->parametersModel.V_PV/model->parametersModel.V_LN);
-    float activatedDcClearance = model->parametersModel.cDl * dcLN;
+    double activatedDcMigration = model->parametersModel.gammaD * (model->activatedDCTissueVessels - dcLN) * (double)(model->parametersModel.V_PV/model->parametersModel.V_LN);
+    double activatedDcClearance = model->parametersModel.cDl * dcLN;
     slopes[0] = activatedDcMigration - activatedDcClearance;
 
     //T Cytotoxic
-    float tCytoActivation = model->parametersModel.bTCytotoxic * (model->parametersModel.rhoTCytotoxic*tCytoLN*dcLN - tCytoLN*dcLN);
-    float tCytoHomeostasis = model->parametersModel.alphaTCytotoxic * (model->parametersModel.stableTCytotoxic - tCytoLN);
-    float tCytoMigration = model->parametersModel.gammaT * (tCytoLN - model->tCytotoxicTissueVessels) * (float)(model->parametersModel.V_BV/model->parametersModel.V_LN);
+    double tCytoActivation = model->parametersModel.bTCytotoxic * (model->parametersModel.rhoTCytotoxic*tCytoLN*dcLN - tCytoLN*dcLN);
+    double tCytoHomeostasis = model->parametersModel.alphaTCytotoxic * (model->parametersModel.stableTCytotoxic - tCytoLN);
+    double tCytoMigration = model->parametersModel.gammaT * (tCytoLN - model->tCytotoxicTissueVessels) * (double)(model->parametersModel.V_BV/model->parametersModel.V_LN);
     slopes[1] = tCytoActivation + tCytoHomeostasis - tCytoMigration;
 
     //T Helper
-    float tHelperActivation = model->parametersModel.bTHelper * (model->parametersModel.rhoTHelper * tHelperLN * dcLN - tHelperLN * dcLN);
-    float tHelperHomeostasis = model->parametersModel.alphaTHelper * (model->parametersModel.stableTHelper - tHelperLN);
-    float tHelperDispendure = model->parametersModel.bRho * dcLN * tHelperLN * bCellLN;
+    double tHelperActivation = model->parametersModel.bTHelper * (model->parametersModel.rhoTHelper * tHelperLN * dcLN - tHelperLN * dcLN);
+    double tHelperHomeostasis = model->parametersModel.alphaTHelper * (model->parametersModel.stableTHelper - tHelperLN);
+    double tHelperDispendure = model->parametersModel.bRho * dcLN * tHelperLN * bCellLN;
     slopes[2] = tHelperActivation + tHelperHomeostasis - tHelperDispendure;
 
     //B Cell
-    float bCellActivation = model->parametersModel.bRhoB * (model->parametersModel.rhoB * tHelperLN * dcLN - tHelperLN * dcLN * bCellLN);
-    float bcellHomeostasis = model->parametersModel.alphaB * (model->parametersModel.stableB - bCellLN);
+    double bCellActivation = model->parametersModel.bRhoB * (model->parametersModel.rhoB * tHelperLN * dcLN - tHelperLN * dcLN * bCellLN);
+    double bcellHomeostasis = model->parametersModel.alphaB * (model->parametersModel.stableB - bCellLN);
     slopes[3] = bcellHomeostasis + bCellActivation;
 
     //Plasma Cells
-    float plasmaActivation = model->parametersModel.bRhoP * (model->parametersModel.rhoP * tHelperLN * dcLN * bCellLN);
-    float plasmaHomeostasis = model->parametersModel.alphaP * (model->parametersModel.stableP - plasmaCellLN);
+    double plasmaActivation = model->parametersModel.bRhoP * (model->parametersModel.rhoP * tHelperLN * dcLN * bCellLN);
+    double plasmaHomeostasis = model->parametersModel.alphaP * (model->parametersModel.stableP - plasmaCellLN);
     slopes[4] = plasmaHomeostasis + plasmaActivation;
 
     //Antibody
-    float antibodyProduction = model->parametersModel.rhoAntibody * plasmaCellLN;
-    float antibodyDecayment = model->parametersModel.cF * antibodyLN;
-    float antibodyMigration = model->parametersModel.gammaAntibody * (antibodyLN - model->antibodyTissueVessels) * (float)(model->parametersModel.V_BV/model->parametersModel.V_LN);
+    double antibodyProduction = model->parametersModel.rhoAntibody * plasmaCellLN;
+    double antibodyDecayment = model->parametersModel.cF * antibodyLN;
+    double antibodyMigration = model->parametersModel.gammaAntibody * (antibodyLN - model->antibodyTissueVessels) * (double)(model->parametersModel.V_BV/model->parametersModel.V_LN);
     slopes[5] = antibodyProduction - antibodyMigration - antibodyDecayment;
 
     return slopes;
@@ -423,7 +427,7 @@ float* EquationsLymphNode(structModel* model, int stepPos){
 
 /*
 void SolverLymphNode(structModel *model, int stepPos){
-    float populationLN[6];
+    double populationLN[6];
     int stepKPlus = (stepPos%(2*model->numStepsLN))/model->numStepsLN;
     int stepKMinus = !(stepKPlus && 1);
     populationLN[0] = model->dendriticLymphNode[stepKMinus];
@@ -433,10 +437,10 @@ void SolverLymphNode(structModel *model, int stepPos){
     populationLN[4] = model->plasmaCellLymphNode[stepKMinus];
     populationLN[5] = model->antibodyLymphNode[stepKMinus];
     
-    float* slopeLN;
+    double* slopeLN;
     slopeLN = EquationsLymphNode(*model, populationLN, stepPos);
 
-    float htLN = model->ht*model->numStepsLN;
+    double htLN = model->ht*model->numStepsLN;
     
     //Execute Euler 
     model->dendriticLymphNode[stepKPlus] = model->dendriticLymphNode[stepKMinus] + htLN*slopeLN[0];
@@ -460,34 +464,34 @@ void SolverLymphNode(structModel *model, int stepPos){
 }
 */
 
-derivatives* SlopePDEs(int stepKPlus, float ht, structModel* model){
+derivatives* SlopePDEs(int stepKPlus, double ht, structModel* model){
 
     derivatives* slopes = calloc(1, sizeof(derivatives));
-    slopes->derivativesLymphNode = (float*)calloc(6, sizeof(float));
-    slopes->derivativesTissue = (float**)calloc(6, sizeof(float*));
+    slopes->derivativesLymphNode = (double*)calloc(6, sizeof(double));
+    slopes->derivativesTissue = (double**)calloc(6, sizeof(double*));
     
 
     for(int i = 0; i < 6; i++)
-        slopes->derivativesTissue[i] = (float*)calloc(model->xSize*model->xSize, sizeof(float));
+        slopes->derivativesTissue[i] = (double*)calloc(model->xSize*model->xSize, sizeof(double));
     /*
      * Solve slope PDEs
     */
     int stepKMinus = !(stepKPlus && 1), line, column;
     
-    float upperNeumannBC = 0.0, lowerNeumannBC = 0.0, leftNeumannBC = 0.0, rightNeumannBC = 0.0;
+    double upperNeumannBC = 0.0, lowerNeumannBC = 0.0, leftNeumannBC = 0.0, rightNeumannBC = 0.0;
     
-    float valIPlus = 0.0, valIMinus = 0.0, valJPlus = 0.0, valJMinus = 0.0, gradientOdcI = 0.0, gradientOdcJ = 0.0;
+    double valIPlus = 0.0, valIMinus = 0.0, valJPlus = 0.0, valJMinus = 0.0, gradientOdcI = 0.0, gradientOdcJ = 0.0;
 
-    float microgliaChemotaxis = 0.0, tCytotoxicChemotaxis = 0.0, conventionalDcChemotaxis = 0.0,\
+    double microgliaChemotaxis = 0.0, tCytotoxicChemotaxis = 0.0, conventionalDcChemotaxis = 0.0,\
      microgliaDiffusion = 0.0, tCytotoxicDiffusion = 0.0, conventionalDcDiffusion = 0.0, activatedDCDiffusion = 0.0, antibodyDiffusion = 0.0;
 
-    float microgliaReaction = 0.0, microgliaClearance = 0.0, tCytotoxicMigration = 0.0, odcAntibodyMicrogliaFagocitosis = 0.0, \
+    double microgliaReaction = 0.0, microgliaClearance = 0.0, tCytotoxicMigration = 0.0, odcAntibodyMicrogliaFagocitosis = 0.0, \
     odcMicrogliaFagocitosis = 0.0, odcTCytotoxicApoptosis = 0.0, conventionalDcReaction = 0.0, conventionalDcClearance = 0.0, conventionalDcActivation = 0.0, \
     activatedDcClearance = 0.0, activatedDcMigration = 0.0, antibodyMigration = 0.0;
 
-    float microgliaKMinus = 0.0, conventionalDcKMinus = 0.0, activatedDcKMinus = 0.0, tCytotoxicKMinus = 0.0, antibodyKMinus = 0.0, oligodendrocyteKMinus = 0.0;
+    double microgliaKMinus = 0.0, conventionalDcKMinus = 0.0, activatedDcKMinus = 0.0, tCytotoxicKMinus = 0.0, antibodyKMinus = 0.0, oligodendrocyteKMinus = 0.0;
 
-    float diffusionOdc;
+    double diffusionOdc;
 
     for(int kPos = 0; kPos < model->xSize*model->xSize; kPos++){
         line = (int)kPos/model->xSize;
@@ -508,8 +512,8 @@ derivatives* SlopePDEs(int stepKPlus, float ht, structModel* model){
 
             diffusionOdc = CalculateDiffusion(*model, valJPlus, valJMinus, valIPlus, valIMinus, model->oligodendrocyte[stepKMinus][kPos]);
 
-            gradientOdcI = (float)(valIPlus - valIMinus)/(float)(model->hx);
-            gradientOdcJ = (float)(valJPlus - valJMinus)/(float)(model->hx);
+            gradientOdcI = (double)(valIPlus - valIMinus)/(double)(model->hx);
+            gradientOdcJ = (double)(valJPlus - valJMinus)/(double)(model->hx);
 
             //Diffusion and Chemotaxis Mic
 
@@ -552,19 +556,19 @@ derivatives* SlopePDEs(int stepKPlus, float ht, structModel* model){
 
             //Difussion ADC
 
-            valIPlus  = (line != model->xSize-1)? model->activatedDc[stepKMinus][kPos + model->xSize]: model->activatedDc[stepKMinus][kPos - model->xSize] - (float)(2*model->hx*lowerNeumannBC);
-            valJPlus  = (column != model->xSize-1)? model->activatedDc[stepKMinus][kPos + 1]: model->activatedDc[stepKMinus][kPos - 1] - (float)(2*model->hx*rightNeumannBC);
-            valIMinus = (line != 0)? model->activatedDc[stepKMinus][kPos - model->xSize]: model->activatedDc[stepKMinus][kPos + model->xSize] - (float)(2*model->hx*upperNeumannBC);
-            valJMinus = (column != 0)? model->activatedDc[stepKMinus][kPos - 1]: model->activatedDc[stepKMinus][kPos + 1] - (float)(2*model->hx*leftNeumannBC);
+            valIPlus  = (line != model->xSize-1)? model->activatedDc[stepKMinus][kPos + model->xSize]: model->activatedDc[stepKMinus][kPos - model->xSize] - (double)(2*model->hx*lowerNeumannBC);
+            valJPlus  = (column != model->xSize-1)? model->activatedDc[stepKMinus][kPos + 1]: model->activatedDc[stepKMinus][kPos - 1] - (double)(2*model->hx*rightNeumannBC);
+            valIMinus = (line != 0)? model->activatedDc[stepKMinus][kPos - model->xSize]: model->activatedDc[stepKMinus][kPos + model->xSize] - (double)(2*model->hx*upperNeumannBC);
+            valJMinus = (column != 0)? model->activatedDc[stepKMinus][kPos - 1]: model->activatedDc[stepKMinus][kPos + 1] - (double)(2*model->hx*leftNeumannBC);
 
             activatedDCDiffusion = model->parametersModel.aDcDiffusion*CalculateDiffusion(*model, valJPlus, valJMinus, valIPlus, valIMinus, model->activatedDc[stepKMinus][kPos]);
 
             //Difussion Antibody
 
-            valIPlus  = (line != model->xSize-1)? model->antibody[stepKMinus][kPos + model->xSize]: model->antibody[stepKMinus][kPos - model->xSize] - (float)(2*model->hx*lowerNeumannBC);
-            valJPlus  = (column != model->xSize-1)? model->antibody[stepKMinus][kPos + 1]: model->antibody[stepKMinus][kPos - 1] - (float)(2*model->hx*rightNeumannBC);
-            valIMinus = (line != 0)? model->antibody[stepKMinus][kPos - model->xSize]: model->antibody[stepKMinus][kPos + model->xSize] - (float)(2*model->hx*upperNeumannBC);
-            valJMinus = (column != 0)? model->antibody[stepKMinus][kPos - 1]: model->antibody[stepKMinus][kPos + 1] - (float)(2*model->hx*leftNeumannBC);
+            valIPlus  = (line != model->xSize-1)? model->antibody[stepKMinus][kPos + model->xSize]: model->antibody[stepKMinus][kPos - model->xSize] - (double)(2*model->hx*lowerNeumannBC);
+            valJPlus  = (column != model->xSize-1)? model->antibody[stepKMinus][kPos + 1]: model->antibody[stepKMinus][kPos - 1] - (double)(2*model->hx*rightNeumannBC);
+            valIMinus = (line != 0)? model->antibody[stepKMinus][kPos - model->xSize]: model->antibody[stepKMinus][kPos + model->xSize] - (double)(2*model->hx*upperNeumannBC);
+            valJMinus = (column != 0)? model->antibody[stepKMinus][kPos - 1]: model->antibody[stepKMinus][kPos + 1] - (double)(2*model->hx*leftNeumannBC);
 
             antibodyDiffusion = model->parametersModel.antibodyDiffusion*CalculateDiffusion(*model, valJPlus, valJMinus, valIPlus, valIMinus, model->antibody[stepKMinus][kPos]);
             
@@ -616,11 +620,11 @@ derivatives* SlopePDEs(int stepKPlus, float ht, structModel* model){
     return slopes;
 }
 
-float Euler(float time, structModel *model, int stepKPlus){
+double Euler(double time, structModel *model, int stepKPlus){
     derivatives* slopeK;
     int stepKMinus = (stepKPlus + 1) % 2;
-    float htCalculated = CalculateHt(*model, stepKMinus) * .1; //Multiplicar por uma tolerancia se der errado
-    printf("Tempo %f: ht dinamico = %f\n", time, htCalculated);
+    double htCalculated = Min(CalculateHt(*model, stepKMinus), model->ht); //Multiplicar por uma tolerancia se der errado
+    printf("Tempo %lf: ht dinamico = %.16lf\n", time, htCalculated);
     
     slopeK = SlopePDEs(stepKPlus, model->ht, model);
     // if(time%model->numStepsLN == 0){
@@ -631,7 +635,7 @@ float Euler(float time, structModel *model, int stepKPlus){
     //     model->tCytotoxicTissueVessels = auxTCytotoxicBV * model->hx * model->hx / model->parametersModel.V_BV;
     //     model->antibodyTissueVessels = auxAntibodyBV * model->hx * model->hx / model->parametersModel.V_BV;
     //     model->activatedDCTissueVessels = auxAdcPV * model->hx * model->hx / model->parametersModel.V_PV;
-    //     float* slopeLN = EquationsLymphNode(model, time);
+    //     double* slopeLN = EquationsLymphNode(model, time);
     //     slopeK->derivativesLymphNode = slopeLN;
 
     //     model->dendriticLymphNode[stepKPlus] = model->dendriticLymphNode[stepKMinus] + htLymphNode * slopeK->derivativesLymphNode[0];
@@ -651,6 +655,10 @@ float Euler(float time, structModel *model, int stepKPlus){
         model->oligodendrocyte[stepKPlus][spacePoint] = model->oligodendrocyte[stepKMinus][spacePoint] + htCalculated * slopeK->derivativesTissue[5][spacePoint];
     }
 
+    for(int i = 0; i < 6; i++)
+        free(slopeK->derivativesTissue[i]);
+    free(slopeK->derivativesLymphNode);
+    free(slopeK->derivativesTissue);
     free(slopeK);
 
     // int intervalPoints = (int)(model->tSize/model->numPointsLN);
@@ -670,12 +678,12 @@ float Euler(float time, structModel *model, int stepKPlus){
 
 void RungeKutta(int kTime, structModel *model){
     derivatives* slopeK1, *slopeK2, *slopeK3 , *slopeK4;
-    float htLymphNode = model->ht * model->numStepsLN;
+    double htLymphNode = model->ht * model->numStepsLN;
 
-    float** yK;
-    yK = (float**) calloc(6, sizeof(float*));
+    double** yK;
+    yK = (double**) calloc(6, sizeof(double*));
     for(int i = 0; i < 6; i++)
-        yK[i] = (float*) calloc(model->xSize * model->xSize, sizeof(float));
+        yK[i] = (double*) calloc(model->xSize * model->xSize, sizeof(double));
 
     int stepKPlus, stepKMinus;
     if(kTime%model->numStepsLN == 0){
@@ -690,7 +698,7 @@ void RungeKutta(int kTime, structModel *model){
         model->tCytotoxicTissueVessels = auxTCytotoxicBV * model->hx * model->hx / model->parametersModel.V_BV;
         model->antibodyTissueVessels = auxAntibodyBV * model->hx * model->hx / model->parametersModel.V_BV;
         model->activatedDCTissueVessels = auxAdcPV * model->hx * model->hx / model->parametersModel.V_PV;
-        float* slopeLN = EquationsLymphNode(model, kTime);
+        double* slopeLN = EquationsLymphNode(model, kTime);
         slopeK1->derivativesLymphNode = slopeLN;
 
         model->dendriticLymphNode[stepKPlus] = model->dendriticLymphNode[stepKMinus] + htLymphNode * slopeK1->derivativesLymphNode[0];
@@ -847,13 +855,12 @@ void RunModel(structModel *model){
         WriteFiles(*model, model->oligodendrocyte[0], model->microglia[0], model->tCytotoxic[0], model->antibody[0], model->conventionalDc[0], model->activatedDc[0], 0);
     
     int kTime = 1; 
-    float time = 0.0;
-    float htDynamic = 0.0;
+    double time = 0.0;
+    double htDynamic = 0.0;
 
     while(time < model->tFinal){
         htDynamic = Euler(time, model, stepKPlus);
         time += htDynamic;
-        
         if(model->saveFigs && ( (int)time - kTime)){
             WriteFiles(*model, model->oligodendrocyte[stepKPlus], model->microglia[stepKPlus], model->tCytotoxic[stepKPlus], model->antibody[stepKPlus], model->conventionalDc[stepKPlus], model->activatedDc[stepKPlus], kTime);
             printf("%d!!\n", (int)(kTime));
@@ -861,7 +868,7 @@ void RunModel(structModel *model){
         kTime = time;
         stepKMinus = stepKPlus;
         stepKPlus = !stepKMinus;
-        // printf("%f!!\n", time);
+        // printf("%lf!!\n", time);
     }    
         
     WriteFiles(*model, model->oligodendrocyte[stepKPlus], model->microglia[stepKPlus], model->tCytotoxic[stepKPlus], model->antibody[stepKPlus], model->conventionalDc[stepKPlus], model->activatedDc[stepKPlus], kTime);
