@@ -864,6 +864,8 @@ void RunModel(structModel *model){
         // printf("%f!!\n", time);
     }    
         
+    WriteFiles(*model, model->oligodendrocyte[stepKPlus], model->microglia[stepKPlus], model->tCytotoxic[stepKPlus], model->antibody[stepKPlus], model->conventionalDc[stepKPlus], model->activatedDc[stepKPlus], kTime);
+    
     printf("Computation Done!!\n");
     SavingData(*model);
     for(int index=0;index<BUFFER;++index){
