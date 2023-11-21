@@ -11,7 +11,7 @@ structParameters ParametersInitialize(){
     params.cDcDiffusion = 0.015206;
     params.aDcDiffusion = 0.015206;
     params.tCytoDiffusion = 0.015206;
-    params.chi = 3;//0.03;
+    params.chi = 0.03;
     
     params.muCDc = 60*24*3*pow(10,-5);
     params.muMic = 60*24*3*pow(10,-6);
@@ -90,7 +90,8 @@ int main(){
     double cpu_time_used;
     clearPhgTxt();
     double ht = 0.0002, hx = 0.5;
-    int numFigs = 28, numPointsLN = 1000, time = 28, space = 20, numStepsLN = 100, saveFigs = 1;
+    int numPointsLN = 1000, time = 28, space = 20, numStepsLN = 100;
+    int numFigs = time, saveFigs = 1;
     structParameters parameters = ParametersInitialize();
     structModel model = ModelInitialize(parameters, ht, hx, time, space, numFigs, numPointsLN, numStepsLN, saveFigs);
     start = clock();

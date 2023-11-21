@@ -44,16 +44,29 @@ int VerifyCFL(structParameters parametersModel, double ht, double hx){
 
 double CalculateMaxGradOdc(structModel model, int stepKMinus){
     double max = 0.0;
+    double valIPlus;
+    double valJPlus;
+    double valIMinus;
+    double valJMinus;
+    double auxMax;
+    int line, column;
     for(int kPos = 0; kPos < model.xSize*model.xSize; kPos++){
-        if(model.oligodendrocyte[stepKMinus][kPos] > max)
-            max = model.oligodendrocyte[stepKMinus][kPos];
+        line = (int)kPos/model.xSize;
+        column = kPos%model.xSize;
+        valIPlus = (line != model.xSize-1)? model.oligodendrocyte[stepKMinus][kPos + model.xSize]: model.oligodendrocyte[stepKMinus][kPos - model.xSize];
+        valJPlus = (column != model.xSize-1)? model.oligodendrocyte[stepKMinus][kPos + 1]: model.oligodendrocyte[stepKMinus][kPos - 1];
+        valIMinus = (line != 0)? model.oligodendrocyte[stepKMinus][kPos - model.xSize]: model.oligodendrocyte[stepKMinus][kPos + model.xSize];
+        valJMinus = (column != 0)? model.oligodendrocyte[stepKMinus][kPos - 1]: model.oligodendrocyte[stepKMinus][kPos + 1];
+        auxMax = Max((double)(valIPlus - valIMinus)/(double)(2 * model.hx), (double)(valJPlus - valJMinus)/(double)(2 * model.hx));
+        if(auxMax > max)
+            max = auxMax;
     }    
     return max;
 }
 
 double CalculateHt(structModel model, double stepKMinus){
     double maxGradOdc = CalculateMaxGradOdc(model, stepKMinus);
-    return Min(model.hx * model.hx / (4 * model.parametersModel.micDiffusion), (4 * model.parametersModel.micDiffusion) / (model.parametersModel.chi * model.parametersModel.chi * maxGradOdc));
+    return Min(model.hx * model.hx / (4 * model.parametersModel.antibodyDiffusion), (4 * model.parametersModel.antibodyDiffusion) / (model.parametersModel.chi * model.parametersModel.chi * maxGradOdc));
 }
 
 void WritePopulation(structModel model, double *population, char* fileName, char* bufferTime){
@@ -512,8 +525,8 @@ derivatives* SlopePDEs(int stepKPlus, double ht, structModel* model){
 
             diffusionOdc = CalculateDiffusion(*model, valJPlus, valJMinus, valIPlus, valIMinus, model->oligodendrocyte[stepKMinus][kPos]);
 
-            gradientOdcI = (double)(valIPlus - valIMinus)/(double)(model->hx);
-            gradientOdcJ = (double)(valJPlus - valJMinus)/(double)(model->hx);
+            gradientOdcI = (double)(valIPlus - valIMinus)/(double)(2 * model->hx);
+            gradientOdcJ = (double)(valJPlus - valJMinus)/(double)(2 * model->hx);
 
             //Diffusion and Chemotaxis Mic
 
@@ -623,7 +636,7 @@ derivatives* SlopePDEs(int stepKPlus, double ht, structModel* model){
 double Euler(double time, structModel *model, int stepKPlus){
     derivatives* slopeK;
     int stepKMinus = (stepKPlus + 1) % 2;
-    double htCalculated = Min(CalculateHt(*model, stepKMinus), model->ht); //Multiplicar por uma tolerancia se der errado
+    double htCalculated = Min(CalculateHt(*model, stepKMinus), 0.25 * (model->hx*model->hx) / model->parametersModel.chi) * .01; //Multiplicar por uma tolerancia se der errado
     printf("Tempo %lf: ht dinamico = %.16lf\n", time, htCalculated);
     
     slopeK = SlopePDEs(stepKPlus, model->ht, model);
@@ -859,13 +872,13 @@ void RunModel(structModel *model){
     double htDynamic = 0.0;
 
     while(time < model->tFinal){
-        htDynamic = Euler(time, model, stepKPlus) * .5;
+        htDynamic = Euler(time, model, stepKPlus);
         time += htDynamic;
-        if(model->saveFigs && ( (int)time - kTime)){
+        if(model->saveFigs && !( (int)time - kTime)){
             WriteFiles(*model, model->oligodendrocyte[stepKPlus], model->microglia[stepKPlus], model->tCytotoxic[stepKPlus], model->antibody[stepKPlus], model->conventionalDc[stepKPlus], model->activatedDc[stepKPlus], kTime);
-            printf("%d!!\n", (int)(kTime));
+            // printf("%d!!%lf\n", kTime, time);
+            kTime++;
         }
-        kTime = time;
         stepKMinus = stepKPlus;
         stepKPlus = !stepKMinus;
         // printf("%lf!!\n", time);
