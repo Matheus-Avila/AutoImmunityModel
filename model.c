@@ -28,12 +28,12 @@ void InitialConditionTissueMicroglia(structModel* model){
 }
 
 void InitialConditionLymphNode(structModel* model, double dendriticLN, double thelperLN, double tcytotoxicLN, double bcellLN, double plasmacellLN, double antibodyLN){
-    model->dendriticLymphNode[0] = dendriticLN;
-    model->tHelperLymphNode[0] = thelperLN;
-    model->tCytotoxicLymphNode[0] = tcytotoxicLN;
-    model->bCellLymphNode[0] = bcellLN;
-    model->plasmaCellLymphNode[0] = plasmacellLN;
-    model->antibodyLymphNode[0] = antibodyLN;
+    model->dendriticLymphNodeSavedPoints[0] = model->dendriticLymphNode[0] = dendriticLN;
+    model->tHelperLymphNodeSavedPoints[0] = model->tHelperLymphNode[0] = thelperLN;
+    model->tCytotoxicLymphNodeSavedPoints[0] = model->tCytotoxicLymphNode[0] = tcytotoxicLN;
+    model->bCellLymphNodeSavedPoints[0] = model->bCellLymphNode[0] = bcellLN;
+    model->plasmaCellLymphNodeSavedPoints[0] = model->plasmaCellLymphNode[0] = plasmacellLN;
+    model->antibodyLymphNodeSavedPoints[0] = model->antibodyLymphNode[0] = antibodyLN;
 }
 
 int VerifyCFL(structParameters parametersModel, double ht, double hx){
@@ -376,7 +376,7 @@ structModel ModelInitialize(structParameters params, double ht, double hx, doubl
     model.tHelperLymphNode = (double*)calloc(2, sizeof(double));
     model.antibodyLymphNode = (double*)calloc(2, sizeof(double));
     model.bCellLymphNode = (double*)calloc(2, sizeof(double));
-    model.plasmaCellLymphNode = (double*)calloc(2, sizeof(double));    
+    model.plasmaCellLymphNode = (double*)calloc(2, sizeof(double));
 
     double dendriticLN = 0.0, thelperLN = params.stableTHelper, tcytotoxicLN = params.stableTCytotoxic, bcellLN = params.stableB, plasmacellLN = 0.0, antibodyLN = 0.0;
     InitialConditionLymphNode(&model, dendriticLN, thelperLN, tcytotoxicLN, bcellLN, plasmacellLN, antibodyLN);
@@ -633,11 +633,11 @@ derivatives* SlopePDEs(int stepKPlus, double ht, structModel* model){
     return slopes;
 }
 
-double Euler(double time, structModel *model, int stepKPlus){
+double Euler(double time, structModel *model, int stepKPlus, int *posSave){
     derivatives* slopeK;
     int stepKMinus = (stepKPlus + 1) % 2;
     double htCalculated = Min(CalculateHt(*model, stepKMinus), 0.25 * (model->hx*model->hx) / model->parametersModel.chi) * .01;
-    printf("Tempo %lf: ht dinamico = %.16lf\n", time, htCalculated);
+    // printf("Tempo %lf: ht dinamico = %.16lf\n", time, htCalculated);
     
     slopeK = SlopePDEs(stepKPlus, model->ht, model);
     model->tCytotoxicTissueVessels = auxTCytotoxicBV * model->hx * model->hx / model->parametersModel.V_BV;
@@ -671,15 +671,16 @@ double Euler(double time, structModel *model, int stepKPlus){
     auxTCytotoxicBV = 0.0;
     auxAntibodyBV = 0.0;
     auxAdcPV = 0.0;
-    int intervalPoints = (int)(model->tFinal/model->numPointsLN);
-    if( (int) time%intervalPoints){
-        int posSave = time/intervalPoints;
-        model->dendriticLymphNodeSavedPoints[posSave] = model->dendriticLymphNode[stepKPlus];
-        model->tCytotoxicLymphNodeSavedPoints[posSave] = model->tCytotoxicLymphNode[stepKPlus];
-        model->tHelperLymphNodeSavedPoints[posSave] = model->tHelperLymphNode[stepKPlus];
-        model->bCellLymphNodeSavedPoints[posSave] = model->bCellLymphNode[stepKPlus];
-        model->plasmaCellLymphNodeSavedPoints[posSave] = model->plasmaCellLymphNode[stepKPlus];
-        model->antibodyLymphNodeSavedPoints[posSave] = model->antibodyLymphNode[stepKPlus];
+    double intervalPoints = (double) ( (double) model->tFinal / (double) model->numPointsLN);
+    if( time > intervalPoints * *posSave){
+        model->dendriticLymphNodeSavedPoints[*posSave] = model->dendriticLymphNode[stepKPlus];
+        model->tCytotoxicLymphNodeSavedPoints[*posSave] = model->tCytotoxicLymphNode[stepKPlus];
+        model->tHelperLymphNodeSavedPoints[*posSave] = model->tHelperLymphNode[stepKPlus];
+        model->bCellLymphNodeSavedPoints[*posSave] = model->bCellLymphNode[stepKPlus];
+        model->plasmaCellLymphNodeSavedPoints[*posSave] = model->plasmaCellLymphNode[stepKPlus];
+        model->antibodyLymphNodeSavedPoints[*posSave] = model->antibodyLymphNode[stepKPlus];
+        *posSave = *posSave + 1;
+        // printf("%d\n", *posSave);
     }
 
     return htCalculated;
@@ -859,7 +860,7 @@ void RungeKutta(int kTime, structModel *model){
 void RunModel(structModel *model){
 
     int stepKPlus = 1, stepKMinus = 0;
-
+    int posSave = 1;
     //Save IC
     if(model->saveFigs)
         WriteFiles(*model, model->oligodendrocyte[0], model->microglia[0], model->tCytotoxic[0], model->antibody[0], model->conventionalDc[0], model->activatedDc[0], 0);
@@ -869,7 +870,7 @@ void RunModel(structModel *model){
     double htDynamic = 0.0;
 
     while(time < model->tFinal){
-        htDynamic = Euler(time, model, stepKPlus);
+        htDynamic = Euler(time, model, stepKPlus, &posSave);
         time += htDynamic;
         if(model->saveFigs && !( (int)time - kTime)){
             WriteFiles(*model, model->oligodendrocyte[stepKPlus], model->microglia[stepKPlus], model->tCytotoxic[stepKPlus], model->antibody[stepKPlus], model->conventionalDc[stepKPlus], model->activatedDc[stepKPlus], kTime);
