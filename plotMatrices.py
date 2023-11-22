@@ -10,7 +10,8 @@ L = int(sys.argv[1])
 h_x = float(sys.argv[2])
 finalTime = int(sys.argv[3])
 numPlots = int(sys.argv[4])
-timesPlots = np.linspace(0, finalTime, numPlots+1)
+# timesPlots = np.linspace(0, finalTime, numPlots+1)
+timesPlots = range(0,finalTime + 1)
 x = np.linspace(0, L, int(L/h_x))#+1)
 
 populationTitle = {

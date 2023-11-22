@@ -59,7 +59,7 @@ structParameters ParametersInitialize(){
     return params;
 }
 
-void WriteTime(float ExecTime){
+void WriteTime(double ExecTime){
     FILE *fileTime;
     fileTime = fopen("./ExecsTimes.txt", "a");
     if(fileTime != NULL){
@@ -87,16 +87,17 @@ void clearPhgTxt(){
 int main(){
     printf("Comecei o main\n");
     clock_t start, end;
-    float cpu_time_used;
+    double cpu_time_used;
     clearPhgTxt();
-    float ht = 0.0002, hx = 0.5;
-    int numFigs = 28, numPointsLN = 1000, time = 28, space = 20, numStepsLN = 100, saveFigs = 1;
+    double ht = 0.0002, hx = 0.5;
+    int numPointsLN = 1000, time = 28, space = 20, numStepsLN = 100;
+    int numFigs = time, saveFigs = 1;
     structParameters parameters = ParametersInitialize();
     structModel model = ModelInitialize(parameters, ht, hx, time, space, numFigs, numPointsLN, numStepsLN, saveFigs);
     start = clock();
     RunModel(&model);
     end = clock();
-    cpu_time_used = ((float) (end - start)) / CLOCKS_PER_SEC;
+    cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
     WriteTime(cpu_time_used);
     return 0;
 }
