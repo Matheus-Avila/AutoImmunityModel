@@ -1,0 +1,72 @@
+cat: /tmp/196152.1.all.q/machines: No such file or directory
+102.26user 32.95system 2:14.95elapsed 100%CPU (0avgtext+0avgdata 2956272maxresident)k
+32inputs+24outputs (0major+52240minor)pagefaults 0swaps
+101.01user 34.21system 2:23.81elapsed 94%CPU (0avgtext+0avgdata 2960320maxresident)k
+32inputs+24outputs (0major+52490minor)pagefaults 0swaps
+94.15user 37.72system 2:19.82elapsed 94%CPU (0avgtext+0avgdata 2957120maxresident)k
+32inputs+24outputs (0major+52292minor)pagefaults 0swaps
+17506.39user 310.97system 10:35.33elapsed 2804%CPU (0avgtext+0avgdata 4302608maxresident)k
+0inputs+88outputs (0major+20207minor)pagefaults 0swaps
+17773.34user 301.23system 10:36.52elapsed 2839%CPU (0avgtext+0avgdata 4294560maxresident)k
+0inputs+96outputs (0major+20312minor)pagefaults 0swaps
+17839.00user 303.47system 10:28.05elapsed 2888%CPU (0avgtext+0avgdata 4286384maxresident)k
+0inputs+88outputs (0major+20273minor)pagefaults 0swaps
+2523.89user 77.59system 2:41.95elapsed 1606%CPU (0avgtext+0avgdata 5141456maxresident)k
+32inputs+88outputs (0major+63629minor)pagefaults 0swaps
+2536.72user 78.53system 2:44.64elapsed 1588%CPU (0avgtext+0avgdata 5123136maxresident)k
+32inputs+88outputs (0major+63153minor)pagefaults 0swaps
+2529.16user 75.23system 2:44.85elapsed 1579%CPU (0avgtext+0avgdata 5125728maxresident)k
+32inputs+88outputs (0major+63354minor)pagefaults 0swaps
+97.75user 35.61system 2:18.44elapsed 96%CPU (0avgtext+0avgdata 2952704maxresident)k
+32inputs+32outputs (0major+52016minor)pagefaults 0swaps
+105.28user 33.82system 2:18.13elapsed 100%CPU (0avgtext+0avgdata 2959600maxresident)k
+32inputs+24outputs (0major+52447minor)pagefaults 0swaps
+100.72user 34.06system 2:22.53elapsed 94%CPU (0avgtext+0avgdata 2958944maxresident)k
+32inputs+24outputs (0major+52405minor)pagefaults 0swaps
+17369.44user 294.19system 10:49.26elapsed 2720%CPU (0avgtext+0avgdata 4294384maxresident)k
+0inputs+88outputs (0major+20269minor)pagefaults 0swaps
+17659.62user 296.36system 10:55.20elapsed 2740%CPU (0avgtext+0avgdata 4294384maxresident)k
+0inputs+88outputs (0major+20209minor)pagefaults 0swaps
+15838.10user 270.49system 11:10.40elapsed 2402%CPU (0avgtext+0avgdata 4309456maxresident)k
+0inputs+96outputs (0major+20804minor)pagefaults 0swaps
+2600.87user 72.83system 2:50.84elapsed 1565%CPU (0avgtext+0avgdata 5123664maxresident)k
+32inputs+88outputs (0major+63488minor)pagefaults 0swaps
+2585.48user 73.37system 2:48.93elapsed 1573%CPU (0avgtext+0avgdata 5120736maxresident)k
+32inputs+88outputs (0major+63592minor)pagefaults 0swaps
+[compute-0-18:10698] *** Process received signal ***
+[compute-0-18:10698] Signal: Segmentation fault (11)
+[compute-0-18:10698] Signal code: Address not mapped (1)
+[compute-0-18:10698] Failing at address: (nil)
+[compute-0-18:10698] [ 0] /lib64/libpthread.so.0() [0x321060f710]
+[compute-0-18:10698] [ 1] /usr/lib64/libnvidia-opencl.so.1(+0x24cb11) [0x2b7038ea4b11]
+[compute-0-18:10698] [ 2] /usr/lib64/libnvidia-opencl.so.1(+0x24d1c1) [0x2b7038ea51c1]
+[compute-0-18:10698] [ 3] /usr/lib64/libnvidia-opencl.so.1(+0x244540) [0x2b7038e9c540]
+[compute-0-18:10698] [ 4] /usr/lib64/libnvidia-opencl.so.1(+0x245b8e) [0x2b7038e9db8e]
+[compute-0-18:10698] [ 5] /usr/lib64/libnvidia-opencl.so.1(+0x2487fa) [0x2b7038ea07fa]
+[compute-0-18:10698] [ 6] /usr/lib64/libnvidia-opencl.so.1(+0x221020) [0x2b7038e79020]
+[compute-0-18:10698] [ 7] /usr/lib64/libnvidia-opencl.so.1(+0x2305e8) [0x2b7038e885e8]
+[compute-0-18:10698] [ 8] /usr/lib64/libnvidia-opencl.so.1(+0x221741) [0x2b7038e79741]
+[compute-0-18:10698] [ 9] /usr/lib64/libnvidia-opencl.so.1(+0x13a308) [0x2b7038d92308]
+[compute-0-18:10698] [10] /usr/lib64/libnvidia-opencl.so.1(+0x13b7f4) [0x2b7038d937f4]
+[compute-0-18:10698] [11] /usr/lib64/libnvidia-opencl.so.1(+0x152ef6) [0x2b7038daaef6]
+[compute-0-18:10698] [12] /usr/lib64/libnvidia-opencl.so.1(+0x153b98) [0x2b7038dabb98]
+[compute-0-18:10698] [13] /usr/lib64/libnvidia-opencl.so.1(+0x14685b) [0x2b7038d9e85b]
+[compute-0-18:10698] [14] HIS_Estatico_ALL(_Z19WriteToMemoryObjectiiPKcii+0xc4) [0x40cb34]
+[compute-0-18:10698] [15] HIS_Estatico_ALL(main+0x15ee) [0x40ad7e]
+[compute-0-18:10698] [16] /lib64/libc.so.6(__libc_start_main+0xfd) [0x320fe1ed1d]
+[compute-0-18:10698] [17] HIS_Estatico_ALL() [0x40b921]
+[compute-0-18:10698] *** End of error message ***
+--------------------------------------------------------------------------
+WARNING: A process refused to die!
+
+Host: compute-0-19.local
+PID:  27090
+
+This process may still be running and/or consuming resources.
+
+--------------------------------------------------------------------------
+--------------------------------------------------------------------------
+mpirun noticed that process rank 1 with PID 10698 on node compute-0-18.local exited on signal 11 (Segmentation fault).
+--------------------------------------------------------------------------
+0.03user 0.05system 0:41.91elapsed 0%CPU (0avgtext+0avgdata 11232maxresident)k
+32inputs+40outputs (0major+1902minor)pagefaults 0swaps

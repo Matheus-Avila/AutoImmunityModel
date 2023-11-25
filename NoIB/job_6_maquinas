@@ -1,0 +1,38 @@
+#!/bin/bash
+#$ -pe mpich_single 192
+#$ -N myjob
+#$ -cwd
+#$ -j y
+#$ -S /bin/bash
+MYPROG="./HIS"
+MPICH2_ROOT="/opt/mpich2/gnu"
+echo "NHOSTS=$NHOSTS, NSLOTS=$NSLOTS, TMPDIR/machines=$TMPDIR/machines"
+cat $TMPDIR/machines
+sort $TMPDIR/machines | uniq > $TMPDIR/machines2
+cat $TMPDIR/machines2
+export LD_LIBRARY_PATH=/share/apps/amd-opencl/AMDAPPSDK-3.0/lib/x86_64/sdk:$LD_LIBRARY_PATH
+
+#50X50X3200
+
+/usr/bin/time $MPICH2_ROOT/bin/mpiexec -machinefile $TMPDIR/machines2 -n 6 ./HIS_Dinamico_GPU 50 50 3200
+/usr/bin/time $MPICH2_ROOT/bin/mpiexec -machinefile $TMPDIR/machines2 -n 6 ./HIS_Dinamico_GPU 50 50 3200
+/usr/bin/time $MPICH2_ROOT/bin/mpiexec -machinefile $TMPDIR/machines2 -n 6 ./HIS_Dinamico_GPU 50 50 3200
+/usr/bin/time $MPICH2_ROOT/bin/mpiexec -machinefile $TMPDIR/machines2 -n 6 ./HIS_Dinamico_CPU 50 50 3200
+/usr/bin/time $MPICH2_ROOT/bin/mpiexec -machinefile $TMPDIR/machines2 -n 6 ./HIS_Dinamico_CPU 50 50 3200
+/usr/bin/time $MPICH2_ROOT/bin/mpiexec -machinefile $TMPDIR/machines2 -n 6 ./HIS_Dinamico_CPU 50 50 3200
+/usr/bin/time $MPICH2_ROOT/bin/mpiexec -machinefile $TMPDIR/machines2 -n 6 ./HIS_Dinamico_ALL 50 50 3200
+/usr/bin/time $MPICH2_ROOT/bin/mpiexec -machinefile $TMPDIR/machines2 -n 6 ./HIS_Dinamico_ALL 50 50 3200
+/usr/bin/time $MPICH2_ROOT/bin/mpiexec -machinefile $TMPDIR/machines2 -n 6 ./HIS_Dinamico_ALL 50 50 3200
+
+/usr/bin/time $MPICH2_ROOT/bin/mpiexec -machinefile $TMPDIR/machines2 -n 6 ./HIS_Estatico_GPU 50 50 3200
+/usr/bin/time $MPICH2_ROOT/bin/mpiexec -machinefile $TMPDIR/machines2 -n 6 ./HIS_Estatico_GPU 50 50 3200
+/usr/bin/time $MPICH2_ROOT/bin/mpiexec -machinefile $TMPDIR/machines2 -n 6 ./HIS_Estatico_GPU 50 50 3200
+/usr/bin/time $MPICH2_ROOT/bin/mpiexec -machinefile $TMPDIR/machines2 -n 6 ./HIS_Estatico_CPU 50 50 3200
+/usr/bin/time $MPICH2_ROOT/bin/mpiexec -machinefile $TMPDIR/machines2 -n 6 ./HIS_Estatico_CPU 50 50 3200
+/usr/bin/time $MPICH2_ROOT/bin/mpiexec -machinefile $TMPDIR/machines2 -n 6 ./HIS_Estatico_CPU 50 50 3200
+/usr/bin/time $MPICH2_ROOT/bin/mpiexec -machinefile $TMPDIR/machines2 -n 6 ./HIS_Estatico_ALL 50 50 3200
+/usr/bin/time $MPICH2_ROOT/bin/mpiexec -machinefile $TMPDIR/machines2 -n 6 ./HIS_Estatico_ALL 50 50 3200
+/usr/bin/time $MPICH2_ROOT/bin/mpiexec -machinefile $TMPDIR/machines2 -n 6 ./HIS_Estatico_ALL 50 50 3200
+
+exit 0
+

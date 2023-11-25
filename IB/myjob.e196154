@@ -1,0 +1,37 @@
+cat: /tmp/196154.1.all.q/machines: No such file or directory
+252.98user 83.28system 5:36.62elapsed 99%CPU (0avgtext+0avgdata 2821568maxresident)k
+32inputs+24outputs (0major+43960minor)pagefaults 0swaps
+251.23user 84.60system 5:36.79elapsed 99%CPU (0avgtext+0avgdata 2822944maxresident)k
+32inputs+24outputs (0major+44045minor)pagefaults 0swaps
+249.53user 84.86system 5:35.01elapsed 99%CPU (0avgtext+0avgdata 2828912maxresident)k
+32inputs+24outputs (0major+43906minor)pagefaults 0swaps
+52379.57user 820.97system 28:19.05elapsed 3131%CPU (0avgtext+0avgdata 4231536maxresident)k
+0inputs+88outputs (0major+16693minor)pagefaults 0swaps
+52370.11user 849.65system 28:22.52elapsed 3125%CPU (0avgtext+0avgdata 4231664maxresident)k
+0inputs+88outputs (0major+16705minor)pagefaults 0swaps
+52350.28user 818.28system 28:19.56elapsed 3128%CPU (0avgtext+0avgdata 4236512maxresident)k
+0inputs+88outputs (0major+16190minor)pagefaults 0swaps
+7128.87user 185.98system 5:24.24elapsed 2255%CPU (0avgtext+0avgdata 5076128maxresident)k
+32inputs+88outputs (0major+59534minor)pagefaults 0swaps
+7295.11user 180.94system 5:20.15elapsed 2335%CPU (0avgtext+0avgdata 5073280maxresident)k
+32inputs+88outputs (0major+59443minor)pagefaults 0swaps
+7206.68user 177.79system 5:18.07elapsed 2321%CPU (0avgtext+0avgdata 5060176maxresident)k
+32inputs+88outputs (0major+59388minor)pagefaults 0swaps
+253.60user 81.02system 5:35.32elapsed 99%CPU (0avgtext+0avgdata 2824288maxresident)k
+32inputs+32outputs (0major+44127minor)pagefaults 0swaps
+250.15user 82.35system 5:33.10elapsed 99%CPU (0avgtext+0avgdata 2825328maxresident)k
+32inputs+24outputs (0major+44192minor)pagefaults 0swaps
+241.51user 90.28system 5:32.82elapsed 99%CPU (0avgtext+0avgdata 2825440maxresident)k
+32inputs+24outputs (0major+43688minor)pagefaults 0swaps
+51931.27user 808.14system 27:59.54elapsed 3140%CPU (0avgtext+0avgdata 4237232maxresident)k
+0inputs+88outputs (0major+16197minor)pagefaults 0swaps
+52001.57user 838.17system 28:09.64elapsed 3127%CPU (0avgtext+0avgdata 4227408maxresident)k
+0inputs+88outputs (0major+16166minor)pagefaults 0swaps
+52038.67user 818.64system 28:10.51elapsed 3126%CPU (0avgtext+0avgdata 4234544maxresident)k
+0inputs+88outputs (0major+16157minor)pagefaults 0swaps
+7363.56user 177.57system 5:21.40elapsed 2346%CPU (0avgtext+0avgdata 5069440maxresident)k
+32inputs+88outputs (0major+59186minor)pagefaults 0swaps
+7505.49user 190.90system 5:44.43elapsed 2234%CPU (0avgtext+0avgdata 5068896maxresident)k
+32inputs+88outputs (0major+59165minor)pagefaults 0swaps
+7394.84user 188.49system 5:37.95elapsed 2243%CPU (0avgtext+0avgdata 5068528maxresident)k
+32inputs+88outputs (0major+59254minor)pagefaults 0swaps

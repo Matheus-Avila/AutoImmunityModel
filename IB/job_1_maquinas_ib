@@ -1,0 +1,29 @@
+#!/bin/bash
+#$ -N myjob       #nome do meu job (opcional)
+#$ -S /bin/bash   #qual o shell que vou usar (obrigatorio)
+#$ -pe orte 32     #qual o ambiente a ser usado (mpi) e quantos nos eu quero (40)
+#$ -cwd           #quero que o job remoto execute a partir do diretorio atual (obrigatorio)
+
+cat $TMPDIR/machines
+export LD_LIBRARY_PATH=/share/apps/amd-opencl/AMDAPPSDK-3.0/lib/x86_64/sdk:$LD_LIBRARY_PATH
+
+/usr/bin/time /opt/openmpi/bin/mpirun --bynode --mca btl openib,self -n 1 HIS_Dinamico_GPU 50 50 3200
+/usr/bin/time /opt/openmpi/bin/mpirun --bynode --mca btl openib,self -n 1 HIS_Dinamico_GPU 50 50 3200
+/usr/bin/time /opt/openmpi/bin/mpirun --bynode --mca btl openib,self -n 1 HIS_Dinamico_GPU 50 50 3200
+/usr/bin/time /opt/openmpi/bin/mpirun --bynode --mca btl openib,self -n 1 HIS_Dinamico_CPU 50 50 3200
+/usr/bin/time /opt/openmpi/bin/mpirun --bynode --mca btl openib,self -n 1 HIS_Dinamico_CPU 50 50 3200
+/usr/bin/time /opt/openmpi/bin/mpirun --bynode --mca btl openib,self -n 1 HIS_Dinamico_CPU 50 50 3200
+/usr/bin/time /opt/openmpi/bin/mpirun --bynode --mca btl openib,self -n 1 HIS_Dinamico_ALL 50 50 3200
+/usr/bin/time /opt/openmpi/bin/mpirun --bynode --mca btl openib,self -n 1 HIS_Dinamico_ALL 50 50 3200
+/usr/bin/time /opt/openmpi/bin/mpirun --bynode --mca btl openib,self -n 1 HIS_Dinamico_ALL 50 50 3200
+
+/usr/bin/time /opt/openmpi/bin/mpirun --bynode --mca btl openib,self -n 1 HIS_Estatico_GPU 50 50 3200
+/usr/bin/time /opt/openmpi/bin/mpirun --bynode --mca btl openib,self -n 1 HIS_Estatico_GPU 50 50 3200
+/usr/bin/time /opt/openmpi/bin/mpirun --bynode --mca btl openib,self -n 1 HIS_Estatico_GPU 50 50 3200
+/usr/bin/time /opt/openmpi/bin/mpirun --bynode --mca btl openib,self -n 1 HIS_Estatico_CPU 50 50 3200
+/usr/bin/time /opt/openmpi/bin/mpirun --bynode --mca btl openib,self -n 1 HIS_Estatico_CPU 50 50 3200
+/usr/bin/time /opt/openmpi/bin/mpirun --bynode --mca btl openib,self -n 1 HIS_Estatico_CPU 50 50 3200
+/usr/bin/time /opt/openmpi/bin/mpirun --bynode --mca btl openib,self -n 1 HIS_Estatico_ALL 50 50 3200
+/usr/bin/time /opt/openmpi/bin/mpirun --bynode --mca btl openib,self -n 1 HIS_Estatico_ALL 50 50 3200
+/usr/bin/time /opt/openmpi/bin/mpirun --bynode --mca btl openib,self -n 1 HIS_Estatico_ALL 50 50 3200
+

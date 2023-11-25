@@ -1,0 +1,15 @@
+cat: /tmp/196149.1.all.q/machines: No such file or directory
+52.69user 26.34system 1:34.11elapsed 83%CPU (0avgtext+0avgdata 2965760maxresident)k
+32inputs+24outputs (0major+52878minor)pagefaults 0swaps
+51.76user 27.27system 1:29.66elapsed 88%CPU (0avgtext+0avgdata 2964064maxresident)k
+32inputs+24outputs (0major+52773minor)pagefaults 0swaps
+54.97user 24.00system 1:26.05elapsed 91%CPU (0avgtext+0avgdata 2958720maxresident)k
+32inputs+32outputs (0major+52438minor)pagefaults 0swaps
+7270.96user 141.64system 6:23.77elapsed 1931%CPU (0avgtext+0avgdata 4299872maxresident)k
+0inputs+88outputs (0major+20597minor)pagefaults 0swaps
+7162.89user 139.34system 6:25.29elapsed 1895%CPU (0avgtext+0avgdata 4300224maxresident)k
+0inputs+88outputs (0major+21132minor)pagefaults 0swaps
+7218.52user 141.53system 6:29.70elapsed 1888%CPU (0avgtext+0avgdata 4299920maxresident)k
+0inputs+96outputs (0major+21108minor)pagefaults 0swaps
+1217.56user 58.75system 1:58.46elapsed 1077%CPU (0avgtext+0avgdata 5135552maxresident)k
+32inputs+88outputs (0major+64025minor)pagefaults 0swaps

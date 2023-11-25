@@ -1,0 +1,468 @@
+2 platform(s) found.
+OpenCL Error: Devices couldn't be resolved.
+2 device(s) found on platform 1.
+Device (0) type: GPU
+Device (1) type: GPU
+2 platform(s) found.
+2 device(s) found on platform 0.
+Device (0) type: GPU
+Device (1) type: GPU
+OpenCL Error: Devices couldn't be resolved.
+2 platform(s) found.
+2 device(s) found on platform 0.
+Device (0) type: GPU
+Device (1) type: GPU
+OpenCL Error: Devices couldn't be resolved.
+Overall ticks (1tick->1ms): 124652532
+Internal computation (s): 108.922702
+Border swap time (s): 12.261423
+Border computation time (s): 2.222832
+Balancing time (s): 1.237861
+Tempo dispositivo (1tick->1nanosegundo) 0: 106235648
+Tempo dispositivo (1tick->1nanosegundo) 1: 106220480
+Tempo dispositivo (1tick->1nanosegundo) 2: 109239232
+Tempo dispositivo (1tick->1nanosegundo) 3: 103727968
+Tempo dispositivo (1tick->1nanosegundo) 4: 105692160
+Tempo dispositivo (1tick->1nanosegundo) 5: 106405024
+2 platform(s) found.
+2 device(s) found on platform 0.
+Device (0) type: GPU
+Device (1) type: GPU
+OpenCL Error: Devices couldn't be resolved.
+2 platform(s) found.
+2 device(s) found on platform 0.
+Device (0) type: GPU
+2 platform(s) found.
+OpenCL Error: Devices couldn't be resolved.
+2 device(s) found on platform 1.
+Device (0) type: GPU
+Device (1) type: GPU
+Device (1) type: GPU
+OpenCL Error: Devices couldn't be resolved.
+Overall ticks (1tick->1ms): 125675006
+Internal computation (s): 108.849761
+Border swap time (s): 13.325511
+Border computation time (s): 2.225731
+Balancing time (s): 1.266961
+Tempo dispositivo (1tick->1nanosegundo) 0: 106723232
+Tempo dispositivo (1tick->1nanosegundo) 1: 103849824
+Tempo dispositivo (1tick->1nanosegundo) 2: 108694144
+Tempo dispositivo (1tick->1nanosegundo) 3: 105178816
+Tempo dispositivo (1tick->1nanosegundo) 4: 105742464
+Tempo dispositivo (1tick->1nanosegundo) 5: 109052960
+2 platform(s) found.
+2 device(s) found on platform 0.
+Device (0) type: GPU
+Device (1) type: GPU
+OpenCL Error: Devices couldn't be resolved.
+2 platform(s) found.
+2 device(s) found on platform 0.
+Device (0) type: GPU
+Device (1) type: GPU
+OpenCL Error: Devices couldn't be resolved.
+2 platform(s) found.
+OpenCL Error: Devices couldn't be resolved.
+2 device(s) found on platform 1.
+Device (0) type: GPU
+Device (1) type: GPU
+Overall ticks (1tick->1ms): 125587688
+Internal computation (s): 108.800959
+Border swap time (s): 13.295480
+Border computation time (s): 2.226943
+Balancing time (s): 1.256954
+Tempo dispositivo (1tick->1nanosegundo) 0: 106182816
+Tempo dispositivo (1tick->1nanosegundo) 1: 107588704
+Tempo dispositivo (1tick->1nanosegundo) 2: 106732096
+Tempo dispositivo (1tick->1nanosegundo) 3: 106396160
+Tempo dispositivo (1tick->1nanosegundo) 4: 107268416
+Tempo dispositivo (1tick->1nanosegundo) 5: 106190368
+2 platform(s) found.
+1 device(s) found on platform 0.
+Device (0) type: CPU
+OpenCL Error: Devices couldn't be resolved.
+2 platform(s) found.
+OpenCL Error: Devices couldn't be resolved.
+1 device(s) found on platform 1.
+Device (0) type: CPU
+2 platform(s) found.
+OpenCL Error: Devices couldn't be resolved.
+1 device(s) found on platform 1.
+Device (0) type: CPU
+Overall ticks (1tick->1ms): 617085506
+Internal computation (s): 596.005067
+Border swap time (s): 5.469456
+Border computation time (s): 9.271935
+Balancing time (s): 6.300384
+Tempo dispositivo (1tick->1nanosegundo) 0: 562226609
+Tempo dispositivo (1tick->1nanosegundo) 1: 571751389
+Tempo dispositivo (1tick->1nanosegundo) 2: 578707135
+2 platform(s) found.
+OpenCL Error: Devices couldn't be resolved.
+1 device(s) found on platform 1.
+Device (0) type: CPU
+2 platform(s) found.
+OpenCL Error: Devices couldn't be resolved.
+1 device(s) found on platform 1.
+Device (0) type: CPU
+2 platform(s) found.
+1 device(s) found on platform 0.
+Device (0) type: CPU
+OpenCL Error: Devices couldn't be resolved.
+Overall ticks (1tick->1ms): 615570811
+Internal computation (s): 595.072562
+Border swap time (s): 5.406535
+Border computation time (s): 8.816959
+Balancing time (s): 6.240600
+Tempo dispositivo (1tick->1nanosegundo) 0: 562121961
+Tempo dispositivo (1tick->1nanosegundo) 1: 565845904
+Tempo dispositivo (1tick->1nanosegundo) 2: 586591141
+2 platform(s) found.
+1 device(s) found on platform 0.
+Device (0) type: CPU
+OpenCL Error: Devices couldn't be resolved.
+2 platform(s) found.
+OpenCL Error: Devices couldn't be resolved.
+1 device(s) found on platform 1.
+Device (0) type: CPU
+2 platform(s) found.
+OpenCL Error: Devices couldn't be resolved.
+1 device(s) found on platform 1.
+Device (0) type: CPU
+Overall ticks (1tick->1ms): 615227972
+Internal computation (s): 594.199781
+Border swap time (s): 5.493452
+Border computation time (s): 9.178456
+Balancing time (s): 6.318770
+Tempo dispositivo (1tick->1nanosegundo) 0: 575548039
+Tempo dispositivo (1tick->1nanosegundo) 1: 555377325
+Tempo dispositivo (1tick->1nanosegundo) 2: 573379015
+2 platform(s) found.
+2 device(s) found on platform 0.
+Device (0) type: GPU
+Device (1) type: GPU
+1 device(s) found on platform 1.
+Device (2) type: CPU
+2 platform(s) found.
+2 device(s) found on platform 0.
+Device (0) type: GPU
+Device (1) type: GPU
+1 device(s) found on platform 1.
+Device (2) type: CPU
+2 platform(s) found.
+1 device(s) found on platform 0.
+Device (0) type: CPU
+2 device(s) found on platform 1.
+Device (1) type: GPU
+Device (2) type: GPU
+Overall ticks (1tick->1ms): 142301103
+Internal computation (s): 112.365611
+Border swap time (s): 19.060695
+Border computation time (s): 9.502034
+Balancing time (s): 1.340375
+Tempo dispositivo (1tick->1nanosegundo) 0: 93389376
+Tempo dispositivo (1tick->1nanosegundo) 1: 93282688
+Tempo dispositivo (1tick->1nanosegundo) 2: 90380823
+Tempo dispositivo (1tick->1nanosegundo) 3: 95403136
+Tempo dispositivo (1tick->1nanosegundo) 4: 92209856
+Tempo dispositivo (1tick->1nanosegundo) 5: 96299935
+Tempo dispositivo (1tick->1nanosegundo) 6: 100936514
+Tempo dispositivo (1tick->1nanosegundo) 7: 91343776
+Tempo dispositivo (1tick->1nanosegundo) 8: 92828544
+2 platform(s) found.
+2 device(s) found on platform 0.
+Device (0) type: GPU
+Device (1) type: GPU
+1 device(s) found on platform 1.
+Device (2) type: CPU
+2 platform(s) found.
+2 device(s) found on platform 0.
+Device (0) type: GPU
+2 platform(s) found.
+1 device(s) found on platform 0.
+Device (0) type: CPU
+Device (1) type: GPU
+2 device(s) found on platform 1.
+Device (1) type: GPU
+1 device(s) found on platform 1.
+Device (2) type: CPU
+Device (2) type: GPU
+Overall ticks (1tick->1ms): 148625421
+Internal computation (s): 118.887585
+Border swap time (s): 18.914005
+Border computation time (s): 9.299635
+Balancing time (s): 1.491421
+Tempo dispositivo (1tick->1nanosegundo) 0: 92903872
+Tempo dispositivo (1tick->1nanosegundo) 1: 93808480
+Tempo dispositivo (1tick->1nanosegundo) 2: 94740266
+Tempo dispositivo (1tick->1nanosegundo) 3: 91077536
+Tempo dispositivo (1tick->1nanosegundo) 4: 95107040
+Tempo dispositivo (1tick->1nanosegundo) 5: 97427222
+Tempo dispositivo (1tick->1nanosegundo) 6: 94737601
+Tempo dispositivo (1tick->1nanosegundo) 7: 90878336
+Tempo dispositivo (1tick->1nanosegundo) 8: 93798208
+2 platform(s) found.
+2 device(s) found on platform 0.
+Device (0) type: GPU
+Device (1) type: GPU
+1 device(s) found on platform 1.
+Device (2) type: CPU
+2 platform(s) found.
+1 device(s) found on platform 0.
+Device (0) type: CPU
+2 device(s) found on platform 1.
+Device (1) type: GPU
+Device (2) type: GPU
+2 platform(s) found.
+2 device(s) found on platform 0.
+Device (0) type: GPU
+Device (1) type: GPU
+1 device(s) found on platform 1.
+Device (2) type: CPU
+Overall ticks (1tick->1ms): 145752931
+Internal computation (s): 116.190799
+Border swap time (s): 18.860718
+Border computation time (s): 9.310388
+Balancing time (s): 1.354736
+Tempo dispositivo (1tick->1nanosegundo) 0: 93536032
+Tempo dispositivo (1tick->1nanosegundo) 1: 94231360
+Tempo dispositivo (1tick->1nanosegundo) 2: 101367100
+Tempo dispositivo (1tick->1nanosegundo) 3: 94630784
+Tempo dispositivo (1tick->1nanosegundo) 4: 94670080
+Tempo dispositivo (1tick->1nanosegundo) 5: 88853921
+Tempo dispositivo (1tick->1nanosegundo) 6: 97567553
+Tempo dispositivo (1tick->1nanosegundo) 7: 91173472
+Tempo dispositivo (1tick->1nanosegundo) 8: 92709248
+2 platform(s) found.
+OpenCL Error: Devices couldn't be resolved.
+2 device(s) found on platform 1.
+Device (0) type: GPU
+Device (1) type: GPU
+2 platform(s) found.
+2 device(s) found on platform 0.
+Device (0) type: GPU
+Device (1) type: GPU
+OpenCL Error: Devices couldn't be resolved.
+2 platform(s) found.
+2 device(s) found on platform 0.
+Device (0) type: GPU
+Device (1) type: GPU
+OpenCL Error: Devices couldn't be resolved.
+Overall ticks (1tick->1ms): 123549623
+Internal computation (s): 108.895044
+Border swap time (s): 12.080431
+Border computation time (s): 2.218526
+Balancing time (s): 0.348810
+Tempo dispositivo (1tick->1nanosegundo) 0: 106585568
+Tempo dispositivo (1tick->1nanosegundo) 1: 103602464
+Tempo dispositivo (1tick->1nanosegundo) 2: 106673600
+Tempo dispositivo (1tick->1nanosegundo) 3: 106771936
+Tempo dispositivo (1tick->1nanosegundo) 4: 106766848
+Tempo dispositivo (1tick->1nanosegundo) 5: 106638944
+2 platform(s) found.
+2 device(s) found on platform 0.
+Device (0) type: GPU
+Device (1) type: GPU
+OpenCL Error: Devices couldn't be resolved.
+2 platform(s) found.
+2 device(s) found on platform 0.
+Device (0) type: GPU
+Device (1) type: GPU
+OpenCL Error: Devices couldn't be resolved.
+2 platform(s) found.
+OpenCL Error: Devices couldn't be resolved.
+2 device(s) found on platform 1.
+Device (0) type: GPU
+Device (1) type: GPU
+Overall ticks (1tick->1ms): 121928860
+Internal computation (s): 107.274315
+Border swap time (s): 12.077260
+Border computation time (s): 2.223310
+Balancing time (s): 0.347865
+Tempo dispositivo (1tick->1nanosegundo) 0: 106375584
+Tempo dispositivo (1tick->1nanosegundo) 1: 106306752
+Tempo dispositivo (1tick->1nanosegundo) 2: 106951360
+Tempo dispositivo (1tick->1nanosegundo) 3: 107791552
+Tempo dispositivo (1tick->1nanosegundo) 4: 105886688
+Tempo dispositivo (1tick->1nanosegundo) 5: 105728032
+2 platform(s) found.
+2 device(s) found on platform 0.
+Device (0) type: GPU
+Device (1) type: GPU
+OpenCL Error: Devices couldn't be resolved.
+2 platform(s) found.
+OpenCL Error: Devices couldn't be resolved.
+2 device(s) found on platform 1.
+Device (0) type: GPU
+Device (1) type: GPU
+2 platform(s) found.
+2 device(s) found on platform 0.
+Device (0) type: GPU
+Device (1) type: GPU
+OpenCL Error: Devices couldn't be resolved.
+Overall ticks (1tick->1ms): 122952106
+Internal computation (s): 108.603814
+Border swap time (s): 11.759907
+Border computation time (s): 2.221725
+Balancing time (s): 0.359390
+Tempo dispositivo (1tick->1nanosegundo) 0: 106580992
+Tempo dispositivo (1tick->1nanosegundo) 1: 109251520
+Tempo dispositivo (1tick->1nanosegundo) 2: 105991968
+Tempo dispositivo (1tick->1nanosegundo) 3: 105445568
+Tempo dispositivo (1tick->1nanosegundo) 4: 105441856
+Tempo dispositivo (1tick->1nanosegundo) 5: 107067584
+2 platform(s) found.
+1 device(s) found on platform 0.
+Device (0) type: CPU
+OpenCL Error: Devices couldn't be resolved.
+2 platform(s) found.
+OpenCL Error: Devices couldn't be resolved.
+1 device(s) found on platform 1.
+Device (0) type: CPU
+2 platform(s) found.
+OpenCL Error: Devices couldn't be resolved.
+1 device(s) found on platform 1.
+Device (0) type: CPU
+Overall ticks (1tick->1ms): 627469192
+Internal computation (s): 611.481326
+Border swap time (s): 5.307009
+Border computation time (s): 8.992265
+Balancing time (s): 1.647611
+Tempo dispositivo (1tick->1nanosegundo) 0: 518634875
+Tempo dispositivo (1tick->1nanosegundo) 1: 515201926
+Tempo dispositivo (1tick->1nanosegundo) 2: 584870902
+2 platform(s) found.
+OpenCL Error: Devices couldn't be resolved.
+1 device(s) found on platform 1.
+Device (0) type: CPU
+2 platform(s) found.
+1 device(s) found on platform 0.
+Device (0) type: CPU
+OpenCL Error: Devices couldn't be resolved.
+2 platform(s) found.
+OpenCL Error: Devices couldn't be resolved.
+1 device(s) found on platform 1.
+Device (0) type: CPU
+Overall ticks (1tick->1ms): 627764105
+Internal computation (s): 611.476302
+Border swap time (s): 5.266986
+Border computation time (s): 9.321196
+Balancing time (s): 1.647569
+Tempo dispositivo (1tick->1nanosegundo) 0: 515461381
+Tempo dispositivo (1tick->1nanosegundo) 1: 515484900
+Tempo dispositivo (1tick->1nanosegundo) 2: 592579766
+2 platform(s) found.
+OpenCL Error: Devices couldn't be resolved.
+1 device(s) found on platform 1.
+Device (0) type: CPU
+2 platform(s) found.
+OpenCL Error: Devices couldn't be resolved.
+1 device(s) found on platform 1.
+Device (0) type: CPU
+2 platform(s) found.
+1 device(s) found on platform 0.
+Device (0) type: CPU
+OpenCL Error: Devices couldn't be resolved.
+Overall ticks (1tick->1ms): 630548918
+Internal computation (s): 613.929917
+Border swap time (s): 5.536899
+Border computation time (s): 9.410044
+Balancing time (s): 1.641233
+Tempo dispositivo (1tick->1nanosegundo) 0: 516066339
+Tempo dispositivo (1tick->1nanosegundo) 1: 513482015
+Tempo dispositivo (1tick->1nanosegundo) 2: 584621712
+2 platform(s) found.
+2 device(s) found on platform 0.
+Device (0) type: GPU
+Device (1) type: GPU
+1 device(s) found on platform 1.
+Device (2) type: CPU
+2 platform(s) found.
+1 device(s) found on platform 0.
+Device (0) type: CPU
+2 device(s) found on platform 1.
+Device (1) type: GPU
+2 platform(s) found.
+2 device(s) found on platform 0.
+Device (0) type: GPU
+Device (2) type: GPU
+Device (1) type: GPU
+1 device(s) found on platform 1.
+Device (2) type: CPU
+Overall ticks (1tick->1ms): 148811376
+Internal computation (s): 120.028107
+Border swap time (s): 18.905476
+Border computation time (s): 9.353251
+Balancing time (s): 0.491391
+Tempo dispositivo (1tick->1nanosegundo) 0: 91878432
+Tempo dispositivo (1tick->1nanosegundo) 1: 89624640
+Tempo dispositivo (1tick->1nanosegundo) 2: 93683911
+Tempo dispositivo (1tick->1nanosegundo) 3: 92482368
+Tempo dispositivo (1tick->1nanosegundo) 4: 91196800
+Tempo dispositivo (1tick->1nanosegundo) 5: 102260438
+Tempo dispositivo (1tick->1nanosegundo) 6: 98172924
+Tempo dispositivo (1tick->1nanosegundo) 7: 90726048
+Tempo dispositivo (1tick->1nanosegundo) 8: 93195968
+2 platform(s) found.
+2 device(s) found on platform 0.
+Device (0) type: GPU
+Device (1) type: GPU
+1 device(s) found on platform 1.
+Device (2) type: CPU
+2 platform(s) found.
+2 device(s) found on platform 0.
+Device (0) type: GPU
+2 platform(s) found.
+1 device(s) found on platform 0.
+Device (0) type: CPU
+2 device(s) found on platform 1.
+Device (1) type: GPU
+Device (1) type: GPU
+Device (2) type: GPU
+1 device(s) found on platform 1.
+Device (2) type: CPU
+Overall ticks (1tick->1ms): 147036398
+Internal computation (s): 118.342544
+Border swap time (s): 18.932711
+Border computation time (s): 9.231348
+Balancing time (s): 0.495665
+Tempo dispositivo (1tick->1nanosegundo) 0: 91855456
+Tempo dispositivo (1tick->1nanosegundo) 1: 92598400
+Tempo dispositivo (1tick->1nanosegundo) 2: 89541356
+Tempo dispositivo (1tick->1nanosegundo) 3: 94325376
+Tempo dispositivo (1tick->1nanosegundo) 4: 91775456
+Tempo dispositivo (1tick->1nanosegundo) 5: 94928644
+Tempo dispositivo (1tick->1nanosegundo) 6: 102247711
+Tempo dispositivo (1tick->1nanosegundo) 7: 91862880
+Tempo dispositivo (1tick->1nanosegundo) 8: 93973664
+2 platform(s) found.
+2 device(s) found on platform 0.
+Device (0) type: GPU
+Device (1) type: GPU
+1 device(s) found on platform 1.
+Device (2) type: CPU
+2 platform(s) found.
+1 device(s) found on platform 0.
+Device (0) type: CPU
+2 device(s) found on platform 1.
+Device (1) type: GPU
+2 platform(s) found.
+2 device(s) found on platform 0.
+Device (0) type: GPU
+Device (2) type: GPU
+Device (1) type: GPU
+1 device(s) found on platform 1.
+Device (2) type: CPU
+Overall ticks (1tick->1ms): 151953332
+Internal computation (s): 123.515809
+Border swap time (s): 18.898136
+Border computation time (s): 9.032192
+Balancing time (s): 0.473296
+Tempo dispositivo (1tick->1nanosegundo) 0: 92088800
+Tempo dispositivo (1tick->1nanosegundo) 1: 92836992
+Tempo dispositivo (1tick->1nanosegundo) 2: 95073400
+Tempo dispositivo (1tick->1nanosegundo) 3: 90062848
+Tempo dispositivo (1tick->1nanosegundo) 4: 92164448
+Tempo dispositivo (1tick->1nanosegundo) 5: 97710783
+Tempo dispositivo (1tick->1nanosegundo) 6: 89009554
+Tempo dispositivo (1tick->1nanosegundo) 7: 91397568
+Tempo dispositivo (1tick->1nanosegundo) 8: 91959616
