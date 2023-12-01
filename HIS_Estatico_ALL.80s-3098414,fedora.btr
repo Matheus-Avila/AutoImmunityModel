@@ -1,0 +1,8 @@
+
+HIS_Estatico_ALL:3098414 terminated with signal 11 at PC=7f2a52e03fe5 SP=7ffda6ebe098.  Backtrace:
+/usr/local/cuda/targets/x86_64-linux/lib/libOpenCL.so.1(clGetEventProfilingInfo+0x5)[0x7f2a52e03fe5]
+./HIS_Estatico_ALL[0x406060]
+./HIS_Estatico_ALL[0x402c44]
+/lib64/libc.so.6(+0x2814a)[0x7f2a5204614a]
+/lib64/libc.so.6(__libc_start_main+0x8b)[0x7f2a5204620b]
+./HIS_Estatico_ALL[0x404bd5]

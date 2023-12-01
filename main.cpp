@@ -13,8 +13,8 @@
 //********************************************************************************************************************************
 
 //#define PRINT
-#define CPU_WORK_GROUP_SIZE	8
-#define GPU_WORK_GROUP_SIZE	64
+#define CPU_WORK_GROUP_SIZE	6
+#define GPU_WORK_GROUP_SIZE	48
 #define SIMULACOES		10000
 #define INTERVALO_BALANCEAMENTO	1000
 #define BALANCEAMENTO_THRESHOLD	0.000025
@@ -79,7 +79,7 @@ void InicializarPontosHIS(float **malha, const int *parametrosMalha)
 					(*malha)[(MICROGLIA * parametrosMalha[MALHA_DIMENSAO_CELULAS]) + (z * parametrosMalha[MALHA_DIMENSAO_POSICAO_Z]) + (y * parametrosMalha[MALHA_DIMENSAO_POSICAO_Y]) + (x *parametrosMalha[MALHA_DIMENSAO_POSICAO_X])] = 0.0f;
 				}
 
-				(*malha)[(OLIGODENDROCYTES * parametrosMalha[MALHA_DIMENSAO_CELULAS]) + (z * parametrosMalha[MALHA_DIMENSAO_POSICAO_Z]) + (y * parametrosMalha[MALHA_DIMENSAO_POSICAO_Y]) + (x *parametrosMalha[MALHA_DIMENSAO_POSICAO_X])] = 1.0f;
+				(*malha)[(OLIGODENDROCYTES * parametrosMalha[MALHA_DIMENSAO_CELULAS]) + (z * parametrosMalha[MALHA_DIMENSAO_POSICAO_Z]) + (y * parametrosMalha[MALHA_DIMENSAO_POSICAO_Y]) + (x *parametrosMalha[MALHA_DIMENSAO_POSICAO_X])] = 0.0f;
 				(*malha)[(CONVENTIONAL_DC * parametrosMalha[MALHA_DIMENSAO_CELULAS]) + (z * parametrosMalha[MALHA_DIMENSAO_POSICAO_Z]) + (y * parametrosMalha[MALHA_DIMENSAO_POSICAO_Y]) + (x *parametrosMalha[MALHA_DIMENSAO_POSICAO_X])] = 0.0f;
 				(*malha)[(ACTIVATED_DC * parametrosMalha[MALHA_DIMENSAO_CELULAS]) + (z * parametrosMalha[MALHA_DIMENSAO_POSICAO_Z]) + (y * parametrosMalha[MALHA_DIMENSAO_POSICAO_Y]) + (x *parametrosMalha[MALHA_DIMENSAO_POSICAO_X])] = 0.0f;
 				(*malha)[(T_CYTOTOXIC * parametrosMalha[MALHA_DIMENSAO_CELULAS]) + (z * parametrosMalha[MALHA_DIMENSAO_POSICAO_Z]) + (y * parametrosMalha[MALHA_DIMENSAO_POSICAO_Y]) + (x *parametrosMalha[MALHA_DIMENSAO_POSICAO_X])] = 0.0f;

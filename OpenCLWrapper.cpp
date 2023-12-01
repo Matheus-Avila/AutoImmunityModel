@@ -259,12 +259,19 @@ int CreateKernel(int devicePosition, const char *source, const char *kernelName)
 		printf("Error creating program!\n");
 		return -1;
 	}
-
+	cl_build_status status;
+        size_t size;
+        char* log;
 	//Compile program.
 	state = clBuildProgram(devices[devicePosition].program, 1, &devices[devicePosition].deviceID, NULL, NULL, NULL);
-	if(state != CL_SUCCESS)
-	{
-		printf("Error compiling program!\n");
+	clGetProgramBuildInfo(devices[devicePosition].program, devices[devicePosition].deviceID, CL_PROGRAM_BUILD_LOG, 0, NULL, &size );
+	if(status != CL_BUILD_SUCCESS || state != CL_SUCCESS)
+	{       
+	        clGetProgramBuildInfo(devices[devicePosition].program, devices[devicePosition].deviceID, CL_PROGRAM_BUILD_LOG, 0, NULL, &size);
+	        log = (char*)malloc(size);
+	        clGetProgramBuildInfo(devices[devicePosition].program, devices[devicePosition].deviceID, CL_PROGRAM_BUILD_LOG, size, log, NULL);
+	        
+		printf("Error compiling program!\n%s\n", log);
 		return -1;
 	}
 
@@ -272,7 +279,7 @@ int CreateKernel(int devicePosition, const char *source, const char *kernelName)
 	devices[devicePosition].kernels[devices[devicePosition].numberOfKernels] = clCreateKernel(devices[devicePosition].program, kernelName, &state);
 	if(state != CL_SUCCESS)
 	{
-		printf("Error creating kernel!\n");
+		printf("Error creating kernel! \n");
 		return -1;
 	}
 	devices[devicePosition].kernelID[devices[devicePosition].numberOfKernels] = automaticNumber;

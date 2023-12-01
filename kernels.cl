@@ -104,8 +104,11 @@ __constant float stableTCytotoxic = 40;
 __constant float stableB = 25;
 __constant float stableP = 2.5;
 __constant float V_LN = 40;
-float V_BV = 0;
-float V_PV = 0;
+__constant float V_BV = 0;
+__constant float V_PV = 0;
+__constant float deltaX = 0.1;
+__constant float deltaY = 0.1;
+__constant float deltaZ = 0.1;
 
 float fFunc(float valuePopulation, float avgPopulation){
     return valuePopulation*valuePopulation/(float)(valuePopulation + avgPopulation);
