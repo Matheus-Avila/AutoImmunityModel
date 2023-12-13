@@ -56,6 +56,7 @@ structParameters ParametersInitialize(){
     params.V_BV = 0;
     params.V_PV = 0;
 
+    params.epslon_x = 0.1;
     return params;
 }
 

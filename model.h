@@ -2,6 +2,7 @@
 #define _MODEL_H_
 
 #define BUFFER 2
+#include <unistd.h> 
 
 typedef struct derivatives
 {
@@ -64,6 +65,7 @@ typedef struct structParameters
     double V_PV;
     double V_BV;
     int V_LN;
+    double epslon_x;
 }structParameters;
 
 typedef struct structModel
@@ -134,7 +136,7 @@ double CalculateHt(structModel model, double stepKMinus);
 
 void SolverLymphNode(structModel *model, int stepPos);
 
-structModel ModelInitialize(structParameters params, double ht, double hx, double time, double space, int numFigs, int numPointsLN, int numStepsLN, int saveFigs);
+structModel ModelInitialize(structParameters params, float ht, float hx, float time, float space, int numFigs, int numPointsLN, int numStepsLN, int saveFigs);
 
 void DefineBVPV(structModel *model);
 
@@ -142,9 +144,10 @@ void InitialConditionTissueMicroglia(structModel* model);
 
 void InitialConditionLymphNode(structModel* model, double dendriticLN, double thelperLN, double tcytotoxicLN, double bcellLN, double plasmacellLN, double antibodyLN);
 
-void RunModel(structModel *model);
+float RunModel(structModel *model,int* save_times, int size, float* points_values);
 
 void WritePopulation(structModel model, double *population, char* fileName, char* bufferTime);
 
 void WriteFiles(structModel model, double *oligodendrocyte, double *microglia, double *tCytotoxic, double *antibody, double *conventionalDC, double  *activatedDC, int time);
+
 #endif

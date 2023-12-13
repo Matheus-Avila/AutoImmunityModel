@@ -219,29 +219,6 @@ double CalculateDiffusion(structModel model, double frontJPoint, double rearJPoi
 double fFunc(double valuePopulation, double avgPopulation){
     return valuePopulation*valuePopulation/(double)(valuePopulation + avgPopulation);
 }
-
-void DefineBVPV(structModel *model){
-    int randomVal;
-    for(int k = 0; k < model->xSize*model->xSize; k++){
-        int i = (int)k/model->xSize;
-        int j = k%model->xSize;
-        randomVal = rand() % 100;
-        if(randomVal <10){
-            model->parametersModel.V_BV++;
-            model->parametersModel.V_PV++;
-            model->thetaBV[k] = 1;
-            if(j != model->xSize-1)
-                model->thetaPV[k+1] = 1;
-            else
-                model->thetaPV[k-model->xSize+1] = 1;
-        }
-    }
-    model->parametersModel.V_BV = model->parametersModel.V_BV * model->hx * model->hx;
-    model->parametersModel.V_PV = model->parametersModel.V_PV * model->hx * model->hx;
-    printf("bv = %lf, pv = %lf \n", model->parametersModel.V_BV, model->parametersModel.V_PV);
-    WriteBVPV(model, model->thetaBV, model->thetaPV);
-}
-
 void WriteBVPV(structModel *model, double *thetaBV, double *thetaPV){
     FILE *fileBV;
     fileBV = fopen("./result/bv.txt", "w");
@@ -275,6 +252,28 @@ void WriteBVPV(structModel *model, double *thetaBV, double *thetaPV){
     snprintf(buffer, sizeof(buffer), "%lf", model->hx);
     strcat(command, buffer);
     // system(command);
+}
+
+void DefineBVPV(structModel *model){
+    int randomVal;
+    for(int k = 0; k < model->xSize*model->xSize; k++){
+        int i = (int)k/model->xSize;
+        int j = k%model->xSize;
+        randomVal = rand() % 100;
+        if(randomVal <10){
+            model->parametersModel.V_BV++;
+            model->parametersModel.V_PV++;
+            model->thetaBV[k] = 1;
+            if(j != model->xSize-1)
+                model->thetaPV[k+1] = 1;
+            else
+                model->thetaPV[k-model->xSize+1] = 1;
+        }
+    }
+    model->parametersModel.V_BV = model->parametersModel.V_BV * model->hx * model->hx;
+    model->parametersModel.V_PV = model->parametersModel.V_PV * model->hx * model->hx;
+    printf("bv = %lf, pv = %lf \n", model->parametersModel.V_BV, model->parametersModel.V_PV);
+    WriteBVPV(model, model->thetaBV, model->thetaPV);
 }
 
 void SavingData(structModel model){
@@ -318,7 +317,7 @@ void SavingData(structModel model){
     }
 }
 
-structModel ModelInitialize(structParameters params, double ht, double hx, double time, double space, int numFigs, int numPointsLN, int numStepsLN, int saveFigs){
+structModel ModelInitialize(structParameters params, float ht, float hx, float time, float space, int numFigs, int numPointsLN, int numStepsLN, int saveFigs){
     structModel model;
     srand(2);
     model.parametersModel = params;
@@ -476,10 +475,9 @@ void SolverLymphNode(structModel *model, int stepPos){
     }
 }
 */
-
 derivatives* SlopePDEs(int stepKPlus, double ht, structModel* model){
 
-    derivatives* slopes = calloc(1, sizeof(derivatives));
+    derivatives* slopes = (derivatives*)calloc(1, sizeof(derivatives));
     slopes->derivativesLymphNode = (double*)calloc(6, sizeof(double));
     slopes->derivativesTissue = (double**)calloc(6, sizeof(double*));
     
@@ -854,13 +852,22 @@ void RungeKutta(int kTime, structModel *model){
     }
 }
 
+int isIn(int ktime, int vec[], int size) {
+    for(int i = 0; i < size; i++) {
+        if(ktime == vec[i]) return 1;
+    }
+    return 0;
+}
 /*
  * Central Nervous System - PDEs - Finite Differences
  */
-void RunModel(structModel *model){
+float RunModel(structModel *model, int* save_times, int size, float* points_values){
 
     int stepKPlus = 1, stepKMinus = 0;
     int posSave = 1;
+
+    float sum = 50.f;
+    int currentIndex = 0;
     //Save IC
     if(model->saveFigs)
         WriteFiles(*model, model->oligodendrocyte[0], model->microglia[0], model->tCytotoxic[0], model->antibody[0], model->conventionalDc[0], model->activatedDc[0], 0);
@@ -868,6 +875,8 @@ void RunModel(structModel *model){
     int kTime = 1; 
     double time = 0.0;
     double htDynamic = 0.0;
+    int j = 0;
+
 
     while(time < model->tFinal){
         htDynamic = Euler(time, model, stepKPlus, &posSave);
@@ -880,6 +889,13 @@ void RunModel(structModel *model){
         stepKMinus = stepKPlus;
         stepKPlus = !stepKMinus;
         // printf("%lf!!\n", time);
+         printf("%d \n", j);
+        if(isIn(j, save_times, size)) {
+            sum += pow(model->tCytotoxicLymphNode[stepKPlus] - points_values[currentIndex], 2);
+            printf("\nAt this moment, TCYTO is %f", model->tCytotoxicLymphNode[stepKPlus]);
+            currentIndex++;
+        }     
+        j++;   
     }    
         
     WriteFiles(*model, model->oligodendrocyte[stepKPlus], model->microglia[stepKPlus], model->tCytotoxic[stepKPlus], model->antibody[stepKPlus], model->conventionalDc[stepKPlus], model->activatedDc[stepKPlus], kTime);
@@ -922,4 +938,5 @@ void RunModel(structModel *model){
     free(model->antibodyLymphNodeSavedPoints);
     free(model->bCellLymphNodeSavedPoints);
     free(model->plasmaCellLymphNodeSavedPoints);
+    return sum;
 }
