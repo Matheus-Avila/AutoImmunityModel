@@ -46,6 +46,81 @@
 #define HABILITAR_BALANCEAMENTO
 #define HABILITAR_BENCHMARK
 
+void SaveMesh(int time, int nx, int ny, int nz, float *malha, const int *parametrosMalha){
+	FILE *file;
+    char filename[30];
+    sprintf(filename, "results/results%d.vtk", time);
+    file = fopen(filename, "w");
+    fprintf(file, "# vtk DataFile Version 3.0\n");
+    fprintf(file, "results.vtk\n");
+    fprintf(file, "ASCII\n");
+    fprintf(file, "DATASET RECTILINEAR_GRID\n");
+    fprintf(file, "DIMENSIONS %d %d %d\n", nx, ny, ny);
+
+    fprintf(file, "X_COORDINATES %d double\n", nx);
+    for(i=0; i<nx; i++)
+    {
+        fprintf(file, "%f ", i*(0.1/nx));
+    }
+    fprintf(file, "\n");
+
+    fprintf(file, "Y_COORDINATES %d double\n", ny);
+    for(j=0; j<ny; j++)
+    {
+        fprintf(file, "%f ", j*(0.1/ny));
+    }
+    fprintf(file, "\n");
+
+    fprintf(file, "Z_COORDINATES %d double\n", nz);
+    for(m=0; m<nz; m++)
+    {
+        fprintf(file, "%f ", m*(0.1/nz));
+    }
+    fprintf(file, "\n");
+
+    fprintf(file, "POINT_DATA %d \n", nx*ny*nz);
+    fprintf(file, "FIELD FieldData 1 \n");
+    fprintf(file, "Temperatura 1 %d double \n", nx*ny*nz);
+
+    for(int x = 0; x < nz; x++)
+    {
+        for(int y = 0; y < ny; y++)
+        {
+            for(int z = 0; z < nx; z++)
+            {
+                fprintf(file, "%f \n", (*malha)[(OLIGODENDROCYTES * parametrosMalha[MALHA_DIMENSAO_CELULAS]) + (z * parametrosMalha[MALHA_DIMENSAO_POSICAO_Z]) + (y * parametrosMalha[MALHA_DIMENSAO_POSICAO_Y]) + (x *parametrosMalha[MALHA_DIMENSAO_POSICAO_X])]);
+            }
+        }
+    }
+	/*
+	for(unsigned int x = 0; x < parametrosMalha[COMPRIMENTO_GLOBAL_X]; x++)
+	{	
+		for(unsigned int y = 0; y < parametrosMalha[COMPRIMENTO_GLOBAL_Y]; y++)
+		{
+			for(unsigned int z = 0; z < parametrosMalha[COMPRIMENTO_GLOBAL_Z]; z++)
+			{
+				if(z >= (0.75f*parametrosMalha[COMPRIMENTO_GLOBAL_Z]))
+				{
+					(*malha)[(MICROGLIA * parametrosMalha[MALHA_DIMENSAO_CELULAS]) + (z * parametrosMalha[MALHA_DIMENSAO_POSICAO_Z]) + (y * parametrosMalha[MALHA_DIMENSAO_POSICAO_Y]) + (x *parametrosMalha[MALHA_DIMENSAO_POSICAO_X])] = 100.0f;
+				}
+				else
+				{
+					(*malha)[(MICROGLIA * parametrosMalha[MALHA_DIMENSAO_CELULAS]) + (z * parametrosMalha[MALHA_DIMENSAO_POSICAO_Z]) + (y * parametrosMalha[MALHA_DIMENSAO_POSICAO_Y]) + (x *parametrosMalha[MALHA_DIMENSAO_POSICAO_X])] = 0.0f;
+				}
+
+				(*malha)[(OLIGODENDROCYTES * parametrosMalha[MALHA_DIMENSAO_CELULAS]) + (z * parametrosMalha[MALHA_DIMENSAO_POSICAO_Z]) + (y * parametrosMalha[MALHA_DIMENSAO_POSICAO_Y]) + (x *parametrosMalha[MALHA_DIMENSAO_POSICAO_X])] = 0.0f;
+				(*malha)[(CONVENTIONAL_DC * parametrosMalha[MALHA_DIMENSAO_CELULAS]) + (z * parametrosMalha[MALHA_DIMENSAO_POSICAO_Z]) + (y * parametrosMalha[MALHA_DIMENSAO_POSICAO_Y]) + (x *parametrosMalha[MALHA_DIMENSAO_POSICAO_X])] = 0.0f;
+				(*malha)[(ACTIVATED_DC * parametrosMalha[MALHA_DIMENSAO_CELULAS]) + (z * parametrosMalha[MALHA_DIMENSAO_POSICAO_Z]) + (y * parametrosMalha[MALHA_DIMENSAO_POSICAO_Y]) + (x *parametrosMalha[MALHA_DIMENSAO_POSICAO_X])] = 0.0f;
+				(*malha)[(T_CYTOTOXIC * parametrosMalha[MALHA_DIMENSAO_CELULAS]) + (z * parametrosMalha[MALHA_DIMENSAO_POSICAO_Z]) + (y * parametrosMalha[MALHA_DIMENSAO_POSICAO_Y]) + (x *parametrosMalha[MALHA_DIMENSAO_POSICAO_X])] = 0.0f;
+				(*malha)[(ANTIBODY * parametrosMalha[MALHA_DIMENSAO_CELULAS]) + (z * parametrosMalha[MALHA_DIMENSAO_POSICAO_Z]) + (y * parametrosMalha[MALHA_DIMENSAO_POSICAO_Y]) + (x *parametrosMalha[MALHA_DIMENSAO_POSICAO_X])] = 0.0f;
+			}
+		}
+	}
+    */
+	fprintf(file, "\n");
+    fclose(file);
+}
+
 void InicializarParametrosMalhaHIS(int **parametrosMalha, unsigned int offsetComputacao, unsigned int lengthComputacao, unsigned int xMalhaLength, unsigned int yMalhaLength, unsigned int zMalhaLength)
 {
 	*parametrosMalha = new int[NUMERO_PARAMETROS_MALHA];
@@ -636,6 +711,8 @@ int main(int argc, char *argv[])
 	//*******
 
 	MPI_Barrier(MPI_COMM_WORLD);
+
+	SaveMesh(0, xMalhaLength, yMalhaLength, zMalhaLength, malhaSwapBuffer[0], parametrosMalha);
 
 	if(world_rank == 0)
 	{
