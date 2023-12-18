@@ -519,8 +519,8 @@ void RunModel(structModel *model){
 
             diffusionOdc = CalculateDiffusion(*model, valJPlus, valJMinus, valIPlus, valIMinus, model->oligodendrocyte[stepKMinus][kPos]);
 
-            gradientOdcI = (float)(valIPlus - valIMinus)/(float)(model->hx);
-            gradientOdcJ = (float)(valJPlus - valJMinus)/(float)(model->hx);
+            gradientOdcI = (float)(valIPlus - valIMinus)/(float)(2 * model->hx);
+            gradientOdcJ = (float)(valJPlus - valJMinus)/(float)(2 * model->hx);
 
             //Diffusion and Chemotaxis Mic
 

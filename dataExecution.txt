@@ -1,7 +1,7 @@
 Days = 28 - Space = 20 - ht = 0.000200, hx = 0.500000, Ht_JumpStep = 100
 Lymph node populations
-DC = 2.413522, TCD8 = 28.157190, TCD4 = 0.433359, B Cell = 11.429572, Plasma cell = 39.094524, IgG = 5.108579
+DC = 2.417954, TCD8 = 29.542885, TCD4 = 0.432563, B Cell = 11.429574, Plasma cell = 39.094250, IgG = 5.111082
 Tissue populations
-ODC = 392562.875000, Microglia = 465502.500000, ConventionalDC = 41974.910156, ActivatedDC = 10845.178711, TCD8 = 9354.572266, IgG = 206.614792
+ODC = 392978.750000, Microglia = 465359.406250, ConventionalDC = 42035.683594, ActivatedDC = 10860.398438, TCD8 = 10352.821289, IgG = 208.836411
 Parameters
 micDiffusion  = 0.015206, antibodyDiffusion = 0.152060, cDcDiffusion = 0.015206, aDcDiffusion = 0.015206, tCytoDiffusion = 0.015206, chi = 0.030000, muCDc = 0.043200, muMic = 0.004320,         rM = 0.000864, rT = 0.001000, lambAntMic = 0.005702, bD = 0.001000, gammaD = 0.100000, gammaAntibody = 0.300000, gammaT = 0.100000,  avgT = 37.000000, avgDc = 33.000000, avgMic = 350.000000, avgOdc = 400.000000,  cMic = 0.100000,         cCDc = 1.000000, cADc = 1.000000, cDl = 0.100000, cF = 0.100000, alphaTHelper = 0.100000, alphaTCytotoxic = 0.100000, alphaB = 0.100000, alphaP = 1.000000, bTHelper = 0.170000, bTCytotoxic = 0.001000, bRho = 0.600000,         bRhoB = 3.020000, bRhoP = 1.020000, rhoTHelper = 2.000000, rhoTCytotoxic = 2.000000, rhoB = 11.000000, rhoP = 3.000000, rhoAntibody = 0.051000, stableTHelper = 70.000000, stableTCytotoxic = 40.000000,         stableB = 25.000000, stableP = 2.500000, V_LN = 40, V_BV = 41.500000, V_PV = 41.500000
