@@ -875,27 +875,29 @@ float RunModel(structModel *model, int* save_times, int size, float* points_valu
     int kTime = 1; 
     double time = 0.0;
     double htDynamic = 0.0;
-    int j = 0;
+    int days = 0;
 
 
     while(time < model->tFinal){
         htDynamic = Euler(time, model, stepKPlus, &posSave);
         time += htDynamic;
-        if(model->saveFigs && !( (int)time - kTime)){
-            WriteFiles(*model, model->oligodendrocyte[stepKPlus], model->microglia[stepKPlus], model->tCytotoxic[stepKPlus], model->antibody[stepKPlus], model->conventionalDc[stepKPlus], model->activatedDc[stepKPlus], kTime);
+        if(!((int)time - kTime)){
+            if(model->saveFigs) {
+                WriteFiles(*model, model->oligodendrocyte[stepKPlus], model->microglia[stepKPlus], model->tCytotoxic[stepKPlus], model->antibody[stepKPlus], model->conventionalDc[stepKPlus], model->activatedDc[stepKPlus], kTime);
+            }
+            days++;
             // printf("%d!!%lf\n", kTime, time);
             kTime++;
         }
         stepKMinus = stepKPlus;
         stepKPlus = !stepKMinus;
         // printf("%lf!!\n", time);
-         printf("%d \n", j);
-        if(isIn(j, save_times, size)) {
+         printf("%d \n", days);
+        if(isIn(days, save_times, size)) {
             sum += pow(model->tCytotoxicLymphNode[stepKPlus] - points_values[currentIndex], 2);
             printf("\nAt this moment, TCYTO is %f", model->tCytotoxicLymphNode[stepKPlus]);
             currentIndex++;
         }     
-        j++;   
     }    
         
     WriteFiles(*model, model->oligodendrocyte[stepKPlus], model->microglia[stepKPlus], model->tCytotoxic[stepKPlus], model->antibody[stepKPlus], model->conventionalDc[stepKPlus], model->activatedDc[stepKPlus], kTime);
