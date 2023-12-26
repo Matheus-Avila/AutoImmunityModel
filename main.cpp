@@ -12,7 +12,7 @@
 //Esta versao nao tem sobreposicao de comunicacao com computacao, provavelmente existe um problema no driver do OpenCL, verificar.
 //********************************************************************************************************************************
 
-//#define PRINT
+#define PRINT
 #define CPU_WORK_GROUP_SIZE	6
 #define GPU_WORK_GROUP_SIZE	48
 #define SIMULACOES		10000
@@ -166,9 +166,9 @@ void InicializarPontosHIS(float **malha, const int *parametrosMalha)
 
 void LerPontosHIS(const float *malha, const int *parametrosMalha)
 {
-	for(unsigned int x = 0; x < 1/*parametrosMalha[COMPRIMENTO_GLOBAL_X]*/; x++)
+	for(unsigned int x = 0; x < parametrosMalha[COMPRIMENTO_GLOBAL_X]; x++)
 	{
-		for(unsigned int y = 0; y < 1/*parametrosMalha[COMPRIMENTO_GLOBAL_Y]*/; y++)
+		for(unsigned int y = 0; y < parametrosMalha[COMPRIMENTO_GLOBAL_Y]; y++)
 		{
 			for(unsigned int z = 0; z < parametrosMalha[COMPRIMENTO_GLOBAL_Z]; z++)
 			{
@@ -712,7 +712,77 @@ int main(int argc, char *argv[])
 
 	MPI_Barrier(MPI_COMM_WORLD);
 
-	SaveMesh(0, xMalhaLength, yMalhaLength, zMalhaLength, malhaSwapBuffer[0], parametrosMalha);
+	/******
+	******** Saving figures 
+	*******/
+	// Provavelmente vai funcionar so com uma thread do MPI. nao sei como criar uma regiao critica e so um processo escrver no arquivo por vez
+	for(int count2 = 0; count2 < world_size; count2++)
+	{
+		if(count2 == world_rank)
+		{
+			printf("Malha do processo %i\n", world_rank);
+			for(int count = 0; count < todosDispositivos; count++)
+			{
+				if(count >= meusDispositivosOffset && count < meusDispositivosOffset+meusDispositivosLength)
+				{
+					printf("Malha do dispositivo %i\n", count);
+					ReadFromMemoryObject(count-meusDispositivosOffset, malhaSwapBufferDispositivo[count][0], (char *)(malhaSwapBuffer[0]+(parametrosMalha[count][OFFSET_COMPUTACAO]*MALHA_TOTAL_CELULAS)), parametrosMalha[count][OFFSET_COMPUTACAO]*MALHA_TOTAL_CELULAS*sizeof(float), parametrosMalha[count][LENGTH_COMPUTACAO]*MALHA_TOTAL_CELULAS*sizeof(float));
+					SynchronizeCommandQueue(count-meusDispositivosOffset);
+					FILE *file;
+					char filename[30];
+					sprintf(filename, "results/results.vtk");
+					file = fopen(filename, "w");
+					if(count2 == 0 && count == 0){
+						fprintf(file, "# vtk DataFile Version 3.0\n");
+						fprintf(file, "results.vtk\n");
+						fprintf(file, "ASCII\n");
+						fprintf(file, "DATASET RECTILINEAR_GRID\n");
+						fprintf(file, "DIMENSIONS %d %d %d\n", nx, ny, ny);
+
+						fprintf(file, "X_COORDINATES %d double\n", nx);
+						for(i=0; i<nx; i++)
+						{
+							fprintf(file, "%f ", i*(0.1/nx));
+						}
+						fprintf(file, "\n");
+
+						fprintf(file, "Y_COORDINATES %d double\n", ny);
+						for(j=0; j<ny; j++)
+						{
+							fprintf(file, "%f ", j*(0.1/ny));
+						}
+						fprintf(file, "\n");
+
+						fprintf(file, "Z_COORDINATES %d double\n", nz);
+						for(m=0; m<nz; m++)
+						{
+							fprintf(file, "%f ", m*(0.1/nz));
+						}
+						fprintf(file, "\n");
+
+						fprintf(file, "POINT_DATA %d \n", nx*ny*nz);
+						fprintf(file, "FIELD FieldData 1 \n");
+						fprintf(file, "Temperatura 1 %d double \n", nx*ny*nz);
+					}
+					for(unsigned int x = 0; x < parametrosMalha[COMPRIMENTO_GLOBAL_X]; x++)
+					{
+						for(unsigned int y = 0; y < parametrosMalha[COMPRIMENTO_GLOBAL_Y]; y++)
+						{
+							for(unsigned int z = 0; z < parametrosMalha[COMPRIMENTO_GLOBAL_Z]; z++)
+							{
+								if((OLIGODENDROCYTES * parametrosMalha[MALHA_DIMENSAO_CELULAS]) + (z * parametrosMalha[MALHA_DIMENSAO_POSICAO_Z]) + (y * parametrosMalha[MALHA_DIMENSAO_POSICAO_Y]) + (x *parametrosMalha[MALHA_DIMENSAO_POSICAO_X]) >= parametrosMalha[OFFSET_COMPUTACAO]*MALHA_TOTAL_CELULAS && (OLIGODENDROCYTES * parametrosMalha[MALHA_DIMENSAO_CELULAS]) + (z * parametrosMalha[MALHA_DIMENSAO_POSICAO_Z]) + (y * parametrosMalha[MALHA_DIMENSAO_POSICAO_Y]) + (x *parametrosMalha[MALHA_DIMENSAO_POSICAO_X]) < (parametrosMalha[OFFSET_COMPUTACAO]+parametrosMalha[LENGTH_COMPUTACAO])*MALHA_TOTAL_CELULAS)
+								{
+									fprintf(file, "%f \n", malhaSwapBuffer[0][(OLIGODENDROCYTES * parametrosMalha[MALHA_DIMENSAO_CELULAS]) + (z * parametrosMalha[MALHA_DIMENSAO_POSICAO_Z]) + (y * parametrosMalha[MALHA_DIMENSAO_POSICAO_Y]) + (x *parametrosMalha[MALHA_DIMENSAO_POSICAO_X])]);
+								}
+							}
+						}
+					}
+					fclose(file);
+				}
+			}
+		}
+		MPI_Barrier(MPI_COMM_WORLD);
+	}
 
 	if(world_rank == 0)
 	{
