@@ -58,7 +58,7 @@
 
 #define days 1
 __constant float micDiffusion = 0.015206;
-__constant float antibodyDiffusion = 0.15206;
+__constant float igGDiffusion = 0.15206;
 __constant float cDcDiffusion = 0.015206;
 __constant float aDcDiffusion = 0.015206;
 __constant float tCytoDiffusion = 0.015206;
@@ -106,9 +106,10 @@ __constant float stableP = 2.5;
 __constant float V_LN = 40;
 __constant float V_BV = 0;
 __constant float V_PV = 0;
-__constant float deltaX = 0.1;
-__constant float deltaY = 0.1;
-__constant float deltaZ = 0.1;
+__constant float deltaX = 0.5;
+__constant float deltaY = 0.5;
+__constant float deltaZ = 0.5;
+__constant float deltaT = 0.0002;
 
 float fFunc(float valuePopulation, float avgPopulation){
     return valuePopulation*valuePopulation/(float)(valuePopulation + avgPopulation);
@@ -132,7 +133,7 @@ void CalcularPontos(float *celulas, int xPosicaoGlobal, int yPosicaoGlobal, int 
 	float conventionalDcDiffusion = cDcDiffusion * Laplaciano(CONVENTIONAL_DC_OFFSET, celulas, xPosicaoGlobal, yPosicaoGlobal, zPosicaoGlobal, parametrosMalhaGPU);
 	float tCytotoxicDiffusion = tCytoDiffusion * Laplaciano(T_CYTOTOXIC_OFFSET, celulas, xPosicaoGlobal, yPosicaoGlobal, zPosicaoGlobal, parametrosMalhaGPU);
 	float activatedDCDiffusion = aDcDiffusion * Laplaciano(ACTIVATED_DC_OFFSET, celulas, xPosicaoGlobal, yPosicaoGlobal, zPosicaoGlobal, parametrosMalhaGPU);
-	float antibodyDiffusion = antibodyDiffusion * Laplaciano(ANTIBODY_OFFSET, celulas, xPosicaoGlobal, yPosicaoGlobal, zPosicaoGlobal, parametrosMalhaGPU);
+	float antibodyDiffusion = igGDiffusion * Laplaciano(ANTIBODY_OFFSET, celulas, xPosicaoGlobal, yPosicaoGlobal, zPosicaoGlobal, parametrosMalhaGPU);
 	
 	float microgliaChemotaxis = chi * Quimiotaxia(MICROGLIA_OFFSET, celulas, xPosicaoGlobal, yPosicaoGlobal, zPosicaoGlobal, parametrosMalhaGPU);
 	float conventionalDcChemotaxis = chi * Quimiotaxia(CONVENTIONAL_DC_OFFSET, celulas, xPosicaoGlobal, yPosicaoGlobal, zPosicaoGlobal, parametrosMalhaGPU);
@@ -142,37 +143,37 @@ void CalcularPontos(float *celulas, int xPosicaoGlobal, int yPosicaoGlobal, int 
 	float microgliaReaction = muMic*celulas[MICROGLIA_OFFSET + CELULAS_POSICAO_OR_OFFSET]*(avgMic - celulas[MICROGLIA_OFFSET + CELULAS_POSICAO_OR_OFFSET]);
 	float microgliaClearance = cMic*celulas[MICROGLIA_OFFSET + CELULAS_POSICAO_OR_OFFSET];
 
-	celulas[MICROGLIA_OFFSET + CELULAS_NOVO_VALOR_OFFSET] = microgliaDiffusion - microgliaChemotaxis + microgliaReaction - microgliaClearance;
+	celulas[MICROGLIA_OFFSET + CELULAS_NOVO_VALOR_OFFSET] = (microgliaDiffusion - microgliaChemotaxis + microgliaReaction - microgliaClearance) * deltaT + celulas[MICROGLIA_OFFSET + CELULAS_POSICAO_OR_OFFSET];
 
 	//Conventional DC update
 	float conventionalDcReaction = muCDc*celulas[OLIGODENDROCYTES_OFFSET + CELULAS_POSICAO_OR_OFFSET]*(avgDc - celulas[CONVENTIONAL_DC_OFFSET + CELULAS_POSICAO_OR_OFFSET]);
 	float conventionalDcActivation = bD*celulas[CONVENTIONAL_DC_OFFSET + CELULAS_POSICAO_OR_OFFSET]*celulas[OLIGODENDROCYTES_OFFSET + CELULAS_POSICAO_OR_OFFSET];
 	float conventionalDcClearance = cCDc*celulas[CONVENTIONAL_DC_OFFSET + CELULAS_POSICAO_OR_OFFSET];
 
-	celulas[CONVENTIONAL_DC_OFFSET + CELULAS_NOVO_VALOR_OFFSET] = conventionalDcDiffusion - conventionalDcChemotaxis - conventionalDcClearance + conventionalDcReaction - conventionalDcActivation;
+	celulas[CONVENTIONAL_DC_OFFSET + CELULAS_NOVO_VALOR_OFFSET] = (conventionalDcDiffusion - conventionalDcChemotaxis - conventionalDcClearance + conventionalDcReaction - conventionalDcActivation) * deltaT + celulas[CONVENTIONAL_DC_OFFSET + CELULAS_POSICAO_OR_OFFSET];
 
 	//Activated DC update
 	float activatedDcClearance = cADc*celulas[ACTIVATED_DC_OFFSET + CELULAS_POSICAO_OR_OFFSET];
 	float activatedDcMigration = 0;//model->thetaPV[kPos]*gammaD*(model->dendriticLymphNode[stepKPlus] - celulas[ACTIVATED_DC_OFFSET + CELULAS_POSICAO_OR_OFFSET]);
 	
-	celulas[ACTIVATED_DC_OFFSET + CELULAS_NOVO_VALOR_OFFSET] = activatedDCDiffusion + conventionalDcActivation + activatedDcMigration - activatedDcClearance;
+	celulas[ACTIVATED_DC_OFFSET + CELULAS_NOVO_VALOR_OFFSET] = (activatedDCDiffusion + conventionalDcActivation + activatedDcMigration - activatedDcClearance) * deltaT + celulas[ACTIVATED_DC_OFFSET + CELULAS_POSICAO_OR_OFFSET];
 
 	//CD8 T update
 	float tCytotoxicMigration = 0;//model->thetaBV[kPos]*gammaT*(model->tCytotoxicLymphNode[stepKPlus] - celulas[T_CYTOTOXIC_OFFSET + CELULAS_POSICAO_OR_OFFSET]);
 	
-	celulas[T_CYTOTOXIC_OFFSET + CELULAS_NOVO_VALOR_OFFSET] = tCytotoxicDiffusion - tCytotoxicChemotaxis + tCytotoxicMigration;
+	celulas[T_CYTOTOXIC_OFFSET + CELULAS_NOVO_VALOR_OFFSET] = (tCytotoxicDiffusion - tCytotoxicChemotaxis + tCytotoxicMigration) * deltaT + celulas[T_CYTOTOXIC_OFFSET + CELULAS_POSICAO_OR_OFFSET];
 	
 	//Antibody update
 	float odcAntibodyMicrogliaFagocitosis = lambAntMic*celulas[ANTIBODY_OFFSET + CELULAS_POSICAO_OR_OFFSET]*(avgOdc - celulas[OLIGODENDROCYTES_OFFSET + CELULAS_POSICAO_OR_OFFSET])*fFunc(celulas[MICROGLIA_OFFSET + CELULAS_POSICAO_OR_OFFSET], avgMic);
 	float antibodyMigration = 0;//model->thetaBV[kPos]*gammaAntibody*(model->antibodyLymphNode[stepKPlus] - celulas[ANTIBODY_OFFSET + CELULAS_POSICAO_OR_OFFSET]);
 	
-	celulas[ANTIBODY_OFFSET + CELULAS_NOVO_VALOR_OFFSET] = antibodyDiffusion + antibodyMigration - odcAntibodyMicrogliaFagocitosis;
+	celulas[ANTIBODY_OFFSET + CELULAS_NOVO_VALOR_OFFSET] = (antibodyDiffusion + antibodyMigration - odcAntibodyMicrogliaFagocitosis) * deltaT + celulas[ANTIBODY_OFFSET + CELULAS_POSICAO_OR_OFFSET];
 	
 	//Oligodendrocytes update
 	float odcMicrogliaFagocitosis = rM*fFunc(celulas[MICROGLIA_OFFSET + CELULAS_POSICAO_OR_OFFSET], avgMic)*(avgOdc - celulas[OLIGODENDROCYTES_OFFSET + CELULAS_POSICAO_OR_OFFSET]);
 	float odcTCytotoxicApoptosis = rT*fFunc(celulas[T_CYTOTOXIC_OFFSET + CELULAS_POSICAO_OR_OFFSET], avgT)*(avgOdc - celulas[OLIGODENDROCYTES_OFFSET + CELULAS_POSICAO_OR_OFFSET]);
 
-	celulas[OLIGODENDROCYTES_OFFSET + CELULAS_NOVO_VALOR_OFFSET] = odcAntibodyMicrogliaFagocitosis + odcMicrogliaFagocitosis + odcTCytotoxicApoptosis;
+	celulas[OLIGODENDROCYTES_OFFSET + CELULAS_NOVO_VALOR_OFFSET] = (odcAntibodyMicrogliaFagocitosis + odcMicrogliaFagocitosis + odcTCytotoxicApoptosis) * deltaT + celulas[OLIGODENDROCYTES_OFFSET + CELULAS_POSICAO_OR_OFFSET];
 	
 }
 

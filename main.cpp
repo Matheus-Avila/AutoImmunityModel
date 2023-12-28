@@ -12,10 +12,10 @@
 //Esta versao nao tem sobreposicao de comunicacao com computacao, provavelmente existe um problema no driver do OpenCL, verificar.
 //********************************************************************************************************************************
 
-#define PRINT
+// #define PRINT
 #define CPU_WORK_GROUP_SIZE	6
 #define GPU_WORK_GROUP_SIZE	48
-#define SIMULACOES		10000
+#define SIMULACOES		1/0.0002
 #define INTERVALO_BALANCEAMENTO	1000
 #define BALANCEAMENTO_THRESHOLD	0.000025
 #define PRECISAO_BALANCEAMENTO	10
@@ -46,81 +46,6 @@
 #define HABILITAR_BALANCEAMENTO
 #define HABILITAR_BENCHMARK
 
-void SaveMesh(int time, int nx, int ny, int nz, float *malha, const int *parametrosMalha){
-	FILE *file;
-    char filename[30];
-    sprintf(filename, "results/results%d.vtk", time);
-    file = fopen(filename, "w");
-    fprintf(file, "# vtk DataFile Version 3.0\n");
-    fprintf(file, "results.vtk\n");
-    fprintf(file, "ASCII\n");
-    fprintf(file, "DATASET RECTILINEAR_GRID\n");
-    fprintf(file, "DIMENSIONS %d %d %d\n", nx, ny, ny);
-
-    fprintf(file, "X_COORDINATES %d double\n", nx);
-    for(i=0; i<nx; i++)
-    {
-        fprintf(file, "%f ", i*(0.1/nx));
-    }
-    fprintf(file, "\n");
-
-    fprintf(file, "Y_COORDINATES %d double\n", ny);
-    for(j=0; j<ny; j++)
-    {
-        fprintf(file, "%f ", j*(0.1/ny));
-    }
-    fprintf(file, "\n");
-
-    fprintf(file, "Z_COORDINATES %d double\n", nz);
-    for(m=0; m<nz; m++)
-    {
-        fprintf(file, "%f ", m*(0.1/nz));
-    }
-    fprintf(file, "\n");
-
-    fprintf(file, "POINT_DATA %d \n", nx*ny*nz);
-    fprintf(file, "FIELD FieldData 1 \n");
-    fprintf(file, "Temperatura 1 %d double \n", nx*ny*nz);
-
-    for(int x = 0; x < nz; x++)
-    {
-        for(int y = 0; y < ny; y++)
-        {
-            for(int z = 0; z < nx; z++)
-            {
-                fprintf(file, "%f \n", (*malha)[(OLIGODENDROCYTES * parametrosMalha[MALHA_DIMENSAO_CELULAS]) + (z * parametrosMalha[MALHA_DIMENSAO_POSICAO_Z]) + (y * parametrosMalha[MALHA_DIMENSAO_POSICAO_Y]) + (x *parametrosMalha[MALHA_DIMENSAO_POSICAO_X])]);
-            }
-        }
-    }
-	/*
-	for(unsigned int x = 0; x < parametrosMalha[COMPRIMENTO_GLOBAL_X]; x++)
-	{	
-		for(unsigned int y = 0; y < parametrosMalha[COMPRIMENTO_GLOBAL_Y]; y++)
-		{
-			for(unsigned int z = 0; z < parametrosMalha[COMPRIMENTO_GLOBAL_Z]; z++)
-			{
-				if(z >= (0.75f*parametrosMalha[COMPRIMENTO_GLOBAL_Z]))
-				{
-					(*malha)[(MICROGLIA * parametrosMalha[MALHA_DIMENSAO_CELULAS]) + (z * parametrosMalha[MALHA_DIMENSAO_POSICAO_Z]) + (y * parametrosMalha[MALHA_DIMENSAO_POSICAO_Y]) + (x *parametrosMalha[MALHA_DIMENSAO_POSICAO_X])] = 100.0f;
-				}
-				else
-				{
-					(*malha)[(MICROGLIA * parametrosMalha[MALHA_DIMENSAO_CELULAS]) + (z * parametrosMalha[MALHA_DIMENSAO_POSICAO_Z]) + (y * parametrosMalha[MALHA_DIMENSAO_POSICAO_Y]) + (x *parametrosMalha[MALHA_DIMENSAO_POSICAO_X])] = 0.0f;
-				}
-
-				(*malha)[(OLIGODENDROCYTES * parametrosMalha[MALHA_DIMENSAO_CELULAS]) + (z * parametrosMalha[MALHA_DIMENSAO_POSICAO_Z]) + (y * parametrosMalha[MALHA_DIMENSAO_POSICAO_Y]) + (x *parametrosMalha[MALHA_DIMENSAO_POSICAO_X])] = 0.0f;
-				(*malha)[(CONVENTIONAL_DC * parametrosMalha[MALHA_DIMENSAO_CELULAS]) + (z * parametrosMalha[MALHA_DIMENSAO_POSICAO_Z]) + (y * parametrosMalha[MALHA_DIMENSAO_POSICAO_Y]) + (x *parametrosMalha[MALHA_DIMENSAO_POSICAO_X])] = 0.0f;
-				(*malha)[(ACTIVATED_DC * parametrosMalha[MALHA_DIMENSAO_CELULAS]) + (z * parametrosMalha[MALHA_DIMENSAO_POSICAO_Z]) + (y * parametrosMalha[MALHA_DIMENSAO_POSICAO_Y]) + (x *parametrosMalha[MALHA_DIMENSAO_POSICAO_X])] = 0.0f;
-				(*malha)[(T_CYTOTOXIC * parametrosMalha[MALHA_DIMENSAO_CELULAS]) + (z * parametrosMalha[MALHA_DIMENSAO_POSICAO_Z]) + (y * parametrosMalha[MALHA_DIMENSAO_POSICAO_Y]) + (x *parametrosMalha[MALHA_DIMENSAO_POSICAO_X])] = 0.0f;
-				(*malha)[(ANTIBODY * parametrosMalha[MALHA_DIMENSAO_CELULAS]) + (z * parametrosMalha[MALHA_DIMENSAO_POSICAO_Z]) + (y * parametrosMalha[MALHA_DIMENSAO_POSICAO_Y]) + (x *parametrosMalha[MALHA_DIMENSAO_POSICAO_X])] = 0.0f;
-			}
-		}
-	}
-    */
-	fprintf(file, "\n");
-    fclose(file);
-}
-
 void InicializarParametrosMalhaHIS(int **parametrosMalha, unsigned int offsetComputacao, unsigned int lengthComputacao, unsigned int xMalhaLength, unsigned int yMalhaLength, unsigned int zMalhaLength)
 {
 	*parametrosMalha = new int[NUMERO_PARAMETROS_MALHA];
@@ -145,7 +70,7 @@ void InicializarPontosHIS(float **malha, const int *parametrosMalha)
 		{
 			for(unsigned int z = 0; z < parametrosMalha[COMPRIMENTO_GLOBAL_Z]; z++)
 			{
-				if(z >= (0.75f*parametrosMalha[COMPRIMENTO_GLOBAL_Z]))
+				if(x >= (0.40f*parametrosMalha[COMPRIMENTO_GLOBAL_X] && x <= (0.60f*parametrosMalha[COMPRIMENTO_GLOBAL_X])) && y >= (0.40f*parametrosMalha[COMPRIMENTO_GLOBAL_Y] && y <= (0.60f*parametrosMalha[COMPRIMENTO_GLOBAL_Y])))
 				{
 					(*malha)[(MICROGLIA * parametrosMalha[MALHA_DIMENSAO_CELULAS]) + (z * parametrosMalha[MALHA_DIMENSAO_POSICAO_Z]) + (y * parametrosMalha[MALHA_DIMENSAO_POSICAO_Y]) + (x *parametrosMalha[MALHA_DIMENSAO_POSICAO_X])] = 100.0f;
 				}
@@ -172,9 +97,9 @@ void LerPontosHIS(const float *malha, const int *parametrosMalha)
 		{
 			for(unsigned int z = 0; z < parametrosMalha[COMPRIMENTO_GLOBAL_Z]; z++)
 			{
-				if((MICROGLIA * parametrosMalha[MALHA_DIMENSAO_CELULAS]) + (z * parametrosMalha[MALHA_DIMENSAO_POSICAO_Z]) + (y * parametrosMalha[MALHA_DIMENSAO_POSICAO_Y]) + (x *parametrosMalha[MALHA_DIMENSAO_POSICAO_X]) >= parametrosMalha[OFFSET_COMPUTACAO]*MALHA_TOTAL_CELULAS && (MICROGLIA * parametrosMalha[MALHA_DIMENSAO_CELULAS]) + (z * parametrosMalha[MALHA_DIMENSAO_POSICAO_Z]) + (y * parametrosMalha[MALHA_DIMENSAO_POSICAO_Y]) + (x *parametrosMalha[MALHA_DIMENSAO_POSICAO_X]) < (parametrosMalha[OFFSET_COMPUTACAO]+parametrosMalha[LENGTH_COMPUTACAO])*MALHA_TOTAL_CELULAS)
+				if((OLIGODENDROCYTES * parametrosMalha[MALHA_DIMENSAO_CELULAS]) + (z * parametrosMalha[MALHA_DIMENSAO_POSICAO_Z]) + (y * parametrosMalha[MALHA_DIMENSAO_POSICAO_Y]) + (x *parametrosMalha[MALHA_DIMENSAO_POSICAO_X]) >= parametrosMalha[OFFSET_COMPUTACAO]*MALHA_TOTAL_CELULAS && (OLIGODENDROCYTES * parametrosMalha[MALHA_DIMENSAO_CELULAS]) + (z * parametrosMalha[MALHA_DIMENSAO_POSICAO_Z]) + (y * parametrosMalha[MALHA_DIMENSAO_POSICAO_Y]) + (x *parametrosMalha[MALHA_DIMENSAO_POSICAO_X]) < (parametrosMalha[OFFSET_COMPUTACAO]+parametrosMalha[LENGTH_COMPUTACAO])*MALHA_TOTAL_CELULAS)
 				{
-					printf("%f ", malha[(MICROGLIA * parametrosMalha[MALHA_DIMENSAO_CELULAS]) + (z * parametrosMalha[MALHA_DIMENSAO_POSICAO_Z]) + (y * parametrosMalha[MALHA_DIMENSAO_POSICAO_Y]) + (x *parametrosMalha[MALHA_DIMENSAO_POSICAO_X])]);
+					printf("%f ", malha[(OLIGODENDROCYTES * parametrosMalha[MALHA_DIMENSAO_CELULAS]) + (z * parametrosMalha[MALHA_DIMENSAO_POSICAO_Z]) + (y * parametrosMalha[MALHA_DIMENSAO_POSICAO_Y]) + (x *parametrosMalha[MALHA_DIMENSAO_POSICAO_X])]);
 				}
 				else
 				{
@@ -257,8 +182,10 @@ int main(int argc, char *argv[])
 	for(int count = 0; count < todosDispositivos; count++)
 	{
 		if(count >= meusDispositivosOffset && count < meusDispositivosOffset+meusDispositivosLength)
-		{
+		{	
 			InicializarParametrosMalhaHIS(&parametrosMalha[count], offsetComputacao, (count+1 == todosDispositivos) ? (xMalhaLength*yMalhaLength*zMalhaLength)-offsetComputacao : lengthComputacao, xMalhaLength, yMalhaLength, zMalhaLength);
+			
+			printf("offset %d legth %d final %d \n", parametrosMalha[count][OFFSET_COMPUTACAO], parametrosMalha[count][LENGTH_COMPUTACAO], parametrosMalha[count][OFFSET_COMPUTACAO] + parametrosMalha[count][LENGTH_COMPUTACAO]-1);
 
 			if(count == meusDispositivosOffset)
 			{
@@ -317,7 +244,7 @@ int main(int argc, char *argv[])
 				balanceamento = false;
 			}
 			#endif
-
+			
 			#ifdef HABILITAR_BENCHMARK
 			tempoInicio = MPI_Wtime();
 			#endif
@@ -371,8 +298,15 @@ int main(int argc, char *argv[])
 				{
 					if(count >= meusDispositivosOffset && count < meusDispositivosOffset+meusDispositivosLength)
 					{
-						int overlapNovoOffset = ((int)(((count == 0) ? 0.0f : cargasNovas[count-1])*((float)(xMalhaLength*yMalhaLength*zMalhaLength))));
+						// int overlapNovoOffset = ((int)(((count == 0) ? 0.0f : cargasNovas[count-1])*((float)(xMalhaLength*yMalhaLength*zMalhaLength))));
+						int aux = 0;
+						if(count == todosDispositivos-1)
+							aux = (xMalhaLength*yMalhaLength*zMalhaLength) - (parametrosMalha[count-1][OFFSET_COMPUTACAO] + parametrosMalha[count-1][LENGTH_COMPUTACAO]);
+						int overlapNovoOffset = (count == 0) ? 0 : parametrosMalha[count-1][OFFSET_COMPUTACAO] + parametrosMalha[count-1][LENGTH_COMPUTACAO];
 						int overlapNovoLength = ((int)(((count == 0) ? cargasNovas[count]-0.0f : cargasNovas[count]-cargasNovas[count-1])*((float)(xMalhaLength*yMalhaLength*zMalhaLength))));
+						if(count == todosDispositivos -1 ){
+							overlapNovoLength = aux;
+						}
 						for(int count2 = 0; count2 < todosDispositivos; count2++)
 						{
 							if(count > count2)
@@ -450,7 +384,6 @@ int main(int argc, char *argv[])
 								}
 							}
 						}
-
 						parametrosMalha[count][OFFSET_COMPUTACAO] = overlapNovoOffset;
 						parametrosMalha[count][LENGTH_COMPUTACAO] = overlapNovoLength;
 
@@ -711,68 +644,75 @@ int main(int argc, char *argv[])
 	//*******
 
 	MPI_Barrier(MPI_COMM_WORLD);
+	int contadorDePontos = 0;
 
 	/******
 	******** Saving figures 
 	*******/
 	// Provavelmente vai funcionar so com uma thread do MPI. nao sei como criar uma regiao critica e so um processo escrver no arquivo por vez
+	FILE *file;
+	char filename[30];
+	sprintf(filename, "results.vtk");
+	file = fopen(filename, "w");
+	fclose(file);
 	for(int count2 = 0; count2 < world_size; count2++)
-	{
+	{	
 		if(count2 == world_rank)
 		{
 			printf("Malha do processo %i\n", world_rank);
 			for(int count = 0; count < todosDispositivos; count++)
-			{
+			{	
 				if(count >= meusDispositivosOffset && count < meusDispositivosOffset+meusDispositivosLength)
-				{
+				{	
 					printf("Malha do dispositivo %i\n", count);
 					ReadFromMemoryObject(count-meusDispositivosOffset, malhaSwapBufferDispositivo[count][0], (char *)(malhaSwapBuffer[0]+(parametrosMalha[count][OFFSET_COMPUTACAO]*MALHA_TOTAL_CELULAS)), parametrosMalha[count][OFFSET_COMPUTACAO]*MALHA_TOTAL_CELULAS*sizeof(float), parametrosMalha[count][LENGTH_COMPUTACAO]*MALHA_TOTAL_CELULAS*sizeof(float));
 					SynchronizeCommandQueue(count-meusDispositivosOffset);
-					FILE *file;
-					char filename[30];
-					sprintf(filename, "results/results.vtk");
-					file = fopen(filename, "w");
-					if(count2 == 0 && count == 0){
+					sprintf(filename, "results.vtk");
+					file = fopen(filename, "a");
+					if(count2 == 0 && count == meusDispositivosOffset){
 						fprintf(file, "# vtk DataFile Version 3.0\n");
 						fprintf(file, "results.vtk\n");
 						fprintf(file, "ASCII\n");
 						fprintf(file, "DATASET RECTILINEAR_GRID\n");
-						fprintf(file, "DIMENSIONS %d %d %d\n", nx, ny, ny);
+						fprintf(file, "DIMENSIONS %d %d %d\n", xMalhaLength, yMalhaLength, zMalhaLength);
 
-						fprintf(file, "X_COORDINATES %d double\n", nx);
-						for(i=0; i<nx; i++)
+						fprintf(file, "X_COORDINATES %d double\n", xMalhaLength);
+						for(int i=0; i<xMalhaLength; i++)
 						{
-							fprintf(file, "%f ", i*(0.1/nx));
+							fprintf(file, "%f ", i*(0.1/xMalhaLength));
 						}
 						fprintf(file, "\n");
 
-						fprintf(file, "Y_COORDINATES %d double\n", ny);
-						for(j=0; j<ny; j++)
+						fprintf(file, "Y_COORDINATES %d double\n", yMalhaLength);
+						for(int j=0; j<yMalhaLength; j++)
 						{
-							fprintf(file, "%f ", j*(0.1/ny));
+							fprintf(file, "%f ", j*(0.1/yMalhaLength));
 						}
 						fprintf(file, "\n");
 
-						fprintf(file, "Z_COORDINATES %d double\n", nz);
-						for(m=0; m<nz; m++)
+						fprintf(file, "Z_COORDINATES %d double\n", zMalhaLength);
+						for(int m=0; m<zMalhaLength; m++)
 						{
-							fprintf(file, "%f ", m*(0.1/nz));
+							fprintf(file, "%f ", m*(0.1/zMalhaLength));
 						}
 						fprintf(file, "\n");
 
-						fprintf(file, "POINT_DATA %d \n", nx*ny*nz);
+						fprintf(file, "POINT_DATA %d \n", xMalhaLength*yMalhaLength*zMalhaLength);
 						fprintf(file, "FIELD FieldData 1 \n");
-						fprintf(file, "Temperatura 1 %d double \n", nx*ny*nz);
+						fprintf(file, "Temperatura 1 %d double \n", xMalhaLength * yMalhaLength * zMalhaLength);
 					}
-					for(unsigned int x = 0; x < parametrosMalha[COMPRIMENTO_GLOBAL_X]; x++)
+					const float *malha = malhaSwapBuffer[0];
+					const int *param = parametrosMalha[count];
+					printf("count %d: inicio %d -- length %d final: %d \n", count, param[OFFSET_COMPUTACAO], param[LENGTH_COMPUTACAO], param[OFFSET_COMPUTACAO] + param[LENGTH_COMPUTACAO]-1);
+					for(unsigned int x = 0; x <  param[COMPRIMENTO_GLOBAL_X]; x++)
 					{
-						for(unsigned int y = 0; y < parametrosMalha[COMPRIMENTO_GLOBAL_Y]; y++)
+						for(unsigned int y = 0; y <  param[COMPRIMENTO_GLOBAL_Y]; y++)
 						{
-							for(unsigned int z = 0; z < parametrosMalha[COMPRIMENTO_GLOBAL_Z]; z++)
+							for(unsigned int z = 0; z <  param[COMPRIMENTO_GLOBAL_Z]; z++)
 							{
-								if((OLIGODENDROCYTES * parametrosMalha[MALHA_DIMENSAO_CELULAS]) + (z * parametrosMalha[MALHA_DIMENSAO_POSICAO_Z]) + (y * parametrosMalha[MALHA_DIMENSAO_POSICAO_Y]) + (x *parametrosMalha[MALHA_DIMENSAO_POSICAO_X]) >= parametrosMalha[OFFSET_COMPUTACAO]*MALHA_TOTAL_CELULAS && (OLIGODENDROCYTES * parametrosMalha[MALHA_DIMENSAO_CELULAS]) + (z * parametrosMalha[MALHA_DIMENSAO_POSICAO_Z]) + (y * parametrosMalha[MALHA_DIMENSAO_POSICAO_Y]) + (x *parametrosMalha[MALHA_DIMENSAO_POSICAO_X]) < (parametrosMalha[OFFSET_COMPUTACAO]+parametrosMalha[LENGTH_COMPUTACAO])*MALHA_TOTAL_CELULAS)
-								{
-									fprintf(file, "%f \n", malhaSwapBuffer[0][(OLIGODENDROCYTES * parametrosMalha[MALHA_DIMENSAO_CELULAS]) + (z * parametrosMalha[MALHA_DIMENSAO_POSICAO_Z]) + (y * parametrosMalha[MALHA_DIMENSAO_POSICAO_Y]) + (x *parametrosMalha[MALHA_DIMENSAO_POSICAO_X])]);
+								if((OLIGODENDROCYTES * param[MALHA_DIMENSAO_CELULAS]) + (z * param[MALHA_DIMENSAO_POSICAO_Z]) + (y * param[MALHA_DIMENSAO_POSICAO_Y]) + (x *param[MALHA_DIMENSAO_POSICAO_X]) >= param[OFFSET_COMPUTACAO]*MALHA_TOTAL_CELULAS && (OLIGODENDROCYTES * param[MALHA_DIMENSAO_CELULAS]) + (z * param[MALHA_DIMENSAO_POSICAO_Z]) + (y * param[MALHA_DIMENSAO_POSICAO_Y]) + (x *param[MALHA_DIMENSAO_POSICAO_X]) <  ((param[OFFSET_COMPUTACAO]+param[LENGTH_COMPUTACAO])*MALHA_TOTAL_CELULAS) )
+								{	contadorDePontos++;
+									fprintf(file, "%f \n", malha[(OLIGODENDROCYTES * param[MALHA_DIMENSAO_CELULAS]) + (z * param[MALHA_DIMENSAO_POSICAO_Z]) + (y * param[MALHA_DIMENSAO_POSICAO_Y]) + (x *param[MALHA_DIMENSAO_POSICAO_X])]);
 								}
 							}
 						}
@@ -783,6 +723,11 @@ int main(int argc, char *argv[])
 		}
 		MPI_Barrier(MPI_COMM_WORLD);
 	}
+	printf("contadorDePontos %d\n", contadorDePontos);
+	// sprintf(filename, "results.vtk");
+	// file = fopen(filename, "a");
+	// fprintf(file, "\n");
+	// fclose(file);
 
 	if(world_rank == 0)
 	{
