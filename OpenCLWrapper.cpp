@@ -419,7 +419,7 @@ int RunKernel(int devicePosition, int kernelID, int parallelDataOffset, int para
 		size_t globalItems = parallelData;
 		size_t mask = 0;
 		globalItems = Maximum(workGroupSize, parallelData + workGroupSize - (parallelData%workGroupSize));
-
+		
 		cl_int state;
 		size_t localItems = workGroupSize;
 

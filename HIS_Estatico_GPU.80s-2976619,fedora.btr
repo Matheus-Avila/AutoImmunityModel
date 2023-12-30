@@ -1,8 +1,0 @@
-
-HIS_Estatico_GPU:2976619 terminated with signal 11 at PC=7f4ae46047e5 SP=7ffc4e503a98.  Backtrace:
-/usr/local/cuda/targets/x86_64-linux/lib/libOpenCL.so.1(clGetDeviceInfo+0x5)[0x7f4ae46047e5]
-./HIS_Estatico_GPU[0x405379]
-./HIS_Estatico_GPU[0x4023fb]
-/lib64/libc.so.6(+0x2814a)[0x7f4ae384614a]
-/lib64/libc.so.6(__libc_start_main+0x8b)[0x7f4ae384620b]
-./HIS_Estatico_GPU[0x404bd5]
