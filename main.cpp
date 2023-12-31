@@ -183,9 +183,9 @@ void SaveFigure(int malhaSwapBufferDispositivo[][2], float **malhaSwapBuffer, in
 						{	
 							for(unsigned int x = 0; x < param[COMPRIMENTO_GLOBAL_X]; x++)
 							{
-								if((T_CYTOTOXIC * param[MALHA_DIMENSAO_CELULAS]) + (z * param[MALHA_DIMENSAO_POSICAO_Z]) + (y * param[MALHA_DIMENSAO_POSICAO_Y]) + (x *param[MALHA_DIMENSAO_POSICAO_X]) >= param[OFFSET_COMPUTACAO]*MALHA_TOTAL_CELULAS && (T_CYTOTOXIC * param[MALHA_DIMENSAO_CELULAS]) + (z * param[MALHA_DIMENSAO_POSICAO_Z]) + (y * param[MALHA_DIMENSAO_POSICAO_Y]) + (x *param[MALHA_DIMENSAO_POSICAO_X]) <  ((param[OFFSET_COMPUTACAO]+param[LENGTH_COMPUTACAO])*MALHA_TOTAL_CELULAS) )
+								if((OLIGODENDROCYTES * param[MALHA_DIMENSAO_CELULAS]) + (z * param[MALHA_DIMENSAO_POSICAO_Z]) + (y * param[MALHA_DIMENSAO_POSICAO_Y]) + (x *param[MALHA_DIMENSAO_POSICAO_X]) >= param[OFFSET_COMPUTACAO]*MALHA_TOTAL_CELULAS && (OLIGODENDROCYTES * param[MALHA_DIMENSAO_CELULAS]) + (z * param[MALHA_DIMENSAO_POSICAO_Z]) + (y * param[MALHA_DIMENSAO_POSICAO_Y]) + (x *param[MALHA_DIMENSAO_POSICAO_X]) <  ((param[OFFSET_COMPUTACAO]+param[LENGTH_COMPUTACAO])*MALHA_TOTAL_CELULAS) )
 								{	
-									fprintf(file, "%f ", malha[(T_CYTOTOXIC * param[MALHA_DIMENSAO_CELULAS]) + (z * param[MALHA_DIMENSAO_POSICAO_Z]) + (y * param[MALHA_DIMENSAO_POSICAO_Y]) + (x *param[MALHA_DIMENSAO_POSICAO_X])]);
+									fprintf(file, "%f ", malha[(OLIGODENDROCYTES * param[MALHA_DIMENSAO_CELULAS]) + (z * param[MALHA_DIMENSAO_POSICAO_Z]) + (y * param[MALHA_DIMENSAO_POSICAO_Y]) + (x *param[MALHA_DIMENSAO_POSICAO_X])]);
 								}
 							}
 						}
@@ -276,7 +276,7 @@ int main(int argc, char *argv[])
 	float gammaD = 0.1;
 	float gammaAntibody = 0.3;
 	float gammaT = 0.1;
-	float V_LN = 40;
+	float V_LN = 160;
 	int V_BV = 0;
 	int V_PV = 0;
 
@@ -300,11 +300,12 @@ int main(int argc, char *argv[])
 		}
     }
 
-    V_BV = V_BV * 0.5 * 0.5;
-    V_PV = V_PV * 0.5 * 0.5;
+    V_BV = V_BV * 0.5 * 0.5 * 0.5;
+    V_PV = V_PV * 0.5 * 0.5 * 0.5;
 
 	float integralTecido[3] = {0, 0, 0};
 	float tecidoIntegraisPontoAPonto[xMalhaLength*yMalhaLength*zMalhaLength];
+	float tecidoInteiro[xMalhaLength*yMalhaLength*zMalhaLength*MALHA_TOTAL_CELULAS];
 
 	float populacoesLinfonodo[2][6];
 	populacoesLinfonodo[0][0] = populacoesLinfonodo[1][0] = 0;
@@ -930,6 +931,47 @@ int main(int argc, char *argv[])
 			tempoComputacaoBorda += tempoFim-tempoInicio;
 			#endif
 		}
+
+		integralTecido[0] = 0.0;
+		integralTecido[1] = 0.0;
+		integralTecido[2] = 0.0;
+
+		for(int count2 = 0; count2 < world_size; count2++)
+		{
+			if(count2 == world_rank)
+			{
+				for(int count = 0; count < todosDispositivos; count++)
+				{
+					if(count >= meusDispositivosOffset && count < meusDispositivosOffset+meusDispositivosLength)
+					{
+						ReadFromMemoryObject(count-meusDispositivosOffset, malhaSwapBufferDispositivo[count][0], (char *)(tecidoInteiro +(parametrosMalha[count][OFFSET_COMPUTACAO]*MALHA_TOTAL_CELULAS)), parametrosMalha[count][OFFSET_COMPUTACAO]*MALHA_TOTAL_CELULAS*sizeof(float), parametrosMalha[count][LENGTH_COMPUTACAO]*MALHA_TOTAL_CELULAS*sizeof(float));
+						SynchronizeCommandQueue(count-meusDispositivosOffset);
+						const float *malha = tecidoInteiro;
+						const int *param = parametrosMalha[count];
+						// printf("count %d: inicio %d -- length %d final: %d \n", count, param[OFFSET_COMPUTACAO], param[LENGTH_COMPUTACAO], param[OFFSET_COMPUTACAO] + param[LENGTH_COMPUTACAO]-1);
+						
+						for(unsigned int z = 0; z < param[COMPRIMENTO_GLOBAL_Z]; z++)
+						{
+							for(unsigned int y = 0; y < param[COMPRIMENTO_GLOBAL_Y]; y++)
+							{	
+								for(unsigned int x = 0; x < param[COMPRIMENTO_GLOBAL_X]; x++)
+								{
+									if((MICROGLIA * param[MALHA_DIMENSAO_CELULAS]) + (z * param[MALHA_DIMENSAO_POSICAO_Z]) + (y * param[MALHA_DIMENSAO_POSICAO_Y]) + (x *param[MALHA_DIMENSAO_POSICAO_X]) >= param[OFFSET_COMPUTACAO]*MALHA_TOTAL_CELULAS && (MICROGLIA * param[MALHA_DIMENSAO_CELULAS]) + (z * param[MALHA_DIMENSAO_POSICAO_Z]) + (y * param[MALHA_DIMENSAO_POSICAO_Y]) + (x *param[MALHA_DIMENSAO_POSICAO_X]) <  ((param[OFFSET_COMPUTACAO]+param[LENGTH_COMPUTACAO])*MALHA_TOTAL_CELULAS) )
+									{	
+										integralTecido[0] += malha[(MICROGLIA * param[MALHA_DIMENSAO_CELULAS]) + (z * param[MALHA_DIMENSAO_POSICAO_Z]) + (y * param[MALHA_DIMENSAO_POSICAO_Y]) + (x *param[MALHA_DIMENSAO_POSICAO_X])] * vetPV[(z * param[MALHA_DIMENSAO_POSICAO_Z] / 6) + (y * param[MALHA_DIMENSAO_POSICAO_Y] / 6) + (x *param[MALHA_DIMENSAO_POSICAO_X] / 6)];
+										integralTecido[1] += malha[(MICROGLIA * param[MALHA_DIMENSAO_CELULAS]) + (z * param[MALHA_DIMENSAO_POSICAO_Z]) + (y * param[MALHA_DIMENSAO_POSICAO_Y]) + (x *param[MALHA_DIMENSAO_POSICAO_X])] * vetBV[(z * param[MALHA_DIMENSAO_POSICAO_Z] / 6) + (y * param[MALHA_DIMENSAO_POSICAO_Y] / 6) + (x *param[MALHA_DIMENSAO_POSICAO_X] / 6)];
+										integralTecido[2] += malha[(MICROGLIA * param[MALHA_DIMENSAO_CELULAS]) + (z * param[MALHA_DIMENSAO_POSICAO_Z]) + (y * param[MALHA_DIMENSAO_POSICAO_Y]) + (x *param[MALHA_DIMENSAO_POSICAO_X])] * vetBV[(z * param[MALHA_DIMENSAO_POSICAO_Z] / 6) + (y * param[MALHA_DIMENSAO_POSICAO_Y] / 6) + (x *param[MALHA_DIMENSAO_POSICAO_X] / 6)];
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+			MPI_Barrier(MPI_COMM_WORLD);
+		}
+		//Percorrer tecidoInteiro e colocar o resultado nas variáveis de integral do tecido
+
 		if(simulacao != 0 && simulacao%((int)(1/0.0002)) == 0){
 			printf("simulacao %d ** total %d\n",simulacao, SIMULACOES);
 			SaveFigure(malhaSwapBufferDispositivo, malhaSwapBuffer, parametrosMalha, xMalhaLength, yMalhaLength, zMalhaLength, meusDispositivosOffset, meusDispositivosLength, simulacao*0.0002, world_size, world_rank, todosDispositivos);
