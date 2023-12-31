@@ -185,7 +185,7 @@ void SaveFigure(int malhaSwapBufferDispositivo[][2], float **malhaSwapBuffer, in
 							{
 								if((OLIGODENDROCYTES * param[MALHA_DIMENSAO_CELULAS]) + (z * param[MALHA_DIMENSAO_POSICAO_Z]) + (y * param[MALHA_DIMENSAO_POSICAO_Y]) + (x *param[MALHA_DIMENSAO_POSICAO_X]) >= param[OFFSET_COMPUTACAO]*MALHA_TOTAL_CELULAS && (OLIGODENDROCYTES * param[MALHA_DIMENSAO_CELULAS]) + (z * param[MALHA_DIMENSAO_POSICAO_Z]) + (y * param[MALHA_DIMENSAO_POSICAO_Y]) + (x *param[MALHA_DIMENSAO_POSICAO_X]) <  ((param[OFFSET_COMPUTACAO]+param[LENGTH_COMPUTACAO])*MALHA_TOTAL_CELULAS) )
 								{	
-									fprintf(file, "%f ", malha[(OLIGODENDROCYTES * param[MALHA_DIMENSAO_CELULAS]) + (z * param[MALHA_DIMENSAO_POSICAO_Z]) + (y * param[MALHA_DIMENSAO_POSICAO_Y]) + (x *param[MALHA_DIMENSAO_POSICAO_X])]);
+									fprintf(file, "%f ", malha[(T_CYTOTOXIC * param[MALHA_DIMENSAO_CELULAS]) + (z * param[MALHA_DIMENSAO_POSICAO_Z]) + (y * param[MALHA_DIMENSAO_POSICAO_Y]) + (x *param[MALHA_DIMENSAO_POSICAO_X])]);
 								}
 							}
 						}
