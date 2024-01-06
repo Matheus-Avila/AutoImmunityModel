@@ -16,9 +16,9 @@
 // #define PRINT
 #define CPU_WORK_GROUP_SIZE	6
 #define GPU_WORK_GROUP_SIZE	48
-#define SIMULACOES		10000
+#define SIMULACOES		7/0.0002
 #define INTERVALO_BALANCEAMENTO	1000
-#define BALANCEAMENTO_THRESHOLD	0.000025
+#define BALANCEAMENTO_THRESHOLD	0.000125 //000125: quarto de face; 00025: metade de face; 0005: face inteira 
 #define PRECISAO_BALANCEAMENTO	10
 
 //Tipos de celulas.
@@ -45,7 +45,7 @@
 //Habilitar.
 #define HABILITAR_ESTATICO
 #define HABILITAR_BALANCEAMENTO
-#define HABILITAR_BENCHMARK
+// #define HABILITAR_BENCHMARK
 
 void WritePopulationLymphNode(float *population, char* fileName){
 	FILE *file;
@@ -213,9 +213,8 @@ int main(int argc, char *argv[])
 	//***************
 	//*Inicializacao.
 	//***************
-
-	#ifdef HABILITAR_BENCHMARK
 	double tempoInicio, tempoFim;
+	#ifdef HABILITAR_BENCHMARK
 	double tempoComputacaoInterna = 0.0;
 	double tempoTrocaBorda = 0.0;
 	double tempoComputacaoBorda = 0.0;
@@ -446,6 +445,8 @@ int main(int argc, char *argv[])
 	int intervalPoints = (int)(SIMULACOES/NUM_POINTSLN);
 	int stepKPlus, stepKMinus;
 
+	tempoInicio = MPI_Wtime();
+
 	for(int simulacao = 0; simulacao < SIMULACOES; simulacao++)
 	{	
 		/*********************SOLUCAO DO LINFONODO ***********************/
@@ -526,9 +527,11 @@ int main(int argc, char *argv[])
 			}
 			MPI_Barrier(MPI_COMM_WORLD);
 		}
+		#ifdef SAVEFIGURES
 		if(simulacao == 0){
 			SaveFigure(malhaSwapBufferDispositivo, malhaSwapBuffer, parametrosMalha, xMalhaLength, yMalhaLength, zMalhaLength, meusDispositivosOffset, meusDispositivosLength, simulacao*0.0002, world_size, world_rank, todosDispositivos);
 		}
+		#endif
 		//Balanceamento de carga.
 		if(balanceamento && ((simulacao == 0) || (simulacao == 1) || (simulacao % INTERVALO_BALANCEAMENTO == 0)))
 		{
@@ -971,24 +974,115 @@ int main(int argc, char *argv[])
 			MPI_Barrier(MPI_COMM_WORLD);
 		}
 		//Percorrer tecidoInteiro e colocar o resultado nas variáveis de integral do tecido
-
+		#ifdef SAVEFIGURES
 		if(simulacao != 0 && simulacao%((int)(1/0.0002)) == 0){
 			printf("simulacao %d ** total %d\n",simulacao, SIMULACOES);
 			SaveFigure(malhaSwapBufferDispositivo, malhaSwapBuffer, parametrosMalha, xMalhaLength, yMalhaLength, zMalhaLength, meusDispositivosOffset, meusDispositivosLength, simulacao*0.0002, world_size, world_rank, todosDispositivos);
 		}
+		#endif
 	}
 
 	//*******
 	//Tempos.
 	//*******
-	SaveFigure(malhaSwapBufferDispositivo, malhaSwapBuffer, parametrosMalha, xMalhaLength, yMalhaLength, zMalhaLength, meusDispositivosOffset, meusDispositivosLength, SIMULACOES*0.0002, world_size, world_rank, todosDispositivos);
-
-	MPI_Barrier(MPI_COMM_WORLD);
-
 	/******
 	******** Saving figures 
 	*******/
+	#ifdef SAVEFIGURES
+	SaveFigure(malhaSwapBufferDispositivo, malhaSwapBuffer, parametrosMalha, xMalhaLength, yMalhaLength, zMalhaLength, meusDispositivosOffset, meusDispositivosLength, SIMULACOES*0.0002, world_size, world_rank, todosDispositivos);
+	#endif
+	MPI_Barrier(MPI_COMM_WORLD);
+	tempoFim = MPI_Wtime();
 	
+	#ifdef GPU_DEVICES
+	#ifdef HABILITAR_BALANCEAMENTO
+	#ifdef HABILITAR_ESTATICO
+	char filename[200];
+	char charThreshold[10];
+	sprintf(filename, "tempo/GPU_DEVICES-HABILITAR_ESTATICO-BALANCEAMENTO_THRESHOLD:");
+	snprintf(charThreshold, sizeof(charThreshold), "%f", BALANCEAMENTO_THRESHOLD);
+	strcat(filename, charThreshold);
+	strcat(filename, ".txt");
+	FILE *file;
+	file = fopen(filename, "a");
+	fprintf(file, "%lf\n",tempoFim-tempoInicio);
+	fclose(file);
+	#endif
+	#ifndef HABILITAR_ESTATICO
+	char filename[200];
+	char charThreshold[10];
+	sprintf(filename, "tempo/GPU_DEVICES-DINAMICO-BALANCEAMENTO_THRESHOLD:");
+	snprintf(charThreshold, sizeof(charThreshold), "%f", BALANCEAMENTO_THRESHOLD);
+	strcat(filename, charThreshold);
+	strcat(filename, ".txt");
+	FILE *file;
+	file = fopen(filename, "a");
+	fprintf(file, "%lf\n",tempoFim-tempoInicio);
+	fclose(file);
+	#endif
+	#endif
+	#endif
+
+	#ifdef ALL_DEVICES
+	#ifdef HABILITAR_BALANCEAMENTO
+	#ifdef HABILITAR_ESTATICO
+	char filename[200];
+	char charThreshold[10];
+	sprintf(filename, "tempo/ALL_DEVICES-HABILITAR_ESTATICO-BALANCEAMENTO_THRESHOLD:");
+	snprintf(charThreshold, sizeof(charThreshold), "%f", BALANCEAMENTO_THRESHOLD);
+	strcat(filename, charThreshold);
+	strcat(filename, ".txt");
+	FILE *file;
+	file = fopen(filename, "a");
+	fprintf(file, "%lf\n",tempoFim-tempoInicio);
+	fclose(file);
+	#endif
+	#ifndef HABILITAR_ESTATICO
+	char filename[200];
+	char charThreshold[10];
+	sprintf(filename, "tempo/ALL_DEVICES-DINAMICO-BALANCEAMENTO_THRESHOLD:");
+	snprintf(charThreshold, sizeof(charThreshold), "%f", BALANCEAMENTO_THRESHOLD);
+	strcat(filename, charThreshold);
+	strcat(filename, ".txt");
+	FILE *file;
+	file = fopen(filename, "a");
+	fprintf(file, "%lf\n",tempoFim-tempoInicio);
+	fclose(file);
+	#endif
+	#endif
+	#endif
+
+	#ifdef CPU_DEVICES
+	#ifdef HABILITAR_BALANCEAMENTO
+	#ifdef HABILITAR_ESTATICO
+	char filename[200];
+	char charThreshold[10];
+	sprintf(filename, "tempo/CPU_DEVICES-HABILITAR_ESTATICO-BALANCEAMENTO_THRESHOLD:");
+	snprintf(charThreshold, sizeof(charThreshold), "%f", BALANCEAMENTO_THRESHOLD);
+	strcat(filename, charThreshold);
+	strcat(filename, ".txt");
+	FILE *file;
+	file = fopen(filename, "a");
+	fprintf(file, "%lf\n",tempoFim-tempoInicio);
+	fclose(file);
+	#endif
+	#ifndef HABILITAR_ESTATICO
+	char filename[200];
+	char charThreshold[10];
+	sprintf(filename, "tempo/CPU_DEVICES-DINAMICO-BALANCEAMENTO_THRESHOLD:");
+	snprintf(charThreshold, sizeof(charThreshold), "%f", BALANCEAMENTO_THRESHOLD);
+	strcat(filename, charThreshold);
+	strcat(filename, ".txt");
+	FILE *file;
+	file = fopen(filename, "a");
+	fprintf(file, "%lf\n",tempoFim-tempoInicio);
+	fclose(file);
+	#endif
+	#endif
+	#endif
+
+
+
 	if(world_rank == 0)
 	{
 		gettimeofday(&timeEnd, NULL);
@@ -1010,14 +1104,13 @@ int main(int argc, char *argv[])
 	//************
 	//Finalização.
 	//************
-
+	#ifdef SAVEFIGURES
 	WritePopulationLymphNode(dendriticLymphNodeSavedPoints, "./result/dendritic.txt");
     WritePopulationLymphNode(tCytotoxicLymphNodeSavedPoints, "./result/tHelper.txt");
     WritePopulationLymphNode(tHelperLymphNodeSavedPoints, "./result/tCyto.txt");
     WritePopulationLymphNode(bCellLymphNodeSavedPoints, "./result/bCell.txt");
     WritePopulationLymphNode(plasmaCellLymphNodeSavedPoints, "./result/plasmaCell.txt");
     WritePopulationLymphNode(antibodyLymphNodeSavedPoints, "./result/antibody.txt");
-    
 	char buffer[10];
     char command[40] = {};
     strcat(command, "python3 plotLymphNode.py ");
@@ -1027,6 +1120,7 @@ int main(int argc, char *argv[])
     snprintf(buffer, sizeof(buffer), "%f", deltaT);
     strcat(command, buffer);
     // system(command);
+    #endif
 	
 	#ifdef PRINT
 	for(int count2 = 0; count2 < world_size; count2++)
