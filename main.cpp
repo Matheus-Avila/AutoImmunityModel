@@ -994,36 +994,7 @@ int main(int argc, char *argv[])
 	MPI_Barrier(MPI_COMM_WORLD);
 	tempoFim = MPI_Wtime();
 	
-	#ifdef GPU_DEVICES
-	#ifdef HABILITAR_BALANCEAMENTO
-	#ifdef HABILITAR_ESTATICO
-	char filename[200];
-	char charThreshold[10];
-	sprintf(filename, "tempo/GPU_DEVICES-HABILITAR_ESTATICO-BALANCEAMENTO_THRESHOLD:");
-	snprintf(charThreshold, sizeof(charThreshold), "%f", BALANCEAMENTO_THRESHOLD);
-	strcat(filename, charThreshold);
-	strcat(filename, ".txt");
-	FILE *file;
-	file = fopen(filename, "a");
-	fprintf(file, "%lf\n",tempoFim-tempoInicio);
-	fclose(file);
-	#endif
-	#ifndef HABILITAR_ESTATICO
-	char filename[200];
-	char charThreshold[10];
-	sprintf(filename, "tempo/GPU_DEVICES-DINAMICO-BALANCEAMENTO_THRESHOLD:");
-	snprintf(charThreshold, sizeof(charThreshold), "%f", BALANCEAMENTO_THRESHOLD);
-	strcat(filename, charThreshold);
-	strcat(filename, ".txt");
-	FILE *file;
-	file = fopen(filename, "a");
-	fprintf(file, "%lf\n",tempoFim-tempoInicio);
-	fclose(file);
-	#endif
-	#endif
-	#endif
-
-	#ifdef ALL_DEVICES
+	#if defined(ALL_DEVICES)
 	#ifdef HABILITAR_BALANCEAMENTO
 	#ifdef HABILITAR_ESTATICO
 	char filename[200];
@@ -1050,9 +1021,34 @@ int main(int argc, char *argv[])
 	fclose(file);
 	#endif
 	#endif
+	#elif defined(GPU_DEVICES)
+	#ifdef HABILITAR_BALANCEAMENTO
+	#ifdef HABILITAR_ESTATICO
+	char filename[200];
+	char charThreshold[10];
+	sprintf(filename, "tempo/GPU_DEVICES-HABILITAR_ESTATICO-BALANCEAMENTO_THRESHOLD:");
+	snprintf(charThreshold, sizeof(charThreshold), "%f", BALANCEAMENTO_THRESHOLD);
+	strcat(filename, charThreshold);
+	strcat(filename, ".txt");
+	FILE *file;
+	file = fopen(filename, "a");
+	fprintf(file, "%lf\n",tempoFim-tempoInicio);
+	fclose(file);
 	#endif
-
-	#ifdef CPU_DEVICES
+	#ifndef HABILITAR_ESTATICO
+	char filename[200];
+	char charThreshold[10];
+	sprintf(filename, "tempo/GPU_DEVICES-DINAMICO-BALANCEAMENTO_THRESHOLD:");
+	snprintf(charThreshold, sizeof(charThreshold), "%f", BALANCEAMENTO_THRESHOLD);
+	strcat(filename, charThreshold);
+	strcat(filename, ".txt");
+	FILE *file;
+	file = fopen(filename, "a");
+	fprintf(file, "%lf\n",tempoFim-tempoInicio);
+	fclose(file);
+	#endif
+	#endif
+	#elif defined(CPU_DEVICES)
 	#ifdef HABILITAR_BALANCEAMENTO
 	#ifdef HABILITAR_ESTATICO
 	char filename[200];
@@ -1080,8 +1076,6 @@ int main(int argc, char *argv[])
 	#endif
 	#endif
 	#endif
-
-
 
 	if(world_rank == 0)
 	{

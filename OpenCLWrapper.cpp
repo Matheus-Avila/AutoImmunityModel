@@ -96,10 +96,12 @@ int InitParallelProcessor()
 		//Get devices.
 		cl_uint numberOfDevicesOfPlatform;
 		#if defined(ALL_DEVICES)
-		state = clGetDeviceIDs(platformIDs[platform], CL_DEVICE_TYPE_ALL, MAX_NUMBER_OF_DEVICES_PER_PLATFORM, deviceList+numberOfDevices, &numberOfDevicesOfPlatform);
+		state = clGetDeviceIDs(platformIDs[platform], CL_DEVICE_TYPE_CPU, MAX_NUMBER_OF_DEVICES_PER_PLATFORM, deviceList+numberOfDevices, &numberOfDevicesOfPlatform);
+		if(state != CL_SUCCESS)
+			state = clGetDeviceIDs(platformIDs[platform], CL_DEVICE_TYPE_GPU, MAX_NUMBER_OF_DEVICES_PER_PLATFORM, deviceList+numberOfDevices, &numberOfDevicesOfPlatform);
 		#elif defined(GPU_DEVICES)
 		state = clGetDeviceIDs(platformIDs[platform], CL_DEVICE_TYPE_GPU, MAX_NUMBER_OF_DEVICES_PER_PLATFORM, deviceList+numberOfDevices, &numberOfDevicesOfPlatform);
-		#else
+		#elif defined(CPU_DEVICES)
 		state = clGetDeviceIDs(platformIDs[platform], CL_DEVICE_TYPE_CPU, MAX_NUMBER_OF_DEVICES_PER_PLATFORM, deviceList+numberOfDevices, &numberOfDevicesOfPlatform);
 		#endif
 		if(state != CL_SUCCESS)
@@ -113,8 +115,6 @@ int InitParallelProcessor()
 				numberOfDevicesOfPlatform = MAX_NUMBER_OF_DEVICES_PER_PLATFORM;
 			}
 			printf("%i device(s) found on platform %i.\n", numberOfDevicesOfPlatform, platform);
-		
-
 		
 		//Set devices.
 		for(int count = numberOfDevices; count < numberOfDevices+numberOfDevicesOfPlatform; count++)
