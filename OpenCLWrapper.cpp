@@ -113,8 +113,9 @@ int InitParallelProcessor()
 				numberOfDevicesOfPlatform = MAX_NUMBER_OF_DEVICES_PER_PLATFORM;
 			}
 			printf("%i device(s) found on platform %i.\n", numberOfDevicesOfPlatform, platform);
-		}
+		
 
+		
 		//Set devices.
 		for(int count = numberOfDevices; count < numberOfDevices+numberOfDevicesOfPlatform; count++)
 		{
@@ -125,9 +126,7 @@ int InitParallelProcessor()
 			clGetDeviceInfo(devices[count].deviceID, CL_DEVICE_TYPE, sizeof(cl_device_type), &devices[count].deviceType, NULL);
 			clGetDeviceInfo(devices[count].deviceID, CL_DEVICE_MAX_WORK_GROUP_SIZE, sizeof(cl_device_type), &devices[count].deviceMaxWorkItemsPerWorkGroup, NULL);
 			clGetDeviceInfo(devices[count].deviceID, CL_DEVICE_MAX_COMPUTE_UNITS, sizeof(cl_device_type), &devices[count].deviceComputeUnits, NULL);
-			
-			printf("CL_DEVICE_MAX_COMPUTE_UNITS %d\n", devices[count].deviceComputeUnits);
-			
+
 			if(devices[count].deviceType == CL_DEVICE_TYPE_GPU)
 			{
 				printf("Device (%i) type: GPU\n", count);
@@ -136,7 +135,9 @@ int InitParallelProcessor()
 			{
 				printf("Device (%i) type: CPU\n", count);
 			}
+			printf("CL_DEVICE_MAX_COMPUTE_UNITS %d\n", devices[count].deviceComputeUnits);
 
+			
 			//Create context.
 			devices[count].context = clCreateContext(NULL, 1, &devices[count].deviceID, NULL, NULL, &state);
 			if(state != CL_SUCCESS)
@@ -180,6 +181,7 @@ int InitParallelProcessor()
 		}
 		numberOfDevices += numberOfDevicesOfPlatform;
 	}
+	}	
 	return numberOfDevices;
 }
 
@@ -380,7 +382,6 @@ int ReadFromMemoryObject(int devicePosition, int memoryObjectID, char *data, int
 		if(state != CL_SUCCESS)
 		{
 			printf("Error reading from memory object %i.\n", state);
-			exit(1);
 			return -1;
 		}
 		else

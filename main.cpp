@@ -16,7 +16,7 @@
 // #define PRINT
 #define CPU_WORK_GROUP_SIZE	6
 #define GPU_WORK_GROUP_SIZE	48
-#define SIMULACOES		7/0.0002
+#define SIMULACOES		30/0.0002
 #define INTERVALO_BALANCEAMENTO	1000
 #define BALANCEAMENTO_THRESHOLD	0.000125 //000125: quarto de face; 00025: metade de face; 0005: face inteira 
 #define PRECISAO_BALANCEAMENTO	10
