@@ -23,7 +23,7 @@
 #define ANTIBODY		5
 
 //Estrutura de celulas.
-#define CELULAS_SIZEOF			48 // qt de células * sizeof(double)
+#define CELULAS_SIZEOF			48 // qt de células * numero de pontos de cada celula
 #define CELULAS_SINGLE_CELL_SIZEOF	8	//Pode ser usado junto com as definicoes de tipos de celulas para substituir os valores abaixo.
 #define MICROGLIA_OFFSET		0
 #define OLIGODENDROCYTES_OFFSET		8
