@@ -113,6 +113,8 @@ typedef struct structModel
     float *plasmaCellLymphNodeSavedPoints;
     float *antibodyLymphNodeSavedPoints;
 
+    float *gradientODC;
+
     structParameters parametersModel;
 
 }structModel;
