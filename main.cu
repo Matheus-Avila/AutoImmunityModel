@@ -10,7 +10,7 @@ structParameters ParametersInitialize(){
     params.cDcDiffusion = 9.6*24*6.6*pow(10,-6);
     params.aDcDiffusion = 9.6*24*6.6*pow(10,-5);
     params.tCytoDiffusion = 50.6*24*6.6*pow(10,-5);
-    params.chi = 3;
+    params.chi = 0.03;
     
     params.muCDc = 60*24*3*pow(10,-5);
     params.muMic = 60*24*3*pow(10,-6);
@@ -85,7 +85,7 @@ void clearPhgTxt(){
 
 int main(){
     clearPhgTxt();
-    float ht = 0.0000000001, hx = 0.5;
+    float ht = 0.0002, hx = 0.5;
     int numFigs = 28, numPointsLN = 1000, time = 28, space = 20, numStepsLN = 1, saveFigs = 1;
     structParameters parameters = ParametersInitialize();
     structModel model = ModelInitialize(parameters, ht, hx, time, space, numFigs, numPointsLN, numStepsLN, saveFigs);
