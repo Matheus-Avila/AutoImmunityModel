@@ -409,7 +409,7 @@ double* EquationsLymphNode(structModel* model, int stepPos){
     //T Cytotoxic
     double tCytoActivation = model->parametersModel.bTCytotoxic * (model->parametersModel.rhoTCytotoxic*tCytoLN*dcLN - tCytoLN*dcLN);
     double tCytoHomeostasis = model->parametersModel.alphaTCytotoxic * (model->parametersModel.stableTCytotoxic - tCytoLN);
-    double tCytoMigration = model->parametersModel.gammaT * (tCytoLN - model->tCytotoxicTissueVessels) * (double)(model->parametersModel.V_BV/model->parametersModel.V_LN);
+    double tCytoMigration = model->parametersModel.gammaT * (tCytoLN - model->tCytotoxicTissueVessels) * (double)(model->parametersModel.V_BV/model->parametersModel.V_LN) * (1 - model->parametersModel.epslon_x);
     slopes[1] = tCytoActivation + tCytoHomeostasis - tCytoMigration;
 
     //T Helper
@@ -605,7 +605,7 @@ derivatives* SlopePDEs(int stepKPlus, double ht, structModel* model){
         slopes->derivativesTissue[2][kPos] = activatedDCDiffusion + conventionalDcActivation + activatedDcMigration - activatedDcClearance;
 
         //CD8 T update
-        tCytotoxicMigration = model->thetaBV[kPos]*model->parametersModel.gammaT*(model->tCytotoxicLymphNode[stepKPlus] - tCytotoxicKMinus);
+        tCytotoxicMigration = model->thetaBV[kPos]*model->parametersModel.gammaT*(model->tCytotoxicLymphNode[stepKPlus] - tCytotoxicKMinus) * (1 - model->parametersModel.epslon_x);
         
         slopes->derivativesTissue[3][kPos] = tCytotoxicDiffusion - tCytotoxicChemotaxis + tCytotoxicMigration;
         
@@ -854,7 +854,10 @@ void RungeKutta(int kTime, structModel *model){
 
 int isIn(int ktime, int vec[], int size) {
     for(int i = 0; i < size; i++) {
-        if(ktime == vec[i]) return 1;
+        if(ktime - 1 == vec[i]) {
+            //printf("entrou \n");
+            return 1;
+        } 
     }
     return 0;
 }
@@ -866,7 +869,7 @@ float RunModel(structModel *model, int* save_times, int size, float* points_valu
     int stepKPlus = 1, stepKMinus = 0;
     int posSave = 1;
 
-    float sum = 50.f;
+    float sum = 0.f;
     int currentIndex = 0;
     //Save IC
     if(model->saveFigs)
@@ -892,8 +895,8 @@ float RunModel(structModel *model, int* save_times, int size, float* points_valu
         stepKMinus = stepKPlus;
         stepKPlus = !stepKMinus;
         // printf("%lf!!\n", time);
-         printf("%d \n", days);
-        if(isIn(days, save_times, size)) {
+        //printf("%d \n", kTime);
+        if(isIn(kTime, save_times, size)) {
             sum += pow(model->tCytotoxicLymphNode[stepKPlus] - points_values[currentIndex], 2);
             printf("\nAt this moment, TCYTO is %f", model->tCytotoxicLymphNode[stepKPlus]);
             currentIndex++;

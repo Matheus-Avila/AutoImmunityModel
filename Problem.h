@@ -61,7 +61,7 @@ structParameters ParametersInitialize(){
     params.V_BV = 0;
     params.V_PV = 0;
 
-    params.epslon_x = 0.1;
+    params.epslon_x = 0.8; //0.1
 
     return params;
 }
@@ -129,25 +129,25 @@ class MSProblemTCytoParams : public pagmo::problem {
         std::pair<vector_double, vector_double> get_bounds() const
         {
             // 
-            return {{0.0001, 0.01, 0.005}, {1.0, 0.99, 1.0}};
+            return {{0.01}, {0.99}};
         }
 
         std::vector<double> fitness(const vector_double& variables) const {
-            double alpha = variables[0];
-            double epslon = variables[1];
-            double gammaT = variables[2];
+            double epslon = variables[0];
+            // double epslon = variables[1];
+            // double gammaT = variables[2];
             float ht = 0.0002, hx = 0.5;
-            int numFigs = 56, numPointsLN = 1000, time = 56, space = 20, numStepsLN = 100, saveFigs = 0;
+            int numFigs = 5, numPointsLN = 1000, time = 14, space = 20, numStepsLN = 100, saveFigs = 0;
             structParameters parameters = ParametersInitialize();
-            parameters.alphaTCytotoxic = alpha;
+            // parameters.alphaTCytotoxic = alpha;
             parameters.epslon_x = epslon;
-            parameters.gammaT = gammaT;
+            // parameters.gammaT = gammaT;
             structModel model = ModelInitialize(parameters, ht, hx, time, space, numFigs, numPointsLN, numStepsLN, saveFigs);
-            int size = 3;
-            int save_times[3] = {70000, 140000, 280000};
+            int size = 1;
+            int save_times[1] = {14};
             
-            std::cout << "Gamma T " << gammaT << " Epslon: " << epslon << " Alpha: " << alpha << std::endl;
-            float points[size] = {6.7, 9.7, 9.5};
+            std::cout << " Epslon: " << parameters.epslon_x << std::endl;
+            float points[size] = {6.7};
             float error = RunModel(&model, save_times, size, points);
             vector_double _error = (vector_double) error;
             std::vector<double> v;
