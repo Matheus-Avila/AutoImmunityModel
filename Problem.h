@@ -54,7 +54,7 @@ structParameters ParametersInitialize(){
     params.rhoP = 3;
     params.rhoAntibody = 5.1*pow(10,-2);
     params.stableTHelper = 58.9;
-    params.stableTCytotoxic = 28.4;
+    params.stableTCytotoxic = 15;//28.4;
     params.stableB = 25;
     params.stableP = 2.5;
     params.V_LN = 40;
@@ -143,11 +143,12 @@ class MSProblemTCytoParams : public pagmo::problem {
             parameters.epslon_x = epslon;
             // parameters.gammaT = gammaT;
             structModel model = ModelInitialize(parameters, ht, hx, time, space, numFigs, numPointsLN, numStepsLN, saveFigs);
-            int size = 1;
-            int save_times[1] = {14};
+            int size = 2;
+            int save_times[2] = {0,14};
             
             std::cout << " Epslon: " << parameters.epslon_x << std::endl;
-            float points[size] = {6.7};
+            //float points[size] = {6.7};
+            float points[size] = {15,13};
             float error = RunModel(&model, save_times, size, points);
             vector_double _error = (vector_double) error;
             std::vector<double> v;
