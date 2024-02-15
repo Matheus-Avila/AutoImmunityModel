@@ -1,0 +1,8 @@
+LD_LIBRARY_PATH=/share/apps/amd-opencl/AMDAPPSDK-3.0/lib/x86_64/sdk:/share/apps/amd-opencl/AMDAPPSDK-3.0/lib/x86_64/:$LD_LIBRARY_PATH
+/opt/ohpc/pub/mpi/openmpi4-gnu12/4.1.6/bin/mpic++ -I/share/apps/amd-opencl/AMDAPPSDK-3.0/include -L/usr/lib64 -p -D MAX_NUMBER_OF_DEVICES_PER_PLATFORM=3 -D CPU_DEVICES -D HABILITAR_ESTATICO -O3 -o HIS_Estatico_CPU Balanceador.cpp OpenCLWrapper.cpp main.cpp -lOpenCL -lrt
+/opt/ohpc/pub/mpi/openmpi4-gnu12/4.1.6/bin/mpic++ -I/share/apps/amd-opencl/AMDAPPSDK-3.0/include -L/usr/lib64 -p -D MAX_NUMBER_OF_DEVICES_PER_PLATFORM=3 -D GPU_DEVICES -D HABILITAR_ESTATICO -O3 -o HIS_Estatico_GPU Balanceador.cpp OpenCLWrapper.cpp main.cpp -lOpenCL -lrt
+/opt/ohpc/pub/mpi/openmpi4-gnu12/4.1.6/bin/mpic++ -I/share/apps/amd-opencl/AMDAPPSDK-3.0/include -L/usr/lib64 -p -D MAX_NUMBER_OF_DEVICES_PER_PLATFORM=3 -D ALL_DEVICES -D HABILITAR_ESTATICO -O3 -o HIS_Estatico_ALL Balanceador.cpp OpenCLWrapper.cpp main.cpp -lOpenCL -lrt
+
+/opt/ohpc/pub/mpi/openmpi4-gnu12/4.1.6/bin/mpic++ -I/share/apps/amd-opencl/AMDAPPSDK-3.0/include -L/usr/lib64 -p -D MAX_NUMBER_OF_DEVICES_PER_PLATFORM=3 -D CPU_DEVICES  -O3 -o HIS_Dinamico_CPU Balanceador.cpp OpenCLWrapper.cpp main.cpp -lOpenCL -lrt
+/opt/ohpc/pub/mpi/openmpi4-gnu12/4.1.6/bin/mpic++ -I/share/apps/amd-opencl/AMDAPPSDK-3.0/include -L/usr/lib64 -p -D MAX_NUMBER_OF_DEVICES_PER_PLATFORM=3 -D GPU_DEVICES  -O3 -o HIS_Dinamico_GPU Balanceador.cpp OpenCLWrapper.cpp main.cpp -lOpenCL -lrt
+/opt/ohpc/pub/mpi/openmpi4-gnu12/4.1.6/bin/mpic++ -I/share/apps/amd-opencl/AMDAPPSDK-3.0/include -L/usr/lib64 -p -D MAX_NUMBER_OF_DEVICES_PER_PLATFORM=3 -D ALL_DEVICES  -O3 -o HIS_Dinamico_ALL Balanceador.cpp OpenCLWrapper.cpp main.cpp -lOpenCL -lrt
