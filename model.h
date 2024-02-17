@@ -73,6 +73,7 @@ typedef struct structModel
     float elapsedTimeLymphNode;
     float elapsedTimeCopiesDeviceToHost;
     float elapsedTimeCopiesHostToDevice;
+    float elapsedTimeReduce;
 
     int intervalFigures;
     int numPointsLN;

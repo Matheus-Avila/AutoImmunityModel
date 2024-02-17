@@ -435,6 +435,7 @@ void SavingData(structModel model){
         fprintf(file, "Execution Time of Lymph Node = %f secs\n", model.elapsedTimeLymphNode);
         fprintf(file, "Execution Time of Copies Device to Host = %f secs\n", model.elapsedTimeCopiesDeviceToHost);
         fprintf(file, "Execution Time of Copies Host to Device = %f secs\n", model.elapsedTimeCopiesHostToDevice);
+        fprintf(file, "Execution Time of Reduce = %f secs\n", model.elapsedTimeReduce);
         fprintf(file, "Days = %d - Space = %d - ht = %f, hx = %f, Ht_JumpStep = %d\n", model.tFinal, model.xFinal, model.ht, model.hx, model.numStepsLN);
         fprintf(file, "Lymph node populations\n");
         fprintf(file, "DC = %f, TCD8 = %f, TCD4 = %f, B Cell = %f, Plasma cell = %f, IgG = %f\n", model.dendriticLymphNodeSavedPoints[model.numPointsLN-1], model.tCytotoxicLymphNodeSavedPoints[model.numPointsLN-1], model.tHelperLymphNodeSavedPoints[model.numPointsLN-1], model.bCellLymphNodeSavedPoints[model.numPointsLN-1], model.plasmaCellLymphNodeSavedPoints[model.numPointsLN-1], model.antibodyLymphNodeSavedPoints[model.numPointsLN-1]);
@@ -657,7 +658,7 @@ void RunModel(structModel *model)
         WriteFiles(*model, model->oligodendrocyte[0], model->microglia[0], model->tCytotoxic[0], model->antibody[0], model->conventionalDc[0], model->activatedDc[0], 0);
 
     clock_t start, end;
-    float elapsedTimeLymphNode = 0, elapsedTimeCopiesDeviceToHost = 0, elapsedTimeCopiesHostToDevice = 0;
+    float elapsedTimeLymphNode = 0, elapsedTimeCopiesDeviceToHost = 0, elapsedTimeCopiesHostToDevice = 0, elapsedTimeReduce = 0;
     float elapsedTimeKernel = 0, elapsedTimeKernelAux = 0;
     cudaEvent_t startKernel, stopKernel;
     cudaEventCreate(&startKernel);
@@ -742,6 +743,7 @@ void RunModel(structModel *model)
 
             elapsedTimeCopiesDeviceToHost += ((float) (end - start)) / CLOCKS_PER_SEC;
 
+            start = clock();
             auxAdcPV = 0.0, auxAntibodyBV = 0.0, auxTCytotoxicBV = 0.0;
             for (int pos = 0; pos < numBlocks; pos++)
             {
@@ -752,6 +754,9 @@ void RunModel(structModel *model)
             model->tCytotoxicTissueVessels = auxTCytotoxicBV * model->hx * model->hx / model->parametersModel.V_BV;
             model->antibodyTissueVessels = auxAntibodyBV * model->hx * model->hx / model->parametersModel.V_BV;
             model->activatedDCTissueVessels = auxAdcPV * model->hx * model->hx / model->parametersModel.V_PV;  
+            end = clock();
+
+            elapsedTimeReduce += ((float) (end - start)) / CLOCKS_PER_SEC;
 
             start = clock(); 
             SolverLymphNode(model, kTime); 
@@ -832,6 +837,7 @@ void RunModel(structModel *model)
     model->elapsedTimeLymphNode = elapsedTimeLymphNode;
     model->elapsedTimeCopiesDeviceToHost = elapsedTimeCopiesDeviceToHost;
     model->elapsedTimeCopiesHostToDevice = elapsedTimeCopiesHostToDevice;
+    model->elapsedTimeReduce = elapsedTimeReduce;
     model->execTimeKernel = elapsedTimeKernel/1000;
     printf("Computation Done!!\n");
     SavingData(*model);
