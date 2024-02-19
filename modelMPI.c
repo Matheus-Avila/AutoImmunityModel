@@ -281,7 +281,7 @@ void DefineBVPV(structModel *model){
 }
 
 structModel ModelInitialize(structParameters params, float ht, 
-float hx, float time, float space, int numFigs, int numPointsLN, int my_rank, int comm_sz){
+float hx, float time, float space, int numFigs, int numPointsLN, int my_rank, int comm_sz, int numStepsLN, int saveFigs){
     structModel model;
     srand(2);
     model.parametersModel = params;
@@ -301,6 +301,9 @@ float hx, float time, float space, int numFigs, int numPointsLN, int my_rank, in
 
     model.my_rank = my_rank;
     model.comm_sz = comm_sz;
+    
+    model->numStepsLN = numStepsLN;
+    model->saveFigs = saveFigs;
     
     model.startLine = my_rank*model.numLines;
     model.endLine = model.startLine + model.numLines-1;

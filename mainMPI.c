@@ -88,9 +88,9 @@ int main(int argc, char* argv[]){
 
     MPI_Comm_size(MPI_COMM_WORLD, &comm_sz);
     float ht = 0.0002, hx = 0.05;
-    int numFigs = 28, numPointsLN = 1000, time = 28, space = 20, numStepsLN = 100, saveFigs = 1;
+    int numFigs = 28, numPointsLN = 1000, time = 28, space = 20, numStepsLN = 100, saveFigs = 0;
     structParameters parameters = ParametersInitialize();
-    structModel model = ModelInitialize(parameters, ht, hx, time, space, numFigs, numPointsLN, my_rank, comm_sz);
+    structModel model = ModelInitialize(parameters, ht, hx, time, space, numFigs, numPointsLN, my_rank, comm_sz, numStepsLN, saveFigs);
     
     float start = omp_get_wtime();
     RunModel(&model);
