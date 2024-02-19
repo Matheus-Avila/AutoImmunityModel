@@ -547,6 +547,7 @@ __global__ void kernelPDE(int kTime, float *tCytoSumVessel, float *activatedDCSu
         CalculateDiffusion(constHx, valJPlus, valJMinus, valIPlus, valIMinus, devTCytotoxicKMinusThrIdx, &tCytotoxicDiffusion);
         CalculateChemottaxis(constHx, valJPlus, valJMinus, valIPlus, valIMinus, devTCytotoxicKMinusThrIdx,
                              modelParams.avgT, gradientOdcI, gradientOdcJ, &tCytotoxicChemotaxis);
+        tCytotoxicChemotaxis += diffusionODC * devTCytotoxicKMinusThrIdx / (devTCytotoxicKMinusThrIdx + modelParams.avgT);
         tCytotoxicChemotaxis *= modelParams.chi;
         tCytotoxicDiffusion *= modelParams.tCytoDiffusion;
 
@@ -775,12 +776,12 @@ void RunModel(structModel *model)
         }
         cudaMemcpy(&devKTime, &kTime, sizeof(int), cudaMemcpyHostToDevice);
 
-        cudaEventRecord(startKernel, 0);
+        cudaEventRecord(startKernel, stream2);
         if (stepKPlus % 2 == 1)
             kernelPDE<<<numBlocks, threadsPerBlock, 0, stream2>>>(devKTime, devTCytotoxicVessel, devActivatedDCVessel, devAntibodyVessel, devActivatedDCLymphNode, devAntibodyLymphNode, devTCytotoxicLymphNode, devThetaPV, devThetaBV, devMicrogliaKMinus, devMicrogliaKPlus, devTCytotoxicKMinus, devTCytotoxicKPlus, devAntibodyKMinus, devAntibodyKPlus, devConventionalDCKMinus, devConventionalDCKPlus, devActivatedDCKMinus, devActivatedDCKPlus, devOligodendrocytesDCKMinus, devOligodendrocytesDCKPlus);
         else
             kernelPDE<<<numBlocks, threadsPerBlock, 0, stream2>>>(devKTime, devTCytotoxicVessel, devActivatedDCVessel, devAntibodyVessel, devActivatedDCLymphNode, devAntibodyLymphNode, devTCytotoxicLymphNode, devThetaPV, devThetaBV, devMicrogliaKPlus, devMicrogliaKMinus, devTCytotoxicKPlus, devTCytotoxicKMinus, devAntibodyKPlus, devAntibodyKMinus, devConventionalDCKPlus, devConventionalDCKMinus, devActivatedDCKPlus, devActivatedDCKMinus, devOligodendrocytesDCKPlus, devOligodendrocytesDCKMinus);
-        cudaEventRecord(stopKernel, 0);
+        cudaEventRecord(stopKernel, stream2);
         cudaEventSynchronize(stopKernel);
         cudaEventElapsedTime(&elapsedTimeKernelAux, startKernel, stopKernel);
         elapsedTimeKernel += elapsedTimeKernelAux;
