@@ -559,9 +559,21 @@ void RunModel(structModel *model){
     //printf("Process %d spaceLen: %d\n\n", model->my_rank, model->spaceLen);
     float auxAdcPV = 0.0, auxAntibodyBV = 0.0, auxTCytotoxicBV = 0.0, auxTT = 0.0, auxAT = 0.0, auxDC = 0.0;
     for(int kTime = 1; kTime <= model->timeLen; kTime++){
+        if(kTime%model->numStepsLN == 0){
+            MPI_Allreduce(&auxTCytotoxicBV, &auxTT, 1, MPI_FLOAT, MPI_SUM, MPI_COMM_WORLD);
+            MPI_Allreduce(&auxAntibodyBV, &auxAT, 1, MPI_FLOAT, MPI_SUM, MPI_COMM_WORLD);
+            MPI_Allreduce(&auxAdcPV, &auxDC, 1, MPI_FLOAT, MPI_SUM, MPI_COMM_WORLD);
+
+            model->tCytotoxicTissueVessels = auxTCytotoxicBV * model->hx * model->hx / model->parametersModel.V_BV;
+            model->antibodyTissueVessels = auxAntibodyBV * model->hx * model->hx / model->parametersModel.V_BV;
+            model->activatedDCTissueVessels = auxAdcPV * model->hx * model->hx / model->parametersModel.V_PV;
+
+            // solve lymphnode
+            
+            SolverLymphNode(model, kTime);
+        }
         auxAdcPV = 0.0, auxAntibodyBV = 0.0, auxTCytotoxicBV = 0.0, auxTT = 0.0, auxAT = 0.0, auxDC = 0.0;
-        // solve lymphnode
-        SolverLymphNode(model, kTime);
+
         stepKPlus = kTime%2;
         for(line = model->startLine; line <= model->endLine; line++){
         for(column = 0; column < model->spaceLen; column++){
@@ -741,14 +753,7 @@ void RunModel(structModel *model){
             if(model->my_rank == 0)
                 WriteFiles(*model, model->oligodendrocyte[stepKPlus], model->microglia[stepKPlus], model->tCytotoxic[stepKPlus], model->antibody[stepKPlus], model->conventionalDc[stepKPlus], model->activatedDc[stepKPlus], kTime);
         }
-        MPI_Allreduce(&auxTCytotoxicBV, &auxTT, 1, MPI_FLOAT, MPI_SUM, MPI_COMM_WORLD);
-        MPI_Allreduce(&auxAntibodyBV, &auxAT, 1, MPI_FLOAT, MPI_SUM, MPI_COMM_WORLD);
-        MPI_Allreduce(&auxAdcPV, &auxDC, 1, MPI_FLOAT, MPI_SUM, MPI_COMM_WORLD);
-
-        model->tCytotoxicTissueVessels = auxTCytotoxicBV * model->hx * model->hx / model->parametersModel.V_BV;
-        model->antibodyTissueVessels = auxAntibodyBV * model->hx * model->hx / model->parametersModel.V_BV;
-        model->activatedDCTissueVessels = auxAdcPV * model->hx * model->hx / model->parametersModel.V_PV;
-
+       
         if(kTime > 1) {
             SendBorderThread(model, stepKPlus);
         }
