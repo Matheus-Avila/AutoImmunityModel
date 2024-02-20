@@ -194,6 +194,11 @@ float AdvectionTerm(float populationPoint, float avgValue){
     return populationPoint/(populationPoint + avgValue);
 }
 
+float PreventionOverCrowdingTerm(float populationPoint, float avgValue){
+    return populationPoint/(populationPoint + avgValue);
+}
+
+
 float UpDownWind(float frontPoint, float rearPoint, float avgValue){
     return AdvectionTerm(frontPoint, avgValue) - AdvectionTerm(rearPoint, avgValue);
 }
@@ -266,8 +271,8 @@ void DefineBVPV(structModel *model){
                 }
             }
         }
-        //printf("BV: %d and PV: %d", model->parametersModel.V_BV, model->parametersModel.V_PV);
-        WriteBVPV(model, model->thetaBV, model->thetaPV);
+        model->parametersModel.V_BV = model->parametersModel.V_BV * model->hx * model->hx;
+        model->parametersModel.V_PV = model->parametersModel.V_PV * model->hx * model->hx;
     }
     // Para cada linha da matriz fazer broadcast
     MPI_Bcast(model->thetaPV, xSize * xSize, MPI_FLOAT, 0, MPI_COMM_WORLD);
@@ -280,7 +285,7 @@ void DefineBVPV(structModel *model){
 }
 
 structModel ModelInitialize(structParameters params, float ht, 
-float hx, float time, float space, int numFigs, int numPointsLN, int my_rank, int comm_sz){
+float hx, float time, float space, int numFigs, int numPointsLN, int my_rank, int comm_sz, int numStepsLN, int saveFigs){
     structModel model;
     srand(2);
     model.parametersModel = params;
@@ -300,6 +305,9 @@ float hx, float time, float space, int numFigs, int numPointsLN, int my_rank, in
 
     model.my_rank = my_rank;
     model.comm_sz = comm_sz;
+    
+    model.numStepsLN = numStepsLN;
+    model.saveFigs = saveFigs;
     
     model.startLine = my_rank*model.numLines;
     model.endLine = model.startLine + model.numLines-1;
@@ -392,8 +400,8 @@ void verifyValues(structModel model, float value, int time, char* populationName
 
 void SolverLymphNode(structModel *model, int stepPos){
     float populationLN[6];
-    int stepKMinus = stepPos%2;
-    int stepKPlus = (stepKMinus+1)%2;
+    int stepKPlus = (stepPos%(2*model->numStepsLN))/model->numStepsLN;
+    int stepKMinus = !(stepKPlus && 1);
     populationLN[0] = model->dendriticLymphNode[stepKMinus];
     populationLN[1] = model->tCytotoxicLymphNode[stepKMinus];
     populationLN[2] = model->tHelperLymphNode[stepKMinus];
@@ -403,17 +411,19 @@ void SolverLymphNode(structModel *model, int stepPos){
     
     float* solutionLN;
     solutionLN = EquationsLymphNode(*model, populationLN, stepPos);
+
+    float htLN = model->ht*model->numStepsLN;
     
     //Execute Euler 
-    model->dendriticLymphNode[stepKPlus] = model->dendriticLymphNode[stepKMinus] + model->ht*solutionLN[0];
-    model->tCytotoxicLymphNode[stepKPlus] = model->tCytotoxicLymphNode[stepKMinus] + model->ht*solutionLN[1];
-    model->tHelperLymphNode[stepKPlus] = model->tHelperLymphNode[stepKMinus] + model->ht*solutionLN[2];
-    model->bCellLymphNode[stepKPlus] = model->bCellLymphNode[stepKMinus] + model->ht*solutionLN[3];
-    model->plasmaCellLymphNode[stepKPlus] = model->plasmaCellLymphNode[stepKMinus] + model->ht*solutionLN[4];
-    model->antibodyLymphNode[stepKPlus] = model->antibodyLymphNode[stepKMinus] + model->ht*solutionLN[5];
+    model->dendriticLymphNode[stepKPlus] = model->dendriticLymphNode[stepKMinus] + htLN*solutionLN[0];
+    model->tCytotoxicLymphNode[stepKPlus] = model->tCytotoxicLymphNode[stepKMinus] + htLN*solutionLN[1];
+    model->tHelperLymphNode[stepKPlus] = model->tHelperLymphNode[stepKMinus] + htLN*solutionLN[2];
+    model->bCellLymphNode[stepKPlus] = model->bCellLymphNode[stepKMinus] + htLN*solutionLN[3];
+    model->plasmaCellLymphNode[stepKPlus] = model->plasmaCellLymphNode[stepKMinus] + htLN*solutionLN[4];
+    model->antibodyLymphNode[stepKPlus] = model->antibodyLymphNode[stepKMinus] + htLN*solutionLN[5];
     free(solutionLN);
 
-    int intervalPoints = (int)(tSize/NUMPOINTSLYMPHNODE);
+    int intervalPoints = (int)(model->tSize/model->numPointsLN);
     if(stepPos%intervalPoints){
         int posSave = stepPos/intervalPoints;
         model->dendriticLymphNodeSavedPoints[posSave] = model->dendriticLymphNode[stepKPlus];
@@ -423,13 +433,6 @@ void SolverLymphNode(structModel *model, int stepPos){
         model->plasmaCellLymphNodeSavedPoints[posSave] = model->plasmaCellLymphNode[stepKPlus];
         model->antibodyLymphNodeSavedPoints[posSave] = model->antibodyLymphNode[stepKPlus];
     }
-    verifyValues(*model, model->dendriticLymphNode[stepKPlus], stepPos, "DC lymph node");
-    verifyValues(*model, model->tCytotoxicLymphNode[stepKPlus], stepPos, "CD8 T lymph node");
-    verifyValues(*model, model->tHelperLymphNode[stepKPlus], stepPos, "CD4 T lymph node");
-    verifyValues(*model, model->bCellLymphNode[stepKPlus], stepPos, "B cell lymph node");
-    verifyValues(*model, model->plasmaCellLymphNode[stepKPlus], stepPos, "Plasma cell lymph node");
-    verifyValues(*model, model->antibodyLymphNode[stepKPlus], stepPos, "Antibody lymph node");
-    
 }
 
 void SendBorderThread(structModel *model, int stepKPlus){
@@ -540,9 +543,8 @@ void SendBorderThread(structModel *model, int stepKPlus){
 
 void RunModel(structModel *model){
     //printf("VPV: %d : VBV: %d", model->parametersModel.V_PV, model->)
-    double start = MPI_Wtime();
+    // double start = MPI_Wtime();
     //Save IC
-    WriteFiles(*model, model->oligodendrocyte[0], model->microglia[0], model->tCytotoxic[0], model->antibody[0], model->conventionalDc[0], model->activatedDc[0], 0);
     int stepKMinus = 0, stepKPlus, line, column;
     float upperNeumannBC = 0.0, lowerNeumannBC = 0.0, leftNeumannBC = 0.0, rightNeumannBC = 0.0;
     
@@ -555,13 +557,27 @@ void RunModel(structModel *model){
     odcMicrogliaFagocitosis = 0.0, odcTCytotoxicApoptosis = 0.0, conventionalDcReaction = 0.0, conventionalDcClearance = 0.0, conventionalDcActivation = 0.0, \
     activatedDcClearance = 0.0, activatedDcMigration = 0.0, antibodyMigration = 0.0;
 
+    float diffusionOdc;
+
     float microgliaKMinus = 0.0, conventionalDcKMinus = 0.0, activatedDcKMinus = 0.0, tCytotoxicKMinus = 0.0, antibodyKMinus = 0.0, oligodendrocyteKMinus = 0.0;
     //printf("Process %d spaceLen: %d\n\n", model->my_rank, model->spaceLen);
     float auxAdcPV = 0.0, auxAntibodyBV = 0.0, auxTCytotoxicBV = 0.0, auxTT = 0.0, auxAT = 0.0, auxDC = 0.0;
     for(int kTime = 1; kTime <= model->timeLen; kTime++){
+        if(kTime%model->numStepsLN == 0){
+            MPI_Allreduce(&auxTCytotoxicBV, &auxTT, 1, MPI_FLOAT, MPI_SUM, MPI_COMM_WORLD);
+            MPI_Allreduce(&auxAntibodyBV, &auxAT, 1, MPI_FLOAT, MPI_SUM, MPI_COMM_WORLD);
+            MPI_Allreduce(&auxAdcPV, &auxDC, 1, MPI_FLOAT, MPI_SUM, MPI_COMM_WORLD);
+
+            model->tCytotoxicTissueVessels = auxTCytotoxicBV * model->hx * model->hx / model->parametersModel.V_BV;
+            model->antibodyTissueVessels = auxAntibodyBV * model->hx * model->hx / model->parametersModel.V_BV;
+            model->activatedDCTissueVessels = auxAdcPV * model->hx * model->hx / model->parametersModel.V_PV;
+
+            // solve lymphnode
+            
+            SolverLymphNode(model, kTime);
+        }
         auxAdcPV = 0.0, auxAntibodyBV = 0.0, auxTCytotoxicBV = 0.0, auxTT = 0.0, auxAT = 0.0, auxDC = 0.0;
-        // solve lymphnode
-        SolverLymphNode(model, kTime);
+
         stepKPlus = kTime%2;
         for(line = model->startLine; line <= model->endLine; line++){
         for(column = 0; column < model->spaceLen; column++){
@@ -581,7 +597,9 @@ void RunModel(structModel *model){
             valJMinus = (column != 0)? model->oligodendrocyte[stepKMinus][line * model->xSize + column-1]: model->oligodendrocyte[stepKMinus][line * model->xSize + column];
             gradientOdcI = (float)(valIPlus - valIMinus)/(float)(2*model->hx);
             gradientOdcJ = (float)(valJPlus - valJMinus)/(float)(2*model->hx);
-            //printf("Point 2: %d\n\n", model->my_rank);
+
+	    diffusionOdc = CalculateDiffusion(valJPlus, valJMinus, valIPlus, valIMinus, model->oligodendrocyte[stepKMinus][line * model->xSize + column], model->hx);
+
             //Diffusion and Chemotaxis Mic
 
             valIPlus  = (line != model->spaceLen-1)? model->microglia[stepKMinus][(line+1) * model->xSize + column]: model->microglia[stepKMinus][line * model->xSize + column] - (float)(2*model->hx*lowerNeumannBC);
@@ -591,7 +609,7 @@ void RunModel(structModel *model){
             
             microgliaDiffusion = model->parametersModel.micDiffusion*CalculateDiffusion(valJPlus, valJMinus, valIPlus, valIMinus, model->microglia[stepKMinus][line * model->xSize + column], model->hx);
             microgliaChemotaxis = model->parametersModel.chi*CalculateChemottaxis(valJPlus, valJMinus, valIPlus, valIMinus, model->microglia[stepKMinus][line * model->xSize + column],\
-            model->parametersModel.avgMic, gradientOdcI, gradientOdcJ, model->hx);
+            model->parametersModel.avgMic, gradientOdcI, gradientOdcJ, model->hx) + model->parametersModel.chi*(diffusionOdc * PreventionOverCrowdingTerm(microgliaKMinus, model->parametersModel.avgMic));
 
             //Diffusion and Chemotaxis CDC
 
@@ -602,7 +620,7 @@ void RunModel(structModel *model){
 
             conventionalDcDiffusion = model->parametersModel.cDcDiffusion*CalculateDiffusion(valJPlus, valJMinus, valIPlus, valIMinus, model->conventionalDc[stepKMinus][line * model->xSize + column], model->hx);
             conventionalDcChemotaxis = model->parametersModel.chi*CalculateChemottaxis(valJPlus, valJMinus, valIPlus, valIMinus, model->conventionalDc[stepKMinus][line * model->xSize + column],\
-            model->parametersModel.avgDc, gradientOdcI, gradientOdcJ, model->hx);
+            model->parametersModel.avgDc, gradientOdcI, gradientOdcJ, model->hx) + model->parametersModel.chi * diffusionOdc * PreventionOverCrowdingTerm(conventionalDcKMinus, model->parametersModel.avgDc);;
 
             //Difussion and Chemotaxis CD8T
 
@@ -613,7 +631,7 @@ void RunModel(structModel *model){
 
             tCytotoxicDiffusion = model->parametersModel.tCytoDiffusion*CalculateDiffusion(valJPlus, valJMinus, valIPlus, valIMinus, model->tCytotoxic[stepKMinus][line * model->xSize + column], model->hx);
             tCytotoxicChemotaxis = model->parametersModel.chi*CalculateChemottaxis(valJPlus, valJMinus, valIPlus, valIMinus, model->tCytotoxic[stepKMinus][line * model->xSize + column],\
-            model->parametersModel.avgT, gradientOdcI, gradientOdcJ, model->hx);
+            model->parametersModel.avgT, gradientOdcI, gradientOdcJ, model->hx) + model->parametersModel.chi * diffusionOdc * PreventionOverCrowdingTerm(tCytotoxicKMinus, model->parametersModel.avgT);;
 
             //Difussion ADC
 
@@ -732,23 +750,14 @@ void RunModel(structModel *model){
                 // );
                 //MPI_Send(composed, model->xSize * model->numLines * 6, MPI_FLOAT, 0, 0, MPI_COMM_WORLD);
                 MPI_Send(&model->oligodendrocyte[stepKPlus][model->startLine * model->xSize], model->xSize * model->numLines, MPI_FLOAT, 0, 0, MPI_COMM_WORLD);
-                MPI_Send(&model->tCytotoxic[stepKPlus][model->startLine], model->xSize * model->numLines, MPI_FLOAT, 0, 1, MPI_COMM_WORLD);
-                MPI_Send(&model->microglia[stepKPlus][model->startLine], model->xSize * model->numLines, MPI_FLOAT, 0, 2, MPI_COMM_WORLD);
-                MPI_Send(&model->antibody[stepKPlus][model->startLine], model->xSize * model->numLines, MPI_FLOAT, 0, 3, MPI_COMM_WORLD);
-                MPI_Send(&model->conventionalDc[stepKPlus][model->startLine], model->xSize * model->numLines, MPI_FLOAT, 0, 4, MPI_COMM_WORLD);
-                MPI_Send(&model->activatedDc[stepKPlus][model->startLine], model->xSize * model->numLines, MPI_FLOAT, 0, 5, MPI_COMM_WORLD);
+                MPI_Send(&model->tCytotoxic[stepKPlus][model->startLine * model->xSize], model->xSize * model->numLines, MPI_FLOAT, 0, 1, MPI_COMM_WORLD);
+                MPI_Send(&model->microglia[stepKPlus][model->startLine * model->xSize], model->xSize * model->numLines, MPI_FLOAT, 0, 2, MPI_COMM_WORLD);
+                MPI_Send(&model->antibody[stepKPlus][model->startLine * model->xSize], model->xSize * model->numLines, MPI_FLOAT, 0, 3, MPI_COMM_WORLD);
+                MPI_Send(&model->conventionalDc[stepKPlus][model->startLine * model->xSize], model->xSize * model->numLines, MPI_FLOAT, 0, 4, MPI_COMM_WORLD);
+                MPI_Send(&model->activatedDc[stepKPlus][model->startLine * model->xSize], model->xSize * model->numLines, MPI_FLOAT, 0, 5, MPI_COMM_WORLD);
             }
-            if(model->my_rank == 0)
-                WriteFiles(*model, model->oligodendrocyte[stepKPlus], model->microglia[stepKPlus], model->tCytotoxic[stepKPlus], model->antibody[stepKPlus], model->conventionalDc[stepKPlus], model->activatedDc[stepKPlus], kTime);
         }
-        MPI_Allreduce(&auxTCytotoxicBV, &auxTT, 1, MPI_FLOAT, MPI_SUM, MPI_COMM_WORLD);
-        MPI_Allreduce(&auxAntibodyBV, &auxAT, 1, MPI_FLOAT, MPI_SUM, MPI_COMM_WORLD);
-        MPI_Allreduce(&auxAdcPV, &auxDC, 1, MPI_FLOAT, MPI_SUM, MPI_COMM_WORLD);
-
-        model->tCytotoxicTissueVessels = auxTCytotoxicBV * model->hx * model->hx / model->parametersModel.V_BV;
-        model->antibodyTissueVessels = auxAntibodyBV * model->hx * model->hx / model->parametersModel.V_BV;
-        model->activatedDCTissueVessels = auxAdcPV * model->hx * model->hx / model->parametersModel.V_PV;
-
+       
         if(kTime > 1) {
             SendBorderThread(model, stepKPlus);
         }
@@ -756,13 +765,14 @@ void RunModel(structModel *model){
         stepKMinus = stepKMinus%2;
         MPI_Barrier(MPI_COMM_WORLD);
     }
-    if(model->my_rank == 0){
-        double end = MPI_Wtime();
-        double time_spent = (double)(end - start);
-        printf("\nComputation Done in %lf seconds!!\n", time_spent);
-        WriteLymphNodeFiles(*model, model->dendriticLymphNodeSavedPoints, model->tHelperLymphNodeSavedPoints, model->tCytotoxicLymphNodeSavedPoints, model->bCellLymphNodeSavedPoints, model->plasmaCellLymphNodeSavedPoints, model->antibodyLymphNodeSavedPoints);
-        PlotResults(*model);
-    }
+    // if(model->my_rank == 0){
+    //     double end = MPI_Wtime();
+    //     double time_spent = (double)(end - start);
+    //     printf("Lymph node last point: %f", model->tCytotoxicLymphNodeSavedPoints[999]);
+    //     printf("\nComputation Done in %lf seconds!!\n", time_spent);
+    //     WriteLymphNodeFiles(*model, model->dendriticLymphNodeSavedPoints, model->tHelperLymphNodeSavedPoints, model->tCytotoxicLymphNodeSavedPoints, model->bCellLymphNodeSavedPoints, model->plasmaCellLymphNodeSavedPoints, model->antibodyLymphNodeSavedPoints);
+    //     PlotResults(*model);
+    // }
 }
 
 

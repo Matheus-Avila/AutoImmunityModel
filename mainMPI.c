@@ -11,7 +11,7 @@ structParameters ParametersInitialize(){
     params.cDcDiffusion = 9.6*24*6.6*pow(10,-5);
     params.aDcDiffusion = 9.6*24*6.6*pow(10,-5);
     params.tCytoDiffusion = 9.6*24*6.6*pow(10,-5);
-    params.chi = 0.298*60*2;
+    params.chi = 0.03;
     
     params.muCDc = 60*24*3*pow(10,-4);
     params.muMic = 60*24*3*pow(10,-6);
@@ -22,7 +22,7 @@ structParameters ParametersInitialize(){
     
     params.gammaD = 0.01;
     params.gammaAntibody = 0.3;
-    params.gammaT = 2;
+    params.gammaT = 4;
 
     params.avgT = 37;
     params.avgDc = 33;
@@ -52,11 +52,23 @@ structParameters ParametersInitialize(){
     params.estableTCytotoxic = 40;
     params.estableB = 25;
     params.estableP = 2.5;
-    params.V_LN = 160;
+    params.V_LN = 40;
     params.V_BV = 0;
     params.V_PV = 0;
 
     return params;
+}
+
+void WriteTime(float ExecTime){
+    FILE *fileTime;
+    fileTime = fopen("./ExecsTimes.txt", "a");
+    if(fileTime != NULL){
+    fprintf(fileTime, "%f\n", ExecTime);
+    fclose(fileTime);
+    }else{
+        printf("Error execution time file\n");
+        exit(0);
+    }
 }
 
 void clearPngTxt(){
@@ -68,20 +80,24 @@ void clearPngTxt(){
 int main(int argc, char* argv[]){
 
     //clearPngTxt();
-
     int my_rank, comm_sz;
-    MPI_Init(NULL, NULL);
+    MPI_Init(&argc, &argv);
 
     MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
 
     MPI_Comm_size(MPI_COMM_WORLD, &comm_sz);
-    float ht = 0.0002, hx = 0.5;
-    int numFigs = 28, numPointsLN = 1000, time = 28, space = 20;
+    float ht = 0.0002, hx = 0.05;
+    int numFigs = 28, numPointsLN = 1000, time = 28, space = 20, numStepsLN = 100, saveFigs = 0;
     structParameters parameters = ParametersInitialize();
-    structModel model = ModelInitialize(parameters, ht, hx, 
-    time, space, numFigs, numPointsLN, my_rank, comm_sz);
+    structModel model = ModelInitialize(parameters, ht, hx, time, space, numFigs, numPointsLN, my_rank, comm_sz, numStepsLN, saveFigs);
     
+    float start = MPI_Wtime();
     RunModel(&model);
+    MPI_Barrier(MPI_COMM_WORLD);
+    float end = MPI_Wtime();
+    if (my_rank ==0)
+        WriteTime(end - start);
+    printf("Work took %f seconds\n", end - start);
     MPI_Finalize();
     return 0;
 }
