@@ -6,23 +6,23 @@
 
 structParameters ParametersInitialize(){
     structParameters params;
-    params.micDiffusion = 9.6*24*6.6*pow(10,-5);
-    params.antibodyDiffusion = 9.6*24*6.6*pow(10,-4);
-    params.cDcDiffusion = 9.6*24*6.6*pow(10,-5);
-    params.aDcDiffusion = 9.6*24*6.6*pow(10,-5);
-    params.tCytoDiffusion = 9.6*24*6.6*pow(10,-5);
+    params.micDiffusion = 0.015206;
+    params.antibodyDiffusion = 0.15206;
+    params.cDcDiffusion = 0.015206;
+    params.aDcDiffusion = 0.015206;
+    params.tCytoDiffusion = 0.015206;
     params.chi = 0.03;
     
-    params.muCDc = 60*24*3*pow(10,-4);
+    params.muCDc = 60*24*3*pow(10,-5);
     params.muMic = 60*24*3*pow(10,-6);
-    params.rM = 60*24*3.96*pow(10,-6);
-    params.rT = 0.1;
+    params.rM = 60*24*6*pow(10,-7);
+    params.rT = 0.001;
     params.lambAntMic = 5.702*pow(10,-3);
     params.bD = 0.001;
     
-    params.gammaD = 0.01;
+    params.gammaD = 0.1;
     params.gammaAntibody = 0.3;
-    params.gammaT = 4;
+    params.gammaT = 0.1;
 
     params.avgT = 37;
     params.avgDc = 33;
@@ -30,8 +30,8 @@ structParameters ParametersInitialize(){
     params.avgOdc = 400;
 
     params.cMic = 0.1;
-    params.cCDc = 0.1;
-    params.cADc = 0.1;
+    params.cCDc = 1;
+    params.cADc = 1;
     params.cDl = 0.1;
     params.cF = 0.1;
     params.alphaTHelper = 0.1;
@@ -48,10 +48,10 @@ structParameters ParametersInitialize(){
     params.rhoB = 11;
     params.rhoP = 3;
     params.rhoAntibody = 5.1*pow(10,-2);
-    params.estableTHelper = 84;
-    params.estableTCytotoxic = 40;
-    params.estableB = 25;
-    params.estableP = 2.5;
+    params.stableTHelper = 70;
+    params.stableTCytotoxic = 40;
+    params.stableB = 25;
+    params.stableP = 2.5;
     params.V_LN = 40;
     params.V_BV = 0;
     params.V_PV = 0;
@@ -71,9 +71,17 @@ void WriteTime(float ExecTime){
     }
 }
 
-void clearPngTxt(){
-    system("find ./modelmpi/result/ -name '*.png' -type f -delete");
-    system("find ./modelmpi/result/ -name '*.txt' -type f -delete");
+void clearPhgTxt(){
+    system("find ./result/ -name '*.png' -type f -delete");
+    system("find ./result/ -name '*.txt' -type f -delete");
+    system("mkdir result");
+    system("mkdir result/matrix");
+    system("mkdir result/odc");
+    system("mkdir result/mic");
+    system("mkdir result/tke");
+    system("mkdir result/ant");
+    system("mkdir result/da");
+    system("mkdir result/dc");
 }
 
 
@@ -86,7 +94,10 @@ int main(int argc, char* argv[]){
     MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
 
     MPI_Comm_size(MPI_COMM_WORLD, &comm_sz);
-    float ht = 0.0002, hx = 0.05;
+    if(my_rank == 0){
+        clearPhgTxt();
+    }
+    float ht = 0.0002, hx = 0.5;
     int numFigs = 28, numPointsLN = 1000, time = 28, space = 20, numStepsLN = 100, saveFigs = 0;
     structParameters parameters = ParametersInitialize();
     structModel model = ModelInitialize(parameters, ht, hx, time, space, numFigs, numPointsLN, my_rank, comm_sz, numStepsLN, saveFigs);
