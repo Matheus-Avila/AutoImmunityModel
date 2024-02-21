@@ -97,8 +97,8 @@ int main(int argc, char* argv[]){
     if(my_rank == 0){
         clearPhgTxt();
     }
-    float ht = 0.0002, hx = 0.05;
-    int numFigs = 28, numPointsLN = 1000, time = 28, space = 20, numStepsLN = 1, saveFigs = 0;
+    float ht = 0.0002, hx = 0.5;
+    int numFigs = 28, numPointsLN = 1000, time = 28, space = 20, numStepsLN = 100, saveFigs = 0;
     structParameters parameters = ParametersInitialize();
     structModel model = ModelInitialize(parameters, ht, hx, time, space, numFigs, numPointsLN, my_rank, comm_sz, numStepsLN, saveFigs);
     

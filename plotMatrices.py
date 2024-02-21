@@ -36,22 +36,22 @@ populationTitle = {
 def printMesh(time, population, type):
 
     x_pts, y_pts = np.meshgrid(x, x)
-    # max_population = np.max(population)
-    # if max_population == 0:
-    #     max_population += 1
-    # levels = np.linspace(0, max_population, 15)
-    if type == "mic":
-        levels = np.linspace(0, 350, 25)
-    elif type == "tke":
-        levels = np.linspace(0, 33, 25)
-    elif type == "ant":
-        levels = np.linspace(0, 3.5, 25)
-    elif type == "dc":
-        levels = np.linspace(0, 33, 25)
-    elif type == "da":
-        levels = np.linspace(0, 20, 25)
-    else:
-        levels = np.linspace(0, 400, 25)
+    max_population = np.max(population)
+    if max_population == 0:
+        max_population += 1
+    levels = np.linspace(0, max_population, 15)
+    # if type == "mic":
+    #     levels = np.linspace(0, 350, 25)
+    # elif type == "tke":
+    #     levels = np.linspace(0, 33, 25)
+    # elif type == "ant":
+    #     levels = np.linspace(0, 3.5, 25)
+    # elif type == "dc":
+    #     levels = np.linspace(0, 33, 25)
+    # elif type == "da":
+    #     levels = np.linspace(0, 20, 25)
+    # else:
+    #     levels = np.linspace(0, 400, 25)
 
     
 
