@@ -625,11 +625,12 @@ void RunModel(structModel *model){
             SolverLymphNode(model, kTime);
         }
         auxAdcPV = 0.0, auxAntibodyBV = 0.0, auxTCytotoxicBV = 0.0, auxTT = 0.0, auxAT = 0.0, auxDC = 0.0;
-
+        int line, column;
         stepKPlus = kTime%2;
-        for(line = model->startLine; line <= model->endLine; line++){
-        for(column = 0; column < model->spaceLen; column++){            
-            
+        for(int kPos = 0; kPos < model->xSize*model->xSize; kPos++){
+            line = (int)kPos/model->xSize;
+            column = kPos%model->xSize;
+    
             microgliaKMinus = model->microglia[stepKMinus][line * model->xSize + column];
             conventionalDcKMinus = model->conventionalDc[stepKMinus][line * model->xSize + column];
             activatedDcKMinus = model->activatedDc[stepKMinus][line * model->xSize + column];
@@ -645,7 +646,7 @@ void RunModel(structModel *model){
             gradientOdcI = (float)(valIPlus - valIMinus)/(float)(2*model->hx);
             gradientOdcJ = (float)(valJPlus - valJMinus)/(float)(2*model->hx);
 
-	    diffusionOdc = CalculateDiffusion(valJPlus, valJMinus, valIPlus, valIMinus, model->oligodendrocyte[stepKMinus][line * model->xSize + column], model->hx);
+	        diffusionOdc = CalculateDiffusion(valJPlus, valJMinus, valIPlus, valIMinus, model->oligodendrocyte[stepKMinus][line * model->xSize + column], model->hx);
 
             //Diffusion and Chemotaxis Mic
 
@@ -737,7 +738,6 @@ void RunModel(structModel *model){
             odcTCytotoxicApoptosis = model->parametersModel.rT*fFunc(tCytotoxicKMinus, model->parametersModel.avgT)*(model->parametersModel.avgOdc - oligodendrocyteKMinus);
 
             model->oligodendrocyte[stepKPlus][line * model->xSize + column] = oligodendrocyteKMinus + model->ht*(odcAntibodyMicrogliaFagocitosis + odcMicrogliaFagocitosis + odcTCytotoxicApoptosis);
-          
             if(model->thetaBV[(line * xSize) + column] == 1){
                 auxTCytotoxicBV += model->tCytotoxic[stepKPlus][(line * xSize) + column];
                 auxAntibodyBV += model->antibody[stepKPlus][(line * xSize) + column];
@@ -745,7 +745,6 @@ void RunModel(structModel *model){
             if(model->thetaPV[(line * xSize) + column] == 1){
                 auxAdcPV += model->activatedDc[stepKPlus][(line * xSize) + column];
             }
-        }
         }
         if((kTime%model->intervaloFiguras == 0 && model->saveFigs ==1) || kTime == model->timeLen){
             //Cada myRank manda o resultado para o myrank 0
@@ -805,3 +804,5 @@ void RunModel(structModel *model){
         }
     }
 }
+
+
