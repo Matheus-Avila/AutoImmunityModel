@@ -625,11 +625,9 @@ void RunModel(structModel *model){
             SolverLymphNode(model, kTime);
         }
         auxAdcPV = 0.0, auxAntibodyBV = 0.0, auxTCytotoxicBV = 0.0, auxTT = 0.0, auxAT = 0.0, auxDC = 0.0;
-        int line, column;
         stepKPlus = kTime%2;
-        for(int kPos = 0; kPos < model->xSize*model->xSize; kPos++){
-            line = (int)kPos/model->xSize;
-            column = kPos%model->xSize;
+        for(int line = 0; line < model->xSize; line++){
+        for(int column = 0; column < model->xSize; column++){
     
             microgliaKMinus = model->microglia[stepKMinus][line * model->xSize + column];
             conventionalDcKMinus = model->conventionalDc[stepKMinus][line * model->xSize + column];
