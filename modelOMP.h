@@ -118,10 +118,10 @@ float PreventionOverCrowdingTerm(float populationPoint, float avgValue);
 
 float UpDownWind(float frontIPoint, float ijPoint, float avgValue);
 
-float CalculateChemotaxis(structModel model, float ponto_posterior_j, float ponto_anterior_j, float ponto_posterior_i, float ponto_anterior_i, float ponto_atual,\
- float valor_medio, float gradiente_odc_i, float gradiente_odc_j);
+float CalculateChemottaxis(float frontJPoint, float rearJPoint, float frontIPoint, float rearIPoint, float ijPoint,\
+ float avgValue, float gradientOdcI, float gradientOdcJ, float hx);
 
-float CalculateDiffusion(structModel model, float ponto_posterior_j, float ponto_anterior_j, float ponto_posterior_i, float ponto_anterior_i, float ponto_atual);
+float CalculateDiffusion(float frontJPoint, float rearJPoint, float frontIPoint, float rearIPoint, float ijPoint, float hx);
 
 float fFunc(float valuePopulation, float avgPopulation);
 

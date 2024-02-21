@@ -1,0 +1,19 @@
+#!/bin/bash
+
+# Job name
+#PBS -N test
+# Name of stdout output file
+#PBS -o openmp.out
+
+cd $PBS_O_WORKDIR
+
+
+NP=$(wc -l $PBS_NODEFILE | awk '{print $1}')
+echo "Total CPU count = $NP"
+
+cat $PBS_NODEFILE
+
+./mainOMP $NP
+./mainOMP $NP
+
+
