@@ -744,6 +744,7 @@ void RunModel(structModel *model){
                 auxAdcPV += model->activatedDc[stepKPlus][(line * xSize) + column];
             }
         }
+        }
         if((kTime%model->intervaloFiguras == 0 && model->saveFigs ==1) || kTime == model->timeLen){
             //Cada myRank manda o resultado para o myrank 0
             if(model->my_rank == 0){
