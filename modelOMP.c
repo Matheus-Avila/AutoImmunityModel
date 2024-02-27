@@ -495,6 +495,8 @@ void RunModel(structModel *model){
         #pragma omp barrier
         stepKPlus = kTime%2;
         stepKMinus = !(stepKPlus && 1);
+        if((1+ kTime)%model->numStepsLN == 0)
+        {
         #pragma omp for reduction(+:auxTCytotoxicBV, auxAntibodyBV, auxAdcPV)
         for(int line = 0; line < model->xSize; line++){
         for(int column = 0; column < model->xSize; column++){
@@ -613,6 +615,122 @@ void RunModel(structModel *model){
             if(model->thetaPV[(line *model->xSize) + column] == 1){
                 auxAdcPV += model->activatedDc[stepKPlus][(line *model->xSize) + column];
             }
+        }
+        }
+        }else{
+        
+        #pragma omp for
+        for(int line = 0; line < model->xSize; line++){
+        for(int column = 0; column < model->xSize; column++){
+    
+            microgliaKMinus = model->microglia[stepKMinus][line * model->xSize + column];
+            conventionalDcKMinus = model->conventionalDc[stepKMinus][line * model->xSize + column];
+            activatedDcKMinus = model->activatedDc[stepKMinus][line * model->xSize + column];
+            tCytotoxicKMinus = model->tCytotoxic[stepKMinus][line * model->xSize + column];
+            antibodyKMinus = model->antibody[stepKMinus][line * model->xSize + column];
+            oligodendrocyteKMinus = model->oligodendrocyte[stepKMinus][line * model->xSize + column];
+            
+            //Define gradient ODCs
+            valIPlus = (line != model->xSize-1)? model->oligodendrocyte[stepKMinus][(line+1) * model->xSize + column]: model->oligodendrocyte[stepKMinus][line * model->xSize + column];
+            valJPlus = (column != model->xSize-1)? model->oligodendrocyte[stepKMinus][line * model->xSize + column+1]: model->oligodendrocyte[stepKMinus][line * model->xSize + column];
+            valIMinus = (line != 0)? model->oligodendrocyte[stepKMinus][(line-1) * model->xSize + column]: model->oligodendrocyte[stepKMinus][line * model->xSize + column];
+            valJMinus = (column != 0)? model->oligodendrocyte[stepKMinus][line * model->xSize + column-1]: model->oligodendrocyte[stepKMinus][line * model->xSize + column];
+            gradientOdcI = (float)(valIPlus - valIMinus)/(float)(2*model->hx);
+            gradientOdcJ = (float)(valJPlus - valJMinus)/(float)(2*model->hx);
+
+	        diffusionOdc = CalculateDiffusion(valJPlus, valJMinus, valIPlus, valIMinus, model->oligodendrocyte[stepKMinus][line * model->xSize + column], model->hx);
+
+            //Diffusion and Chemotaxis Mic
+
+            valIPlus  = (line != model->xSize-1)? model->microglia[stepKMinus][(line+1) * model->xSize + column]: model->microglia[stepKMinus][line * model->xSize + column] - (float)(2*model->hx*lowerNeumannBC);
+            valJPlus  = (column != model->xSize-1)? model->microglia[stepKMinus][line * model->xSize + column+1]: model->microglia[stepKMinus][line * model->xSize + column] - (float)(2*model->hx*rightNeumannBC);
+            valIMinus = (line != 0)? model->microglia[stepKMinus][(line-1) * model->xSize + column]: model->microglia[stepKMinus][line * model->xSize + column] - (float)(2*model->hx*upperNeumannBC);
+            valJMinus = (column != 0)? model->microglia[stepKMinus][line * model->xSize + column-1]: model->microglia[stepKMinus][line * model->xSize + column] - (float)(2*model->hx*leftNeumannBC);
+            
+            microgliaDiffusion = model->parametersModel.micDiffusion*CalculateDiffusion(valJPlus, valJMinus, valIPlus, valIMinus, model->microglia[stepKMinus][line * model->xSize + column], model->hx);
+            microgliaChemotaxis = model->parametersModel.chi*CalculateChemottaxis(valJPlus, valJMinus, valIPlus, valIMinus, model->microglia[stepKMinus][line * model->xSize + column],\
+            model->parametersModel.avgMic, gradientOdcI, gradientOdcJ, model->hx) + model->parametersModel.chi*(diffusionOdc * PreventionOverCrowdingTerm(microgliaKMinus, model->parametersModel.avgMic));
+
+            //Diffusion and Chemotaxis CDC
+
+            valIPlus  = (line != model->xSize-1)? model->conventionalDc[stepKMinus][(line+1) * model->xSize + column]: model->conventionalDc[stepKMinus][line * model->xSize + column] - (float)(2*model->hx*lowerNeumannBC);
+            valJPlus  = (column != model->xSize-1)? model->conventionalDc[stepKMinus][line * model->xSize + column+1]: model->conventionalDc[stepKMinus][line * model->xSize + column] - (float)(2*model->hx*rightNeumannBC);
+            valIMinus = (line != 0)? model->conventionalDc[stepKMinus][(line-1) * model->xSize + column]: model->conventionalDc[stepKMinus][line * model->xSize + column] - (float)(2*model->hx*upperNeumannBC);
+            valJMinus = (column != 0)? model->conventionalDc[stepKMinus][line * model->xSize + column-1]: model->conventionalDc[stepKMinus][line * model->xSize + column] - (float)(2*model->hx*leftNeumannBC);
+
+            conventionalDcDiffusion = model->parametersModel.cDcDiffusion*CalculateDiffusion(valJPlus, valJMinus, valIPlus, valIMinus, model->conventionalDc[stepKMinus][line * model->xSize + column], model->hx);
+            conventionalDcChemotaxis = model->parametersModel.chi*CalculateChemottaxis(valJPlus, valJMinus, valIPlus, valIMinus, model->conventionalDc[stepKMinus][line * model->xSize + column],\
+            model->parametersModel.avgDc, gradientOdcI, gradientOdcJ, model->hx) + model->parametersModel.chi * diffusionOdc * PreventionOverCrowdingTerm(conventionalDcKMinus, model->parametersModel.avgDc);;
+
+            //Difussion and Chemotaxis CD8T
+
+            valIPlus  = (line != model->xSize-1)? model->tCytotoxic[stepKMinus][(line+1) * model->xSize + column]: model->tCytotoxic[stepKMinus][line * model->xSize + column] - (float)(2*model->hx*lowerNeumannBC);
+            valJPlus  = (column != model->xSize-1)? model->tCytotoxic[stepKMinus][line * model->xSize + column+1]: model->tCytotoxic[stepKMinus][line * model->xSize + column] - (float)(2*model->hx*rightNeumannBC);
+            valIMinus = (line != 0)? model->tCytotoxic[stepKMinus][(line-1) * model->xSize + column]: model->tCytotoxic[stepKMinus][line * model->xSize + column] - (float)(2*model->hx*upperNeumannBC);
+            valJMinus = (column != 0)? model->tCytotoxic[stepKMinus][line * model->xSize + column-1]: model->tCytotoxic[stepKMinus][line * model->xSize + column] - (float)(2*model->hx*leftNeumannBC);
+
+            tCytotoxicDiffusion = model->parametersModel.tCytoDiffusion*CalculateDiffusion(valJPlus, valJMinus, valIPlus, valIMinus, model->tCytotoxic[stepKMinus][line * model->xSize + column], model->hx);
+            tCytotoxicChemotaxis = model->parametersModel.chi*CalculateChemottaxis(valJPlus, valJMinus, valIPlus, valIMinus, model->tCytotoxic[stepKMinus][line * model->xSize + column],\
+            model->parametersModel.avgT, gradientOdcI, gradientOdcJ, model->hx) + model->parametersModel.chi * diffusionOdc * PreventionOverCrowdingTerm(tCytotoxicKMinus, model->parametersModel.avgT);;
+
+            //Difussion ADC
+
+            valIPlus  = (line != model->xSize-1)? model->activatedDc[stepKMinus][(line+1) * model->xSize + column]: model->activatedDc[stepKMinus][line * model->xSize + column] - (float)(2*model->hx*lowerNeumannBC);
+            valJPlus  = (column != model->xSize-1)? model->activatedDc[stepKMinus][line * model->xSize + column+1]: model->activatedDc[stepKMinus][line * model->xSize + column] - (float)(2*model->hx*rightNeumannBC);
+            valIMinus = (line != 0)? model->activatedDc[stepKMinus][(line-1) * model->xSize + column]: model->activatedDc[stepKMinus][line * model->xSize + column] - (float)(2*model->hx*upperNeumannBC);
+            valJMinus = (column != 0)? model->activatedDc[stepKMinus][line * model->xSize + column-1]: model->activatedDc[stepKMinus][line * model->xSize + column] - (float)(2*model->hx*leftNeumannBC);
+
+            activatedDCDiffusion = model->parametersModel.aDcDiffusion*CalculateDiffusion(valJPlus, valJMinus, valIPlus, valIMinus, model->activatedDc[stepKMinus][line * model->xSize + column], model->hx);
+
+            //Difussion Antibody
+
+            valIPlus  = (line != model->xSize-1)? model->antibody[stepKMinus][(line+1) * model->xSize + column]: model->antibody[stepKMinus][line * model->xSize + column] - (float)(2*model->hx*lowerNeumannBC);
+            valJPlus  = (column != model->xSize-1)? model->antibody[stepKMinus][line * model->xSize + column+1]: model->antibody[stepKMinus][line * model->xSize + column] - (float)(2*model->hx*rightNeumannBC);
+            valIMinus = (line != 0)? model->antibody[stepKMinus][(line-1) * model->xSize + column]: model->antibody[stepKMinus][line * model->xSize + column] - (float)(2*model->hx*upperNeumannBC);
+            valJMinus = (column != 0)? model->antibody[stepKMinus][line * model->xSize + column-1]: model->antibody[stepKMinus][line * model->xSize + column] - (float)(2*model->hx*leftNeumannBC);
+
+            antibodyDiffusion = model->parametersModel.antibodyDiffusion*CalculateDiffusion(valJPlus, valJMinus, valIPlus, valIMinus, model->antibody[stepKMinus][line * model->xSize + column], model->hx);
+
+            //*******************************************Solving Tissue equations*****************************************************
+
+            //Microglia update
+            microgliaReaction = model->parametersModel.muMic*microgliaKMinus*(model->parametersModel.avgMic - microgliaKMinus);
+            microgliaClearance = model->parametersModel.cMic*microgliaKMinus;
+
+            model->microglia[stepKPlus][line * model->xSize + column] = microgliaKMinus + \
+            model->ht*(microgliaDiffusion - microgliaChemotaxis + microgliaReaction - microgliaClearance);
+
+            //Conventional DC update
+            conventionalDcReaction = model->parametersModel.muCDc*oligodendrocyteKMinus*(model->parametersModel.avgDc - conventionalDcKMinus);
+            conventionalDcActivation = model->parametersModel.bD*conventionalDcKMinus*oligodendrocyteKMinus;
+            conventionalDcClearance = model->parametersModel.cCDc*conventionalDcKMinus;
+
+            model->conventionalDc[stepKPlus][line * model->xSize + column] = conventionalDcKMinus + \
+            model->ht*(conventionalDcDiffusion - conventionalDcChemotaxis - conventionalDcClearance + conventionalDcReaction - conventionalDcActivation);
+
+            //Activated DC update
+            activatedDcClearance = model->parametersModel.cADc*activatedDcKMinus;
+            activatedDcMigration = model->thetaPV[(line * model->xSize) + column]*model->parametersModel.gammaD*(model->dendriticLymphNode[stepKPlus] - activatedDcKMinus);
+            
+            model->activatedDc[stepKPlus][line * model->xSize + column] = activatedDcKMinus + model->ht*(activatedDCDiffusion + conventionalDcActivation + activatedDcMigration - activatedDcClearance);
+
+            //CD8 T update
+            tCytotoxicMigration = model->thetaBV[(line * model->xSize) + column]*model->parametersModel.gammaT*(model->tCytotoxicLymphNode[stepKPlus] - tCytotoxicKMinus);
+            
+            model->tCytotoxic[stepKPlus][line * model->xSize + column] = tCytotoxicKMinus + model->ht*(tCytotoxicDiffusion - tCytotoxicChemotaxis + tCytotoxicMigration);
+
+            //Antibody update
+            odcAntibodyMicrogliaFagocitosis = model->parametersModel.lambAntMic*antibodyKMinus*(model->parametersModel.avgOdc - oligodendrocyteKMinus)*fFunc(microgliaKMinus, model->parametersModel.avgMic);
+            antibodyMigration = model->thetaBV[(line * model->xSize) + column]*model->parametersModel.gammaAntibody*(model->antibodyLymphNode[stepKPlus] - antibodyKMinus);
+            
+            model->antibody[stepKPlus][line * model->xSize + column] = antibodyKMinus + model->ht*(antibodyDiffusion + antibodyMigration - odcAntibodyMicrogliaFagocitosis);
+
+            //Oligodendrocytes update
+            odcMicrogliaFagocitosis = model->parametersModel.rM*fFunc(microgliaKMinus, model->parametersModel.avgMic)*(model->parametersModel.avgOdc - oligodendrocyteKMinus);
+            odcTCytotoxicApoptosis = model->parametersModel.rT*fFunc(tCytotoxicKMinus, model->parametersModel.avgT)*(model->parametersModel.avgOdc - oligodendrocyteKMinus);
+
+            model->oligodendrocyte[stepKPlus][line * model->xSize + column] = oligodendrocyteKMinus + model->ht*(odcAntibodyMicrogliaFagocitosis + odcMicrogliaFagocitosis + odcTCytotoxicApoptosis);
+        }
         }
         }
         if(tid == 0 && model->saveFigs && (kTime%model->intervalFigures == 0 || kTime == model->tSize))
