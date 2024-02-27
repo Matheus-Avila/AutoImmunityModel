@@ -489,10 +489,9 @@ void RunModel(structModel *model){
                 model->activatedDCTissueVessels = auxAdcPV * model->hx * model->hx / model->parametersModel.V_PV;
                 SolverLymphNode(model, kTime);
             }
+        #pragma omp barrier
         }
-        #pragma omp barrier
         auxAdcPV = 0.0, auxAntibodyBV = 0.0, auxTCytotoxicBV = 0.0;
-        #pragma omp barrier
         stepKPlus = kTime%2;
         stepKMinus = !(stepKPlus && 1);
         if((1+ kTime)%model->numStepsLN == 0)
