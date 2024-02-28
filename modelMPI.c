@@ -735,12 +735,14 @@ void RunModel(structModel *model){
             odcTCytotoxicApoptosis = model->parametersModel.rT*fFunc(tCytotoxicKMinus, model->parametersModel.avgT)*(model->parametersModel.avgOdc - oligodendrocyteKMinus);
 
             model->oligodendrocyte[stepKPlus][line * model->xSize + column] = oligodendrocyteKMinus + model->ht*(odcAntibodyMicrogliaFagocitosis + odcMicrogliaFagocitosis + odcTCytotoxicApoptosis);
+            if((kTime +1)%model->numStepsLN == 0){
             if(model->thetaBV[(line *model->xSize) + column] == 1){
                 auxTCytotoxicBV += model->tCytotoxic[stepKPlus][(line *model->xSize) + column];
                 auxAntibodyBV += model->antibody[stepKPlus][(line *model->xSize) + column];
             }
             if(model->thetaPV[(line *model->xSize) + column] == 1){
                 auxAdcPV += model->activatedDc[stepKPlus][(line *model->xSize) + column];
+            }
             }
         }
         }
