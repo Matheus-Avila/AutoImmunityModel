@@ -41,28 +41,27 @@ def model(d_mic, d_anti, d_dc, d_da, d_t_cit, chi, mu_dc, mu_m, r_m, r_t, lamb_f
     outPut = float(outPut)
     return outPut
 
+d_mic_mean = 0.015206
+d_anti_mean = 0.15206
+d_dc_mean = 0.015206
+d_da_mean = 0.015206
+d_t_cit_mean = 0.015206
+chi_mean = 0.03
 
-d_mic_mean = 1520*10**-5
-d_anti_mean = 1520*10**-4
-d_dc_mean = 1520*10**-5
-d_da_mean = 1520*10**-5
-d_t_cit_mean = 1520*10**-5
-chi_mean = 0.298*60*2
-
-mu_dc_mean = 60*24*3*10**-4
+mu_dc_mean = 60*24*3*10**-5
 mu_m_mean = 60*24*3*10**-6
-r_m_mean = 5.702**10**-3
-r_t_mean = 0.1
+r_m_mean = 60*24*6*10**-7
+r_t_mean = 0.001
 lamb_f_m_mean = 5.702*10**-3
 b_d_mean = 0.001
 
-gamma_D_mean = 0.01
+gamma_D_mean = 0.1
 gamma_F_mean = 0.3
-gamma_T_mean = 2
+gamma_T_mean = 0.1
 
 cMic_mean = 0.1
-cCDc_mean = 0.1
-cADc_mean = 0.1
+cCDc_mean = 1
+cADc_mean = 1
 cDl_mean  = 0.1
 cF_mean   = 0.1
 
@@ -74,7 +73,7 @@ alpha_P_mean = 1
 b_T_mean = 0.17
 b_Tc_mean = 0.001
 b_rho_mean = 0.6
-b_rho_b_mean = 3
+b_rho_b_mean = 3.02
 b_rho_p_mean = 1.02
 rho_T_mean = 2
 rho_Tc_mean = 2
@@ -264,11 +263,11 @@ def RunSA():
     else:
         numOutPuts = numSamples*(len(sample[0]) + 2)
     
-    # inputFile = open("sample.txt", "w")
-    # for samp in sample:
-    #     for param in range(len(samp)):
-    #         inputFile.write(str(samp[param]) + "\n")
-    # inputFile.close()
+    inputFile = open("sample.txt", "w")
+    for samp in sample:
+        for param in range(len(samp)):
+            inputFile.write(str(samp[param]) + "\n")
+    inputFile.close()
 
     numParams = problem["num_vars"]
     with open("../sample.txt", "r") as file:
@@ -276,14 +275,14 @@ def RunSA():
             for j in range(numParams):
                 sample[i][j] = file.readline()
 
-    # startPos = 0.975
-    # startPos = int(numOutPuts * startPos)
-    # sample = sample[startPos:]
+    startPos = 0
+    startPos = int(numOutPuts * startPos)
+    sample = sample[startPos:]
     # print(len(sample))
     # evaluate the model for eah point in the input sample
-    # for i in range(len(Y)):
-    #     x = sample[i]
-    #     Y[i] = model(x[0], x[1], x[2], x[3], x[4], x[5], x[6], x[7], x[8], x[9], x[10], x[11], x[2], x[13], x[14], x[15], x[16], x[17], x[18], x[19], x[20], x[21], x[22], x[23], x[24], x[25], x[26], x[27], x[28], x[29], x[30], x[31], x[32], x[33])
+    for i in range(len(Y)):
+        x = sample[i]
+        Y[i] = model(x[0], x[1], x[2], x[3], x[4], x[5], x[6], x[7], x[8], x[9], x[10], x[11], x[2], x[13], x[14], x[15], x[16], x[17], x[18], x[19], x[20], x[21], x[22], x[23], x[24], x[25], x[26], x[27], x[28], x[29], x[30], x[31], x[32], x[33])
 
     output_file = np.zeros(numOutPuts)
     i = 0

@@ -64,7 +64,7 @@ structParameters ReadParameters(){
     params.estableTCytotoxic = 40;
     params.estableB = 25;
     params.estableP = 2.5;
-    params.V_LN = 160;
+    params.V_LN = 40;
     params.V_BV = 0;
     params.V_PV = 0;
     return params;
@@ -73,23 +73,23 @@ structParameters ReadParameters(){
 
 structParameters ParametersInitialize(){
     structParameters params;
-    params.micDiffusion = 9.6*24*6.6*pow(10,-5);
-    params.antibodyDiffusion = 9.6*24*6.6*pow(10,-4);
-    params.cDcDiffusion = 9.6*24*6.6*pow(10,-5);
-    params.aDcDiffusion = 9.6*24*6.6*pow(10,-5);
-    params.tCytoDiffusion = 9.6*24*6.6*pow(10,-5);
-    params.chi = 0.298*60*2;
+    params.micDiffusion = 0.015206;
+    params.antibodyDiffusion = 0.15206;
+    params.cDcDiffusion = 0.015206;
+    params.aDcDiffusion = 0.015206;
+    params.tCytoDiffusion = 0.015206;
+    params.chi = 0.03;
     
-    params.muCDc = 60*24*3*pow(10,-4);
+    params.muCDc = 60*24*3*pow(10,-5);
     params.muMic = 60*24*3*pow(10,-6);
-    params.rM = 60*24*3.96*pow(10,-6);
-    params.rT = 0.1;
+    params.rM = 60*24*6*pow(10,-7);
+    params.rT = 0.001;
     params.lambAntMic = 5.702*pow(10,-3);
     params.bD = 0.001;
     
-    params.gammaD = 0.01;
+    params.gammaD = 0.1;
     params.gammaAntibody = 0.3;
-    params.gammaT = 2;
+    params.gammaT = 0.1;
 
     params.avgT = 37;
     params.avgDc = 33;
@@ -97,8 +97,8 @@ structParameters ParametersInitialize(){
     params.avgOdc = 400;
 
     params.cMic = 0.1;
-    params.cCDc = 0.1;
-    params.cADc = 0.1;
+    params.cCDc = 1;
+    params.cADc = 1;
     params.cDl = 0.1;
     params.cF = 0.1;
     params.alphaTHelper = 0.1;
@@ -115,11 +115,11 @@ structParameters ParametersInitialize(){
     params.rhoB = 11;
     params.rhoP = 3;
     params.rhoAntibody = 5.1*pow(10,-2);
-    params.estableTHelper = 84;
+    params.estableTHelper = 70;
     params.estableTCytotoxic = 40;
     params.estableB = 25;
     params.estableP = 2.5;
-    params.V_LN = 160;
+    params.V_LN = 40;
     params.V_BV = 0;
     params.V_PV = 0;
 
@@ -166,7 +166,7 @@ int main(int argc, char** argv){
         parameters = ReadParameters();
     }
     float ht = 0.0002, hx = 0.05;
-    int numFigs = 28, numPointsLN = 1000, time = 28, space = 20, numStepsLN = 100, saveFigs = 1;
+    int numFigs = 28, numPointsLN = 1000, time = 28, space = 20, numStepsLN = 100, saveFigs = 0;
     
     structModel model = ModelInitialize(parameters, ht, hx, time, space, numFigs, numPointsLN, numStepsLN, saveFigs);
     RunModel(&model);
