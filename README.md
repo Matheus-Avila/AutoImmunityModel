@@ -21,9 +21,9 @@ Stable serial version of the code.
 
 Compile: 
 
-ˋˋˋ
+~~~
 gcc -O3 -o main main.c model.c
-ˋˋˋ
+~~~
 
 ## omp
 
