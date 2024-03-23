@@ -10,9 +10,10 @@ L = int(sys.argv[1])
 h_x = float(sys.argv[2])
 finalTime = int(sys.argv[3])
 numPlots = int(sys.argv[4])
-timesPlots = np.linspace(0, finalTime, numPlots+1)
-x = np.linspace(0, L, int(L/h_x))
-
+# timesPlots = np.linspace(0, finalTime, numPlots+1)
+timesPlots = range(0,finalTime + 1)
+x = np.linspace(0, L, int(L/h_x))#+1)
+'''
 populationTitle = {
     "odc": "Destroyed oligodendrocytes",
     "mic": "Microglia",
@@ -21,24 +22,50 @@ populationTitle = {
     "tke": "$CD8^+$ T",
     "ant": "Antibodies igG"
 }
+'''
+
+populationTitle = {
+    "odc": "Oligodendrócitos Destruídos",
+    "mic": "Microglia",
+    "dc": "Células Dendríticas Convencionais",
+    "da": "Células Dendríticas Ativadas",
+    "tke": "T $CD8^+$",
+    "ant": "Anticorpos IgG"
+}
 
 def printMesh(time, population, type):
 
     x_pts, y_pts = np.meshgrid(x, x)
-    max_population = np.max(population)
-    if max_population == 0:
-        max_population += 1
-    levels = np.linspace(0, max_population, 50)
+    # max_population = np.max(population)
+    # if max_population == 0:
+    #     max_population += 1
+    # levels = np.linspace(0, max_population, 15)
+    if type == "mic":
+        levels = np.linspace(0, 350, 25)
+    elif type == "tke":
+        levels = np.linspace(0, 33, 25)
+    elif type == "ant":
+        levels = np.linspace(0, 3.5, 25)
+    elif type == "dc":
+        levels = np.linspace(0, 33, 25)
+    elif type == "da":
+        levels = np.linspace(0, 20, 25)
+    else:
+        levels = np.linspace(0, 400, 25)
+
+    
 
     cp = plt.contourf(x_pts, y_pts, population, levels=levels)
     plt.title(populationTitle[type], fontsize=20)
     matplotlib.rc('xtick', labelsize=15) 
-    matplotlib.rc('ytick', labelsize=16)
-    plt.rc('axes', labelsize=16)
+    matplotlib.rc('ytick', labelsize=20)
+    plt.rc('axes', labelsize=20)
     plt.rc('font', size=15)
-    plt.xlabel("Millimeters")
-    plt.ylabel("Millimeters")
-    plt.colorbar(cp, label="Concentration (cells/$mm^2$)")
+    """plt.xlabel("Millimeters")
+    plt.ylabel("Millimeters")"""
+    plt.xlabel("Milímetros")
+    plt.ylabel("Milímetros")
+    plt.colorbar(cp, label="Concentração (células/$mm^2$)")
     plt.savefig('result/'+type+'/fig'+'{:.1f}'.format(time)+type+'.png', dpi = 300)
     plt.clf()
 
