@@ -2,6 +2,7 @@
 
 C version of [NeuroImmunoModel](https://github.com/quintelabm/NeuroImmunoModel) - Mathematical Model of the Activation of the Immune Response in the Central Nervous System.
 
+![Modelo Matemático]([URL da imagem](https://ars.els-cdn.com/content/image/1-s2.0-S0377042723001073-ga1_lrg.jpg))
 
 ## Branch main
 
@@ -43,3 +44,10 @@ Compile: nvcc -O3 -use_fast_math -o main main.c model.c
 
 CUDA version solving Tissue and Lymph Node in GPU. CPU only for reduction in tissue.
 Compile: nvcc -O3 -use_fast_math -o main main.c model.c
+
+# Authors:
+
+* Matheus Avila Moreira de Paula 
+* Barbara de M Quintela
+* Marcelo Lobosco
+
