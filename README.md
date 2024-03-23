@@ -2,7 +2,18 @@
 
 C version of [NeuroImmunoModel](https://github.com/quintelabm/NeuroImmunoModel) - Mathematical Model of the Activation of the Immune Response in the Central Nervous System.
 
+## Publication
+
+Graphical abstract of the paper that describes the model:
+
 ![Modelo Matematico](https://ars.els-cdn.com/content/image/1-s2.0-S0377042723001073-ga1_lrg.jpg)
+
+
+
+DE PAULA, M. A. M.; QUINTELA, B. de M.; LOBOSCO, M. On the use of a coupled
+mathematical model for understanding the dynamics of multiple sclerosis. Journal of
+Computational and Applied Mathematics, v. 428, p. 115163, 2023. ISSN 0377-0427
+DOI: [https://doi.org/10.1016/j.cam.2023.115163](https://doi.org/10.1016/j.cam.2023.115163)
 
 ## Branch main
 
