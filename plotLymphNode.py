@@ -3,11 +3,17 @@ import numpy as np
 import sys
 # sns.set()
 
-t_exp = [0, 14, 28, 56]
-y_exp = [58.99657719329848, 1.883624572149165, 3.355791749234345, 1.4491082687803782]
-
 T_final = int(sys.argv[1])
 h_t = float(sys.argv[2])
+
+populationTitle = {
+    "thp": "Linfonodo - T $CD4^+$",
+    "adc": "Linfonodo - Células Dendríticas Ativadas",
+    "bcl": "Linfonodo - Células B",
+    "pcl": "Linfonodo - Plasmócitos",
+    "tke": "Linfonodo - T $CD8^+$",
+    "ant": "Linfonodo - Anticorpos IgG"
+}
 
 t = np.linspace(0, T_final, int(T_final/h_t))
 
@@ -50,46 +56,63 @@ for i in range(0,len(TL_c)):
     FL_vetor[i] = FL[i]
     PL_vetor[i] = PL[i]
     DL_vetor[i] = DL[i]
-plt.plot(t,TL_c_vetor, "-r", label= "model")
-plt.title("Lymph node - T $CD8^+$")
-plt.xlabel("Time (days)")
-plt.ylabel("Concentration (Cells/$mm^2$)")
-plt.plot(t_exp, y_exp, "*", label= "experimental data")
-plt.legend()
+
+ax = plt.gca()
+ax.set_xticks([0,7,14,21,28])
+
+plt.plot(t,TL_c_vetor, "-r")
+plt.title(populationTitle["tke"])
+plt.xlabel("Tempo (dias)")
+plt.ylabel("Concentração (Células/$mm^2$)")
 plt.savefig('result/t_cito_linfonodo.png', dpi = 300)
 plt.clf()
 
+ax = plt.gca()
+ax.set_xticks([0,7,14,21,28])
+
 plt.plot(t,TL_h_vetor, "-r")
-plt.title("Lymph node - T $CD4^+$")
-plt.xlabel("Time (days)")
-plt.ylabel("Concentration (Cells/$mm^2$)")
+plt.title(populationTitle["thp"])
+plt.xlabel("Tempo (dias)")
+plt.ylabel("Concentração (Células/$mm^2$)")
 plt.savefig('result/t_helper_linfonodo.png', dpi = 300)
 plt.clf()
 
+ax = plt.gca()
+ax.set_xticks([0,7,14,21,28])
+
 plt.plot(t,B_vetor, "-r")
-plt.title("Lymph node - B Cells")
-plt.xlabel("Time (days)")
-plt.ylabel("Concentration (Cells/$mm^2$)")
+plt.title(populationTitle["bcl"])
+plt.xlabel("Tempo (dias)")
+plt.ylabel("Concentração (Células/$mm^2$)")
 plt.savefig('result/b_cell_linfonodo.png', dpi = 300)
 plt.clf()
 
+ax = plt.gca()
+ax.set_xticks([0,7,14,21,28])
+
 plt.plot(t,FL_vetor, "-r")
-plt.title("Lymph node - Antibodies")
-plt.xlabel("Time (days)")
-plt.ylabel("Concentration (Molecules/$mm^2$)")
+plt.title(populationTitle["ant"])
+plt.xlabel("Tempo (dias)")
+plt.ylabel("Concentração (Células/$mm^2$)")
 plt.savefig('result/anticorpo_linfonodo.png', dpi = 300)
 plt.clf()
 
+ax = plt.gca()
+ax.set_xticks([0,7,14,21,28])
+
 plt.plot(t,PL_vetor, "-r")
-plt.title("Lymph node - Plasma-cells")
-plt.xlabel("Time (days)")
-plt.ylabel("Concentration (Molecules/$mm^2$)")
+plt.title(populationTitle["pcl"])
+plt.xlabel("Tempo (dias)")
+plt.ylabel("Concentração (Células/$mm^2$)")
 plt.savefig('result/pl_cell_linfonodo.png', dpi = 300)
 plt.clf()
 
+ax = plt.gca()
+ax.set_xticks([0,7,14,21,28])
+
 plt.plot(t,DL_vetor, "-r")
-plt.title("Lymph node - Activated dendritic cells")
-plt.xlabel("Time (days)")
-plt.ylabel("Concentration (Cells/$mm^2$)")
+plt.title(populationTitle["adc"])
+plt.xlabel("Tempo (dias)")
+plt.ylabel("Concentração (Células/$mm^2$)")
 plt.savefig('result/dc_linfonodo.png', dpi = 300)
 plt.clf()
