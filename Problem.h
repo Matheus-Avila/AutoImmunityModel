@@ -44,7 +44,7 @@ structParameters ParametersInitialize(){
     params.alphaB = 0.1;
     params.alphaP = 1;
     params.bTHelper = 0.17;
-    params.bTCytotoxic = 0.001;
+    params.bTCytotoxic = 0.001; 
     params.bRho = 0.6;
     params.bRhoB = 3.02;
     params.bRhoP = 1.02;
@@ -53,7 +53,7 @@ structParameters ParametersInitialize(){
     params.rhoB = 11;
     params.rhoP = 3;
     params.rhoAntibody = 5.1*pow(10,-2);
-    params.stableTHelper = 58.9;
+    params.stableTHelper = 58.9; //ponto inicial
     params.stableTCytotoxic = 28.4;
     params.stableB = 25;
     params.stableP = 2.5;
@@ -61,7 +61,7 @@ structParameters ParametersInitialize(){
     params.V_BV = 0;
     params.V_PV = 0;
 
-    params.epslon_x = 0.8; //0.1
+    params.epslon_x = 0; //0.1
 
     return params;
 }
@@ -129,32 +129,37 @@ class MSProblemTCytoParams : public pagmo::problem {
         std::pair<vector_double, vector_double> get_bounds() const
         {
             // 
+            //return {{0.0001, 0.01, 0.005}, {1.0, 0.99, 1.0}};
             return {{0.01}, {0.99}};
         }
 
         std::vector<double> fitness(const vector_double& variables) const {
-            double epslon = variables[0];
-            // double epslon = variables[1];
-            // double gammaT = variables[2];
+            //std::vector<double> epslon ;
+            //double alpha = variables[1];
+            //double gammaT = variables[2];
+            double epslon = variables[1];
             float ht = 0.0002, hx = 0.5;
-            int numFigs = 5, numPointsLN = 1000, time = 14, space = 20, numStepsLN = 100, saveFigs = 0;
+            int numFigs = 7, numPointsLN = 1000, time = 30, space = 20, numStepsLN = 100, saveFigs = 1;
             structParameters parameters = ParametersInitialize();
-            // parameters.alphaTCytotoxic = alpha;
+            //parameters.alphaTCytotoxic = alpha;
             parameters.epslon_x = epslon;
-            // parameters.gammaT = gammaT;
+            //parameters.gammaT = gammaT;
             structModel model = ModelInitialize(parameters, ht, hx, time, space, numFigs, numPointsLN, numStepsLN, saveFigs);
             int size = 2;
-            int save_times[2] = {0,14};
-            
+            int save_times[size] = {14,30}; //14 e 28
             std::cout << " Epslon: " << parameters.epslon_x << std::endl;
+            std::cout << std::endl;
+            //std::cout << "Gamma T " << gammaT << " Epslon: " << epslon << " Alpha: " << alpha << std::endl;
             //float points[size] = {6.7};
-            float points[size] = {6.7};
+            float points[size] = {5.4, 8.6}; //8.6
             float error = RunModel(&model, save_times, size, points);
+            //std::cout << "Error: (voltou runmodel) " << error << std::endl;
             vector_double _error = (vector_double) error;
             std::vector<double> v;
             v.resize(1);
             std::cout << "Error: " << error << std::endl;
             v[0] = (double)error;
+            //exit(0);
             return v;
         }   
 

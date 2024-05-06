@@ -66,6 +66,7 @@ typedef struct structParameters
     double V_BV;
     int V_LN;
     double epslon_x;
+
 }structParameters;
 
 typedef struct structModel
