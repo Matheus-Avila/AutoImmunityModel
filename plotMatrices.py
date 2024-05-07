@@ -56,11 +56,11 @@ def printMesh(time, population, type):
     
 
     cp = plt.contourf(x_pts, y_pts, population, levels=levels)
-    plt.title(populationTitle[type], fontsize=20)
-    matplotlib.rc('xtick', labelsize=15) 
-    matplotlib.rc('ytick', labelsize=20)
-    plt.rc('axes', labelsize=20)
-    plt.rc('font', size=15)
+    plt.title(populationTitle[type], fontsize=17)
+    matplotlib.rc('xtick', labelsize=13) 
+    matplotlib.rc('ytick', labelsize=17)
+    plt.rc('axes', labelsize=15)
+    plt.rc('font', size=12)
     """plt.xlabel("Millimeters")
     plt.ylabel("Millimeters")"""
     plt.xlabel("Milímetros")

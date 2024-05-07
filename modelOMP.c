@@ -96,7 +96,7 @@ void WriteFiles(structModel model, float *oligodendrocyte, float *microglia, flo
     char buffer[10];
     float day = time * model.ht;
     
-    snprintf(buffer, sizeof(buffer), "%.1f", day);
+    snprintf(buffer, sizeof(buffer), "%.0f", day);
     
     char pathOligodendrocytes[200];
     getcwd(pathOligodendrocytes, sizeof(pathOligodendrocytes));
