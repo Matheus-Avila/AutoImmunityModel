@@ -60,8 +60,8 @@ structParameters ParametersInitialize(){
     params.V_LN = 40;
     params.V_BV = 0;
     params.V_PV = 0;
-
-    params.epslon_x = 0; //0.1
+    
+    params.epslon_x = 0.99; //0.1
 
     return params;
 }
@@ -134,19 +134,19 @@ class MSProblemTCytoParams : public pagmo::problem {
         }
 
         std::vector<double> fitness(const vector_double& variables) const {
-            //std::vector<double> epslon ;
+            std::vector<double> epslon ;
             //double alpha = variables[1];
             //double gammaT = variables[2];
-            double epslon = variables[1];
+            //double epslon = variables[0];
             float ht = 0.0002, hx = 0.5;
-            int numFigs = 7, numPointsLN = 1000, time = 30, space = 20, numStepsLN = 100, saveFigs = 1;
+            int numFigs = 7, numPointsLN = 1000, time = 90, space = 20, numStepsLN = 100, saveFigs = 1;
             structParameters parameters = ParametersInitialize();
             //parameters.alphaTCytotoxic = alpha;
-            parameters.epslon_x = epslon;
+            //parameters.epslon_x = epslon;
             //parameters.gammaT = gammaT;
             structModel model = ModelInitialize(parameters, ht, hx, time, space, numFigs, numPointsLN, numStepsLN, saveFigs);
             int size = 2;
-            int save_times[size] = {14,30}; //14 e 28
+            int save_times[size] = {14,90}; //14 e 28
             std::cout << " Epslon: " << parameters.epslon_x << std::endl;
             std::cout << std::endl;
             //std::cout << "Gamma T " << gammaT << " Epslon: " << epslon << " Alpha: " << alpha << std::endl;

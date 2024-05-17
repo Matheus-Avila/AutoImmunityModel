@@ -114,6 +114,8 @@ typedef struct structModel
     double *plasmaCellLymphNodeSavedPoints;
     double *antibodyLymphNodeSavedPoints;
 
+    double eps_new;
+
     structParameters parametersModel;
 
 }structModel;

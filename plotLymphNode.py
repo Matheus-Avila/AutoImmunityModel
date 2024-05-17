@@ -17,8 +17,6 @@ t = np.linspace(0, T_final, int(T_final/h_t))
 with open("./result/tCyto.txt", 'r') as f:
     lines = f.readlines()
     
-with open("./dataExecution.txt", 'r') as f:
-    lines2 = f.readlines()
 
 # Divide os dados em três resultados principais
 resultados = [lines[i:i+1000] for i in range(0, len(lines), 1000)]
@@ -51,41 +49,9 @@ experimentais = {
     0: [(0, 43.137254901960785), (0, 27.647058823529403)],
     0: [(0, 27.647058823529403)],
     1: [(14, 5.49019607843137), (30, 8.627450980392166)],
-    #2: [(60, 7.843137254901956), (90, 8.23529411764705)]
+    2: [(60, 7.843137254901956)],
      #   (180, 5.098039215686276), (360, 4.705882352941171)]
 }
-
-for key, values in experimentais.items():
-    t_exp, valores_exp = zip(*values)
-    plt.scatter(t_exp, valores_exp, label=f'Experimental Data', color='red')   
-
-plt.title("Lymph node - T $CD8^+$")
-plt.xlabel("Time (days)")
-plt.ylabel("Concentration (Cel(Cells/$mm^2$)")
-plt.legend()
-plt.grid(True)
-plt.savefig('result/t_cito_linfonodo.png', dpi = 300)
-plt.clf()
-plt.show()
-
-
-# Lista para armazenar os valores lidos do arquivo
-totalCD8_values = []
-
-# Lendo os valores do arquivo
-with open("dataExecution.txt", "r") as file:
-    for line in file:
-        totalCD8_values.append(float(line.strip()))  # Convertendo para float e adicionando à lista
-
-# Pontos experimentais
-experimentais = {
-    0: [(0, 27.647058823529403)],  # Adicionando o ponto (0, 27.647058823529403) aqui
-    1: [(14, 5.49019607843137), (30, 8.627450980392166)],
-}
-
-# Criando o gráfico
-plt.figure(figsize=(10, 6))
-plt.plot(totalCD8_values, label='Total CD8')
 
 first = True  # Variável para verificar o primeiro conjunto de dados experimentais
 for key, values in experimentais.items():
@@ -96,43 +62,203 @@ for key, values in experimentais.items():
     else:
         plt.scatter(t_exp, valores_exp, color='red')
 
-plt.title('Total CD8 ao longo do tempo')
-plt.xlabel('Dias')
-plt.ylabel('Concentração CD8')
+plt.title("Lymph node - T $CD8^+$")
+plt.xlabel("Time (days)")
+plt.ylabel("Concentration (Cel(Cells/$mm^2$)")
 plt.legend()
 plt.grid(True)
-plt.savefig('result/totalCD8.png', dpi=300)
+plt.savefig('result/t_cito_linfonodo.png', dpi = 300)
+plt.clf()
 plt.show()
 
+# Lista dos nomes dos arquivos de dados
+arquivos = ["dataExecution0fixo.txt", "dataExecution055fixo.txt", "dataExecution099fixo.txt", "dataExecution0.txt", "dataExecution055.txt", "dataExecution099.txt"]
+
+resultados = []
+
+# Lê cada arquivo de dados
+for arquivo in arquivos:
+    with open(arquivo, 'r') as f:
+        lines = f.readlines()
+        resultados.append(lines)
+
+# Criando array de tempo baseado no número de linhas nos arquivos de dados
+num_linhas_arquivo = len(resultados[0])  # Considerando que todos os arquivos têm o mesmo número de linhas
+T_final = 90  # Substitua pelo valor real de T_final
+t = np.linspace(0, T_final, num_linhas_arquivo)
+
+# Define as cores para cada curva, com a cor laranja para Epsilon 0.99
+cores = ['blue', 'green', 'orange']
+
+# Inicializa listas para armazenar linhas de plotagem e legendas
+linhas_plot = []
+labels_plot = []
+
+# Convertendo os dados para float e plotando as primeiras três curvas
+plt.figure(figsize=(10, 6))
+
+for i in range(3):
+    valores = [float(line.strip()) for line in resultados[i]]
+    label = f'{i+1}'
+    cor = cores[i]
+    if i == 0:
+        label += " without treatment, eps=0"
+    elif i == 1:
+        label += " Constant efficacy, eps = 0.55"
+    elif i == 2:
+        label += " Constant efficacy, eps= 0.99"
+        cor = 'orange'  # Define a cor laranja para Epsilon 0.99
+    linha, = plt.plot(t, valores, label=label, color=cor)
+    linhas_plot.append(linha)
+    labels_plot.append(label)
+
+# # Combina os dados dos três últimos arquivos e plota a curva tracejada
+# valores_combinados = np.zeros(num_linhas_arquivo)
+# for i in range(3, 6):
+#     valores_combinados += np.array([float(line.strip()) for line in resultados[i]])
+
+# valores_combinados /= 3  # Faz a média dos valores combinados
+
+# linha_combinada, = plt.plot(t, valores_combinados, label='4', color='black', linestyle='--')
+# linhas_plot.append(linha_combinada)
+# labels_plot.append('varying efficacy, eps = 0 - 0,55')
+
+# Plota as linhas para dataExecution055fixo e dataExecution099fixo
+valores_055 = [float(line.strip()) for line in resultados[4]]
+valores_099 = [float(line.strip()) for line in resultados[5]]
+
+linha_055, = plt.plot(t, valores_055, label='varying efficacy, eps = 0 - 0,55', color='purple', linestyle='--')
+linha_099, = plt.plot(t, valores_099, label='Varying efficacy, eps= 0 - 0.99', color='black', linestyle='--')
+
+linhas_plot.append(linha_055)
+labels_plot.append('varying efficacy, eps = 0 - 0,55')
+linhas_plot.append(linha_099)
+labels_plot.append('Varying efficacy, eps= 0 - 0.99')
+
+# Adicionando pontos experimentais
+experimentais = {
+    #0: [(0, 43.137254901960785), (0, 27.647058823529403)],
+    1: [(40, 8.627450980392166)],
+    2: [(70, 7.843137254901956)],
+    3: [(100, 8.23529411764705)],
+}
+
+first = True  # Variável para verificar o primeiro conjunto de dados experimentais
+for key, values in experimentais.items():
+    t_exp, valores_exp = zip(*values)
+    if first:
+        scatter = plt.scatter(t_exp, valores_exp, label='Experimental Data', color='red')
+        first = False
+    else:
+        plt.scatter(t_exp, valores_exp, color='red')
+
+# Adiciona a linha de dados experimentais à legenda
+linhas_plot.append(scatter)
+labels_plot.append('Experimental Data')
+
+# Adiciona a legenda ao gráfico
+plt.legend(linhas_plot, labels_plot)
+
+plt.title("Total T $CD8^+$")
+plt.xlabel("Time (days)")
+plt.ylabel("Concentration (Cells/$mm^2$)")
+plt.grid(True)
+plt.savefig('result/totalTCD8.png', dpi=300)
+plt.clf()
+plt.show()
+# resultados = []
+
+# # Lê cada arquivo de dados
+# for arquivo in arquivos:
+#     with open(arquivo, 'r') as f:
+#         lines = f.readlines()
+#         # Verifica se o número de linhas do arquivo é consistente
+#         # if len(lines) != 92:
+#         #     print(f"Erro: Número de linhas inconsistente no arquivo {arquivo}")
+#         #     sys.exit(1)
+#         resultados.append(lines)
+
+# # Criando array de tempo baseado no número de linhas nos arquivos de dados
+# num_linhas_arquivo = len(resultados[0])  # Considerando que todos os arquivos têm o mesmo número de linhas
+# t = np.linspace(0, T_final, num_linhas_arquivo)
+
+# # Convertendo os dados para float e plotando
+# plt.figure(figsize=(10, 6))
+
+# for i, resultado in enumerate(resultados):
+#     valores = [float(line.strip()) for line in resultado]
+#     label = f'{i+1}'
+#     if i == 0:
+#         label += " Epsilon 0"
+#     elif i == 1:
+#         label += " Epsilon 0.55"
+#     elif i == 2:
+#         label += " Epsilon 0.99"
+#     elif i == 3:
+#         label += " Epsilon variado com o tempo"
+#     plt.plot(t, valores, label=label)
+
+# # Adicionando pontos experimentais
+# experimentais = {
+#     #0: [(0, 43.137254901960785), (0, 27.647058823529403)],
+#     1: [(30, 8.627450980392166)],
+#     2: [(60, 7.843137254901956)],
+#     3: [(90, 8.23529411764705)],
+# }
+
+# first = True  # Variável para verificar o primeiro conjunto de dados experimentais
+# for key, values in experimentais.items():
+#     t_exp, valores_exp = zip(*values)
+#     if first:
+#         plt.scatter(t_exp, valores_exp, label=f'Experimental Data', color='red')
+#         first = False
+#     else:
+#         plt.scatter(t_exp, valores_exp, color='red')
+
+# plt.title("Total T $CD8^+$")
+# plt.xlabel("Time (days)")
+# plt.ylabel("Concentration (Cells/$mm^2$)")
+# plt.legend()
+# plt.grid(True)
+# plt.savefig('result/totalTCD8.png', dpi=300)
+# plt.clf()
+# plt.show()
 
 # Lista para armazenar os valores lidos do arquivo
-totalCD8_values = []
+mediaCD8_values = []
 
 # Lendo os valores do arquivo
 with open("dataExecution2.txt", "r") as file:
     for line in file:
-        totalCD8_values.append(float(line.strip()))  # Convertendo para float e adicionando à lista
+        mediaCD8_values.append(float(line.strip()))  
 
 # Pontos experimentais
 experimentais = {
-    0: [(0, 43.137254901960785), (0, 27.647058823529403)],
-    1: [(14, 5.49019607843137), (30, 8.627450980392166)]
+    0: [(0, 27.647058823529403)],  
+    1: [(14, 5.49019607843137), (30, 8.627450980392166)],
+    2: [(60, 7.843137254901956)],
 }
 
 # Criando o gráfico
 plt.figure(figsize=(10, 6))
-plt.plot(totalCD8_values, label='Media CD8')
-for key, value in experimentais.items():
+plt.plot(mediaCD8_values, label='Media T CD8')
+
+first = True  # Variável para verificar o primeiro conjunto de dados experimentais
+for key, values in experimentais.items():
     t_exp, valores_exp = zip(*values)
-    plt.scatter(t_exp, valores_exp, label=f'Experimental Data', color='red')  
+    if first:
+        plt.scatter(t_exp, valores_exp, label=f'Experimental Data', color='red')
+        first = False
+    else:
+        plt.scatter(t_exp, valores_exp, color='red')
     
 
-plt.title('Media CD8 ao longo do tempo')
-plt.xlabel('Dias')
-plt.ylabel('Concentração CD8')
+plt.title('Media T CD8 ao longo do tempo')
+plt.xlabel('Time (Days)')
+plt.ylabel("Concentration (Molecules/$mm^2$)")
 plt.legend()
 plt.grid(True)
-plt.savefig('result/mediaCD8.png', dpi=300)
+plt.savefig('result/mediaTCD8.png', dpi=300)
 plt.show()
 # TL_c_vetor = np.zeros(len(t))
 # TL_h_vetor = np.zeros(len(t))

@@ -1,0 +1,25 @@
+Problem name: Multiple Sclerosis Problem with Tcyto alpha and beta
+	C++ class name: MSProblemTCytoParams
+
+	Global dimension:			1
+	Integer dimension:			0
+	Fitness dimension:			1
+	Number of objectives:			1
+	Equality constraints dimension:		0
+	Inequality constraints dimension:	0
+	Lower bounds: [0.01]
+	Upper bounds: [0.99]
+	Has batch fitness evaluation: false
+
+	Has gradient: false
+	User implemented gradient sparsity: false
+	Has hessians: false
+	User implemented hessians sparsity: false
+
+	Fitness evaluations: 0
+
+	Thread safety: basic
+
+bv = 41.500000, pv = 41.500000 
+ Epslon: 0.529691
+
