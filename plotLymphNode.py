@@ -8,6 +8,7 @@ if len(sys.argv) != 3:
     print("Uso: python script.py T_final h_t")
     sys.exit(1)
 
+
 T_final = int(sys.argv[1])
 h_t = float(sys.argv[2])
 
@@ -71,8 +72,14 @@ plt.savefig('result/t_cito_linfonodo.png', dpi = 300)
 plt.clf()
 plt.show()
 
+t_start = 0
+T_final = int(sys.argv[1])
+h_t = float(sys.argv[2])
+
+t = np.linspace(t_start, T_final, int((T_final-t_start)/h_t))
+
 # Lista dos nomes dos arquivos de dados
-arquivos = ["dataExecution0fixo.txt", "dataExecution055fixo.txt", "dataExecution099fixo.txt", "dataExecution0.txt", "dataExecution055.txt", "dataExecution099.txt"]
+arquivos = ["dataExecution0fixo.txt", "dataExecution0.txt", "dataExecution055.txt", "dataExecution099.txt"]
 
 resultados = []
 
@@ -85,7 +92,7 @@ for arquivo in arquivos:
 # Criando array de tempo baseado no número de linhas nos arquivos de dados
 num_linhas_arquivo = len(resultados[0])  # Considerando que todos os arquivos têm o mesmo número de linhas
 T_final = 90  # Substitua pelo valor real de T_final
-t = np.linspace(0, T_final, num_linhas_arquivo)
+t = np.linspace(t_start, T_final, num_linhas_arquivo)
 
 # Define as cores para cada curva, com a cor laranja para Epsilon 0.99
 cores = ['blue', 'green', 'orange']
@@ -97,17 +104,17 @@ labels_plot = []
 # Convertendo os dados para float e plotando as primeiras três curvas
 plt.figure(figsize=(10, 6))
 
-for i in range(3):
+for i in range(1):
     valores = [float(line.strip()) for line in resultados[i]]
     label = f'{i+1}'
     cor = cores[i]
     if i == 0:
-        label += " without treatment, eps=0"
-    elif i == 1:
-        label += " Constant efficacy, eps = 0.55"
-    elif i == 2:
-        label += " Constant efficacy, eps= 0.99"
-        cor = 'orange'  # Define a cor laranja para Epsilon 0.99
+        label = "Without treatment, eps=0"
+    # elif i == 1:
+    #     label += " Constant efficacy, eps = 0.55"
+    # elif i == 2:
+    #     label += " Constant efficacy, eps= 0.99"
+        #cor = 'orange'  # Define a cor laranja para Epsilon 0.99
     linha, = plt.plot(t, valores, label=label, color=cor)
     linhas_plot.append(linha)
     labels_plot.append(label)
@@ -124,23 +131,23 @@ for i in range(3):
 # labels_plot.append('varying efficacy, eps = 0 - 0,55')
 
 # Plota as linhas para dataExecution055fixo e dataExecution099fixo
-valores_055 = [float(line.strip()) for line in resultados[4]]
-valores_099 = [float(line.strip()) for line in resultados[5]]
+valores_055 = [float(line.strip()) for line in resultados[2]]
+valores_099 = [float(line.strip()) for line in resultados[3]]
 
-linha_055, = plt.plot(t, valores_055, label='varying efficacy, eps = 0 - 0,55', color='purple', linestyle='--')
+linha_055, = plt.plot(t, valores_055, label='Varying efficacy, eps = 0 - 0,55', color='purple', linestyle='--')
 linha_099, = plt.plot(t, valores_099, label='Varying efficacy, eps= 0 - 0.99', color='black', linestyle='--')
 
 linhas_plot.append(linha_055)
-labels_plot.append('varying efficacy, eps = 0 - 0,55')
+labels_plot.append('Varying efficacy, eps = 0 - 0,55')
 linhas_plot.append(linha_099)
 labels_plot.append('Varying efficacy, eps= 0 - 0.99')
 
 # Adicionando pontos experimentais
 experimentais = {
-    #0: [(0, 43.137254901960785), (0, 27.647058823529403)],
-    1: [(40, 8.627450980392166)],
-    2: [(70, 7.843137254901956)],
-    3: [(100, 8.23529411764705)],
+    0: [(30, 43.137254901960785)],
+    1: [(45, 5.49019607843137)],
+    2: [(80, 8.27450980392166)],
+    
 }
 
 first = True  # Variável para verificar o primeiro conjunto de dados experimentais

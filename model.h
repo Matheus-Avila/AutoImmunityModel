@@ -66,6 +66,7 @@ typedef struct structParameters
     double V_BV;
     int V_LN;
     double epslon_x;
+    double eps_new;
 
 }structParameters;
 
@@ -114,7 +115,7 @@ typedef struct structModel
     double *plasmaCellLymphNodeSavedPoints;
     double *antibodyLymphNodeSavedPoints;
 
-    double eps_new;
+    
 
     structParameters parametersModel;
 

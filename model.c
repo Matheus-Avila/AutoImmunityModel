@@ -483,9 +483,10 @@ double* EquationsLymphNode(structModel* model, int stepPos){
     slopes[0] = activatedDcMigration - activatedDcClearance;
 
     //T Cytotoxic
+    //printf("%.2lf\n",model->parametersModel.eps_new);
     double tCytoActivation = model->parametersModel.bTCytotoxic * (model->parametersModel.rhoTCytotoxic*tCytoLN*dcLN - tCytoLN*dcLN);
     double tCytoHomeostasis = model->parametersModel.alphaTCytotoxic * (model->parametersModel.stableTCytotoxic - tCytoLN);
-    double tCytoMigration = model->parametersModel.gammaT * (tCytoLN - model->tCytotoxicTissueVessels) * (double)(model->parametersModel.V_BV/model->parametersModel.V_LN)* (1 - model->eps_new);
+    double tCytoMigration = model->parametersModel.gammaT * (tCytoLN - model->tCytotoxicTissueVessels) * (double)(model->parametersModel.V_BV/model->parametersModel.V_LN)* (1 - model->parametersModel.eps_new);
     slopes[1] = tCytoActivation + tCytoHomeostasis - tCytoMigration;
 
     //T Helper
@@ -551,13 +552,13 @@ void SolverLymphNode(structModel *model, int stepPos){
     }
 }
 */
-derivatives* SlopePDEs(int kTime, double ht, structModel* model){
+derivatives* SlopePDEs(int stepKPlus, double ht, structModel* model){
 
     derivatives* slopes = (derivatives*)calloc(1, sizeof(derivatives));
     slopes->derivativesLymphNode = (double*)calloc(6, sizeof(double));
     slopes->derivativesTissue = (double**)calloc(6, sizeof(double*));
     
-    int stepKPlus;
+    
     for(int i = 0; i < 6; i++)
         slopes->derivativesTissue[i] = (double*)calloc(model->xSize*model->xSize, sizeof(double));
     /*
@@ -683,7 +684,8 @@ derivatives* SlopePDEs(int kTime, double ht, structModel* model){
         slopes->derivativesTissue[2][kPos] = activatedDCDiffusion + conventionalDcActivation + activatedDcMigration - activatedDcClearance;
 
         //CD8 T update
-        tCytotoxicMigration = model->thetaBV[kPos]*model->parametersModel.gammaT*(model->tCytotoxicLymphNode[stepKPlus] - tCytotoxicKMinus) * (1 - model->eps_new);
+        
+        tCytotoxicMigration = model->thetaBV[kPos]*model->parametersModel.gammaT*(model->tCytotoxicLymphNode[stepKPlus] - tCytotoxicKMinus) * (1 - model->parametersModel.eps_new);
         
         slopes->derivativesTissue[3][kPos] = tCytotoxicDiffusion - tCytotoxicChemotaxis + tCytotoxicMigration;
         
@@ -958,15 +960,15 @@ float RunModel(structModel *model, int* save_times, int size, float* points_valu
     double time = 0.0;
     double htDynamic = 0.0;
     int days = 0;
-    float eps_new;
+    //double eps_new;
    
 
     while(time < model->tFinal){
 
-         if(time <= 30){
-            eps_new = 0;
+        if(time <= 30){
+            model->parametersModel.eps_new = 0;
         }else if(time > 30){
-            eps_new = model->parametersModel.epslon_x;
+            model->parametersModel.eps_new = model->parametersModel.epslon_x;
         }
 
         htDynamic = Euler(time, model, stepKPlus, &posSave);
