@@ -5,74 +5,75 @@
 
 typedef struct derivatives
 {
-    double** derivativesTissue;
-    double* derivativesLymphNode;
+    float** derivativesTissue;
+    float* derivativesLymphNode;
 }derivatives;
 
 typedef struct structParameters
 {
-    double muMic;
-    double rM;
+    float muMic;
+    float rM;
 
-    double chi;
-    double micDiffusion;
-    double cDcDiffusion;
-    double aDcDiffusion;
-    double tCytoDiffusion;
-    double antibodyDiffusion;
+    float chi;
+    float micDiffusion;
+    float cDcDiffusion;
+    float aDcDiffusion;
+    float tCytoDiffusion;
+    float antibodyDiffusion;
     
-    double lambAntMic;
-    double bD;
-    double rT;
-    double cMic;
-    double muCDc;
+    float lambAntMic;
+    float bD;
+    float rT;
+    float cMic;
+    float muCDc;
 
-    double gammaD;
-    double gammaAntibody;
-    double gammaT;
+    float gammaD;
+    float gammaAntibody;
+    float gammaT;
 
-    double avgT;
-    double avgDc;
-    double avgMic;
-    double avgOdc;
+    float avgT;
+    float avgDc;
+    float avgMic;
+    float avgOdc;
     
-    double cCDc;
-    double cADc;
-    double cDl;
-    double cF;
+    float cCDc;
+    float cADc;
+    float cDl;
+    float cF;
 
-    double alphaTHelper;
-    double alphaTCytotoxic;
-    double alphaB;
-    double alphaP;
+    float alphaTHelper;
+    float alphaTCytotoxic;
+    float alphaB;
+    float alphaP;
     
-    double bTHelper;
-    double bTCytotoxic;
-    double bRho;
-    double bRhoB;
-    double bRhoP;
+    float bTHelper;
+    float bTCytotoxic;
+    float bRho;
+    float bRhoB;
+    float bRhoP;
     
-    double rhoTHelper;
-    double rhoTCytotoxic;
-    double rhoB;
-    double rhoP;
-    double rhoAntibody;
-    double stableTHelper;
-    double stableTCytotoxic;
-    double stableB;
-    double stableP;
-    double V_PV;
-    double V_BV;
+    float rhoTHelper;
+    float rhoTCytotoxic;
+    float rhoB;
+    float rhoP;
+    float rhoAntibody;
+    float stableTHelper;
+    float stableTCytotoxic;
+    float stableB;
+    float stableP;
+    float V_PV;
+    float V_BV;
     int V_LN;
 }structParameters;
 
 typedef struct structModel
 {
-    double ht;
-    double hx;
+    float ht;
+    float hx;
 
     int tFinal;
     int xFinal;
+    int zFinal;
     
     int numStepsLN;
     int intervalFigures;
@@ -82,69 +83,69 @@ typedef struct structModel
 
     int tSize;
     int xSize;
+    int zSize;
+    int meshSize;
 
-    double *thetaBV;
-    double *thetaPV;
+    float *thetaBV;
+    float *thetaPV;
 
-    double activatedDCTissueVessels;
-    double antibodyTissueVessels;
-    double tCytotoxicTissueVessels;
+    float activatedDCTissueVessels;
+    float antibodyTissueVessels;
+    float tCytotoxicTissueVessels;
     
-    double **microglia;
-    double **oligodendrocyte;
-    double **conventionalDc;
-    double **activatedDc;
-    double **antibody;
-    double **tCytotoxic;
+    float **microglia;
+    float **oligodendrocyte;
+    float **conventionalDc;
+    float **activatedDc;
+    float **antibody;
+    float **tCytotoxic;
 
-    double *dendriticLymphNode;
-    double *tHelperLymphNode;
-    double *tCytotoxicLymphNode;
-    double *bCellLymphNode;
-    double *plasmaCellLymphNode;
-    double *antibodyLymphNode;
+    float *dendriticLymphNode;
+    float *tHelperLymphNode;
+    float *tCytotoxicLymphNode;
+    float *bCellLymphNode;
+    float *plasmaCellLymphNode;
+    float *antibodyLymphNode;
 
-    double *dendriticLymphNodeSavedPoints;
-    double *tHelperLymphNodeSavedPoints;
-    double *tCytotoxicLymphNodeSavedPoints;
-    double *bCellLymphNodeSavedPoints;
-    double *plasmaCellLymphNodeSavedPoints;
-    double *antibodyLymphNodeSavedPoints;
+    float *dendriticLymphNodeSavedPoints;
+    float *tHelperLymphNodeSavedPoints;
+    float *tCytotoxicLymphNodeSavedPoints;
+    float *bCellLymphNodeSavedPoints;
+    float *plasmaCellLymphNodeSavedPoints;
+    float *antibodyLymphNodeSavedPoints;
 
     structParameters parametersModel;
 
 }structModel;
 
-int VerifyCFL(structParameters parametersModel, double ht, double hx);
+int VerifyCFL(structParameters parametersModel, float ht, float hx);
 
-double PreventionOverCrowdingTerm(double populationPoint, double avgValue);
+float PreventionOverCrowdingTerm(float populationPoint, float avgValue);
 
-double UpDownWind(double frontIPoint, double ijPoint, double avgValue);
+float UpDownWind(float frontIPoint, float ijPoint, float avgValue);
 
-double CalculateChemotaxis(structModel model, double ponto_posterior_j, double ponto_anterior_j, double ponto_posterior_i, double ponto_anterior_i, double ponto_atual,\
- double valor_medio, double gradiente_odc_i, double gradiente_odc_j);
+float CalculateChemotaxis(structModel model, float frontKPoint, float rearKPoint, float frontJPoint, float rearJPoint, float frontIPoint, float rearIPoint, float ijPoint,\
+ float avgValue, float gradientOdcI, float gradientOdcJ, float gradientOdcK);
 
-double CalculateDiffusion(structModel model, double ponto_posterior_j, double ponto_anterior_j, double ponto_posterior_i, double ponto_anterior_i, double ponto_atual);
+float CalculateDiffusion(structModel model, float frontKPoint, float rearKPoint, float frontJPoint, float rearJPoint, float frontIPoint, float rearIPoint, float ijPoint);
 
-double fFunc(double valuePopulation, double avgPopulation);
+float fFunc(float valuePopulation, float avgPopulation);
 
-double* EquationsLymphNode(structModel* model, int stepPos);
-
-double CalculateHt(structModel model, double stepKMinus);
+float* EquationsLymphNode(structModel* model, int stepPos);
 
 void SolverLymphNode(structModel *model, int stepPos);
 
-structModel ModelInitialize(structParameters params, double ht, double hx, double time, double space, int numFigs, int numPointsLN, int numStepsLN, int saveFigs);
+structModel ModelInitialize(structParameters params, float ht, float hx, float time, float space, float spaceZ, int numFigs, int numPointsLN, int numStepsLN, int saveFigs);
 
 void DefineBVPV(structModel *model);
 
 void InitialConditionTissueMicroglia(structModel* model);
 
-void InitialConditionLymphNode(structModel* model, double dendriticLN, double thelperLN, double tcytotoxicLN, double bcellLN, double plasmacellLN, double antibodyLN);
+void InitialConditionLymphNode(structModel* model, float dendriticLN, float thelperLN, float tcytotoxicLN, float bcellLN, float plasmacellLN, float antibodyLN);
 
 void RunModel(structModel *model);
 
-void WritePopulation(structModel model, double *population, char* fileName, char* bufferTime);
+void WritePopulation(structModel model, float *population, char* fileName, char* bufferTime);
 
-void WriteFiles(structModel model, double *oligodendrocyte, double *microglia, double *tCytotoxic, double *antibody, double *conventionalDC, double  *activatedDC, int time);
+void WriteFiles(structModel model, float *oligodendrocyte, float *microglia, float *tCytotoxic, float *antibody, float *conventionalDC, float  *activatedDC, float time);
 #endif

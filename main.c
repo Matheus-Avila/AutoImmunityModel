@@ -6,12 +6,12 @@
 
 structParameters ParametersInitialize(){
     structParameters params;
-    params.micDiffusion = 0.015206;
-    params.antibodyDiffusion = 0.15206;
-    params.cDcDiffusion = 0.015206;
-    params.aDcDiffusion = 0.015206;
-    params.tCytoDiffusion = 0.015206;
-    params.chi = 0.03;
+    params.micDiffusion = 3*24*6.6*pow(10,-5); //Difusao
+    params.antibodyDiffusion = 9.6*24*6.6*pow(10,-4);
+    params.cDcDiffusion = 9.6*24*6.6*pow(10,-6);
+    params.aDcDiffusion = 9.6*24*6.6*pow(10,-5);
+    params.tCytoDiffusion = 6.6*24*6.6*pow(10,-5);
+    params.chi = 0.033; //Quimiotaxia
     
     params.muCDc = 60*24*3*pow(10,-5);
     params.muMic = 60*24*3*pow(10,-6);
@@ -59,7 +59,7 @@ structParameters ParametersInitialize(){
     return params;
 }
 
-void WriteTime(double ExecTime){
+void WriteTime(float ExecTime){
     FILE *fileTime;
     fileTime = fopen("./ExecsTimes.txt", "a");
     if(fileTime != NULL){
@@ -87,17 +87,16 @@ void clearPhgTxt(){
 int main(){
     printf("Comecei o main\n");
     clock_t start, end;
-    double cpu_time_used;
+    float cpu_time_used;
     clearPhgTxt();
-    double ht = 0.0002, hx = 0.5;
-    int numPointsLN = 1000, time = 28, space = 20, numStepsLN = 100;
-    int numFigs = time, saveFigs = 1;
+    float ht = 0.0002, hx = 0.5;
+    int numFigs = 10, numPointsLN = 1000, time = 1, space = 20*hx, spaceZ = 600*hx, numStepsLN = 100, saveFigs = 0;
     structParameters parameters = ParametersInitialize();
-    structModel model = ModelInitialize(parameters, ht, hx, time, space, numFigs, numPointsLN, numStepsLN, saveFigs);
+    structModel model = ModelInitialize(parameters, ht, hx, time, space, spaceZ, numFigs, numPointsLN, numStepsLN, saveFigs);
     start = clock();
     RunModel(&model);
     end = clock();
-    cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
+    cpu_time_used = ((float) (end - start)) / CLOCKS_PER_SEC;
     WriteTime(cpu_time_used);
     return 0;
 }
