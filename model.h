@@ -27,6 +27,7 @@ typedef struct structParameters
     double rT;
     double cMic;
     double muCDc;
+    double ct;
 
     double gammaD;
     double gammaAntibody;

@@ -79,7 +79,7 @@ h_t = float(sys.argv[2])
 t = np.linspace(t_start, T_final, int((T_final-t_start)/h_t))
 
 # Lista dos nomes dos arquivos de dados
-arquivos = ["dataExecution0fixo.txt", "dataExecution0.txt", "dataExecution055.txt", "dataExecution099.txt"]
+arquivos = ["dataExecution0.txt", "dataExecution0fixo.txt", "dataExecution055.txt", "dataExecution099.txt"]
 
 resultados = []
 
@@ -144,7 +144,8 @@ labels_plot.append('Varying efficacy, eps= 0 - 0.99')
 
 # Adicionando pontos experimentais
 experimentais = {
-    0: [(30, 43.137254901960785)],
+    #0: [(30, 43.137254901960785)],
+    0: [(30, 27.647058823529403)],
     1: [(45, 5.49019607843137)],
     2: [(80, 8.27450980392166)],
     

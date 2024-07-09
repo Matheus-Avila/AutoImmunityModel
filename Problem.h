@@ -34,6 +34,7 @@ structParameters ParametersInitialize(){
     params.avgMic = 350;
     params.avgOdc = 400;
 
+    params.ct = 0.01;
     params.cMic = 0.1;
     params.cCDc = 1;
     params.cADc = 1;
@@ -134,27 +135,27 @@ class MSProblemTCytoParams : public pagmo::problem {
         }
 
         std::vector<double> fitness(const vector_double& variables) const {
-            std::vector<double> epslon ;
+            //std::vector<double> epslon ;
             //double alpha = variables[1];
             //double gammaT = variables[2];
-            //double epslon = variables[0];
+            double epslon = variables[0];
             float ht = 0.0002, hx = 0.5;
-            int numFigs = 7, numPointsLN = 1000, time = 90, space = 20, numStepsLN = 100, saveFigs = 1;
+            int numFigs = 7, numPointsLN = 1000, time = 90, space = 20, numStepsLN = 100, saveFigs = 0;
             structParameters parameters = ParametersInitialize();
             //parameters.alphaTCytotoxic = alpha;
-            //parameters.epslon_x = epslon;
+            parameters.eps_new = epslon;
             //parameters.gammaT = gammaT;
             structModel model = ModelInitialize(parameters, ht, hx, time, space, numFigs, numPointsLN, numStepsLN, saveFigs);
             int size = 2;
             int save_times[size] = {14,90}; //14 e 28
-            std::cout << " Epslon: " << parameters.epslon_x << std::endl;
+            std::cout << " Epslon: " << parameters.eps_new << std::endl;
             std::cout << std::endl;
             //std::cout << "Gamma T " << gammaT << " Epslon: " << epslon << " Alpha: " << alpha << std::endl;
             //float points[size] = {6.7};
             float points[size] = {5.4, 8.6}; //8.6
             float error = RunModel(&model, save_times, size, points);
             //std::cout << "Error: (voltou runmodel) " << error << std::endl;
-            vector_double _error = (vector_double) error;
+            //vector_double _error = (vector_double) error;
             std::vector<double> v;
             v.resize(1);
             std::cout << "Error: " << error << std::endl;

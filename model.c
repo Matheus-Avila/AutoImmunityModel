@@ -18,6 +18,7 @@ double Max(double a, double b){
 }
 
 void InitialConditionTissueMicroglia(structModel* model){
+
     for(int k = 0; k < model->xSize*model->xSize; k++){
         int i = (int)k/model->xSize;
         int j = k%model->xSize;
@@ -25,7 +26,9 @@ void InitialConditionTissueMicroglia(structModel* model){
             model->microglia[0][k] = (double)model->parametersModel.avgMic/3;
         }
         
-        model->tCytotoxic[0][k] = model->thetaBV[i] * 28.4;   
+        //inicializar apenas com vaso sanguineo
+        //model->tCytotoxic[0][k] = model->thetaBV[i] * 28.4;   
+        
        
     }
     
@@ -331,9 +334,9 @@ void SavingData(structModel model, int Ktime){
     FILE *file;
     structParameters parameters = ParametersInitialize();
     if(parameters.epslon_x  == 0){
-        file = fopen("dataExecution0.txt", "w");
+        file = fopen("dataExecution0.txt", "a");
     }else if(parameters.epslon_x  == 0.55){
-        file = fopen("dataExecution055.txt", "w");
+        file = fopen("dataExecution055.txt", "a");
     }else if(parameters.epslon_x  == 0.99){
         file = fopen("dataExecution099.txt", "a");
     }
@@ -354,6 +357,7 @@ void SavingData(structModel model, int Ktime){
     }
         //if(file != NULL){
         fprintf(file, "%lf\n", totalCD8/(model.xFinal*model.xFinal));
+        
         fclose(file);
 
         FILE *file2;
@@ -389,7 +393,7 @@ void SavingData(structModel model, int Ktime){
             model.parametersModel.stableP, model.parametersModel.V_LN, model.parametersModel.V_BV, model.parametersModel.V_PV);
             */
         
-        fclose(file);
+        fclose(file2);
     
 }
 
@@ -685,9 +689,9 @@ derivatives* SlopePDEs(int stepKPlus, double ht, structModel* model){
 
         //CD8 T update
         
-        tCytotoxicMigration = model->thetaBV[kPos]*model->parametersModel.gammaT*(model->tCytotoxicLymphNode[stepKPlus] - tCytotoxicKMinus) * (1 - model->parametersModel.eps_new);
+        tCytotoxicMigration = model->thetaBV[kPos]*model->parametersModel.gammaT*(model->tCytotoxicLymphNode[stepKPlus] - tCytotoxicKMinus) * (1 - model->parametersModel.eps_new) ;
         
-        slopes->derivativesTissue[3][kPos] = tCytotoxicDiffusion - tCytotoxicChemotaxis + tCytotoxicMigration;
+        slopes->derivativesTissue[3][kPos] = tCytotoxicDiffusion - tCytotoxicChemotaxis + tCytotoxicMigration - (model->parametersModel.ct * tCytotoxicKMinus);
         
         //Antibody update
         odcAntibodyMicrogliaFagocitosis = model->parametersModel.lambAntMic*antibodyKMinus*(model->parametersModel.avgOdc - oligodendrocyteKMinus)*fFunc(microgliaKMinus, model->parametersModel.avgMic);
@@ -986,7 +990,7 @@ float RunModel(structModel *model, int* save_times, int size, float* points_valu
         stepKMinus = stepKPlus;
         stepKPlus = !stepKMinus;
         // printf("%lf!!\n", time);
-        //printf("%d \n", kTime);
+        // printf("%d \n", kTime);
         // if(isIn(kTime, save_times, size)) {
         //     sum += pow(model->tCytotoxicLymphNode[stepKPlus] - points_values[currentIndex], 2);
         //     printf("\nAt this moment, TCYTO is %f", model->tCytotoxicLymphNode[stepKPlus]);
