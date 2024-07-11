@@ -146,14 +146,17 @@ class MSProblemTCytoParams : public pagmo::problem {
             parameters.eps_new = epslon;
             //parameters.gammaT = gammaT;
             structModel model = ModelInitialize(parameters, ht, hx, time, space, numFigs, numPointsLN, numStepsLN, saveFigs);
-            int size = 2;
-            int save_times[size] = {14,90}; //14 e 28
+            int size = 3;
+            int save_times[size] = {14,30,90}; //14 e 28
+
+            int targetSize = 3;
+            int targetDays[targetSize] = {14,30,90};
             std::cout << " Epslon: " << parameters.eps_new << std::endl;
             std::cout << std::endl;
             //std::cout << "Gamma T " << gammaT << " Epslon: " << epslon << " Alpha: " << alpha << std::endl;
             //float points[size] = {6.7};
-            float points[size] = {5.4, 8.6}; //8.6
-            float error = RunModel(&model, save_times, size, points);
+            float points[size] = {5.4, 8.6, 8.2}; //8.6
+            float error = RunModel(&model, save_times, size, points, targetDays, targetSize);
             //std::cout << "Error: (voltou runmodel) " << error << std::endl;
             //vector_double _error = (vector_double) error;
             std::vector<double> v;

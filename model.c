@@ -949,7 +949,7 @@ int isIn(int ktime, int vec[], int size) {
  * Central Nervous System - PDEs - Finite Differences
  */
 
-float RunModel(structModel *model, int* save_times, int size, float* points_values){
+float RunModel(structModel *model, int* save_times, int size, float* points_values, int* targetDays,int targetSize){
 
     int stepKPlus = 1, stepKMinus = 0;
     int posSave = 1;
@@ -987,15 +987,23 @@ float RunModel(structModel *model, int* save_times, int size, float* points_valu
             // printf("%d!!%lf\n", kTime, time);
             kTime++;
         }
+
+        // Verifique se `days` é igual a qualquer um dos dias em `targetDays`
+        for (int i = 0; i < targetSize; ++i) {
+            if (days == targetDays[i]) {
+                sum += (model->tCytotoxicLymphNode[stepKPlus] - points_values[i]);
+            }
+        }
+
         stepKMinus = stepKPlus;
         stepKPlus = !stepKMinus;
         // printf("%lf!!\n", time);
         // printf("%d \n", kTime);
-        // if(isIn(kTime, save_times, size)) {
-        //     sum += pow(model->tCytotoxicLymphNode[stepKPlus] - points_values[currentIndex], 2);
-        //     printf("\nAt this moment, TCYTO is %f", model->tCytotoxicLymphNode[stepKPlus]);
-        //     currentIndex++;
-        // }     
+        if(isIn(kTime, save_times, size)) {
+            sum += pow(model->tCytotoxicLymphNode[stepKPlus] - points_values[currentIndex], 2);
+            printf("\nAt this moment, TCYTO is %f", model->tCytotoxicLymphNode[stepKPlus]);
+            currentIndex++;
+        }     
         
     }    
         

@@ -149,7 +149,7 @@ void InitialConditionTissueMicroglia(structModel* model);
 
 void InitialConditionLymphNode(structModel* model, double dendriticLN, double thelperLN, double tcytotoxicLN, double bcellLN, double plasmacellLN, double antibodyLN);
 
-float RunModel(structModel *model,int* save_times, int size, float* points_values);
+float RunModel(structModel *model,int* save_times, int size, float* points_values,int* targetDays, int targetSize);
 
 void WritePopulation(structModel model, double *population, char* fileName, char* bufferTime);
 
