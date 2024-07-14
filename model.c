@@ -998,13 +998,7 @@ float RunModel(structModel *model, int* save_times, int size, float* points_valu
         stepKMinus = stepKPlus;
         stepKPlus = !stepKMinus;
         // printf("%lf!!\n", time);
-        // printf("%d \n", kTime);
-        if(isIn(kTime, save_times, size)) {
-            sum += pow(model->tCytotoxicLymphNode[stepKPlus] - points_values[currentIndex], 2);
-            printf("\nAt this moment, TCYTO is %f", model->tCytotoxicLymphNode[stepKPlus]);
-            currentIndex++;
-        }     
-        
+        // printf("%d \n", kTime);   
     }    
         
     WriteFiles(*model, model->oligodendrocyte[stepKPlus], model->microglia[stepKPlus], model->tCytotoxic[stepKPlus], model->antibody[stepKPlus], model->conventionalDc[stepKPlus], model->activatedDc[stepKPlus], kTime);
@@ -1042,7 +1036,7 @@ float RunModel(structModel *model, int* save_times, int size, float* points_valu
         PlotResults(*model);
     }
 
-    sum = (model->tCytotoxicLymphNode[stepKPlus] - points_values[0]);
+    //sum = (model->tCytotoxicLymphNode[stepKPlus] - points_values[0]);
 
     free(model->dendriticLymphNodeSavedPoints);
     free(model->tCytotoxicLymphNodeSavedPoints);
