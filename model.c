@@ -969,11 +969,11 @@ float RunModel(structModel *model, int* save_times, int size, float* points_valu
 
     while(time < model->tFinal){
 
-        if(time <= 30){
-            model->parametersModel.eps_new = 0;
-        }else if(time > 30){
-            model->parametersModel.eps_new = model->parametersModel.epslon_x;
-        }
+        // if(time <= 30){
+        //     model->parametersModel.eps_new = 0;
+        // }else if(time > 30){
+        //     model->parametersModel.eps_new = model->parametersModel.epslon_x;
+        // }
 
         htDynamic = Euler(time, model, stepKPlus, &posSave);
         time += htDynamic;
