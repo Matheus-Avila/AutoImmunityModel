@@ -90,7 +90,7 @@ int main(){
     float cpu_time_used;
     clearPhgTxt();
     float ht = 0.0002, hx = 0.5;
-    int numFigs = 10, numPointsLN = 1000, time = 1, space = 20*hx, spaceZ = 600*hx, numStepsLN = 100, saveFigs = 0;
+    int numFigs = 1, numPointsLN = 1000, time = 1, space = 20*hx, spaceZ = 600*hx, numStepsLN = 100, saveFigs = 0;
     structParameters parameters = ParametersInitialize();
     structModel model = ModelInitialize(parameters, ht, hx, time, space, spaceZ, numFigs, numPointsLN, numStepsLN, saveFigs);
     start = clock();
