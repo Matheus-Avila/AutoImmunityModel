@@ -14,11 +14,11 @@
 
 # define NUM_POINTSLN 1000
 // #define PRINT
-#define CPU_WORK_GROUP_SIZE	6
-#define GPU_WORK_GROUP_SIZE	48
+#define CPU_WORK_GROUP_SIZE	8
+#define GPU_WORK_GROUP_SIZE	64
 #define SIMULACOES		30/0.0002
 #define INTERVALO_BALANCEAMENTO	1000
-#define BALANCEAMENTO_THRESHOLD	0.000125 //00025: quarto de face; 0005: metade de face; 001: face inteira 
+#define BALANCEAMENTO_THRESHOLD	0.6 //0.00085 //0.0017 //0.6: face inteira 
 #define PRECISAO_BALANCEAMENTO	10
 
 //Tipos de celulas.
@@ -43,10 +43,10 @@
 #define NUMERO_PARAMETROS_MALHA         9
 
 //Habilitar.
-#define HABILITAR_ESTATICO
-#define HABILITAR_BALANCEAMENTO
-// #define HABILITAR_BENCHMARK
-
+//#define HABILITAR_ESTATICO
+// #define HABILITAR_BALANCEAMENTO
+#define HABILITAR_BENCHMARK
+// #define SAVEFIGURES
 void WritePopulationLymphNode(float *population, char* fileName){
 	FILE *file;
 	file = fopen(fileName, "w");
@@ -135,7 +135,7 @@ void SaveFigure(int malhaSwapBufferDispositivo[][2], float **malhaSwapBuffer, in
 	char filename[30];
 	char charTime[4];
 	sprintf(filename, "result/results");
-	snprintf(charTime, sizeof(charTime), "%f", time);
+	snprintf(charTime, sizeof(charTime), "%2.1f", time);
 	strcat(filename, charTime);
 	strcat(filename, ".vtk");
 	file = fopen(filename, "w");
@@ -151,7 +151,7 @@ void SaveFigure(int malhaSwapBufferDispositivo[][2], float **malhaSwapBuffer, in
 				{	
 					// printf("Malha do dispositivo %i\n", count);
 					ReadFromMemoryObject(count-meusDispositivosOffset, malhaSwapBufferDispositivo[count][0], (char *)(malhaSwapBuffer[0]+(parametrosMalha[count][OFFSET_COMPUTACAO]*MALHA_TOTAL_CELULAS)), parametrosMalha[count][OFFSET_COMPUTACAO]*MALHA_TOTAL_CELULAS*sizeof(float), parametrosMalha[count][LENGTH_COMPUTACAO]*MALHA_TOTAL_CELULAS*sizeof(float));
-					SynchronizeCommandQueue(count-meusDispositivosOffset);
+					SynchronizeCommandQueue(count-meusDispositivosOffset, 1);
 					file = fopen(filename, "a");
 					if(count2 == 0 && count == meusDispositivosOffset){
 						fprintf(file, "# vtk DataFile Version 2.0\nReally cool data\n");
@@ -213,12 +213,16 @@ int main(int argc, char *argv[])
 	//***************
 	//*Inicializacao.
 	//***************
-	double tempoInicio, tempoFim;
+	double tempoInicio, tempoFim, tempoBordaComuInicio, tempoBordaComuFim;
 	#ifdef HABILITAR_BENCHMARK
 	double tempoComputacaoInterna = 0.0;
+	double tempoEDO = 0.0;
+	double tempoCpyCPUtoDev = 0.0;
+	double tempoReducaoCpyDevtoCPU = 0.0;
 	double tempoTrocaBorda = 0.0;
 	double tempoComputacaoBorda = 0.0;
 	double tempoBalanceamento = 0.0;
+	double tempoIniti = 0.0;
 	#endif
 
 	int world_size;
@@ -271,10 +275,10 @@ int main(int argc, char *argv[])
 	float stableTCytotoxic = 40;
 	float stableB = 25;
 	float stableP = 2.5;
-	float deltaT = 0.0002;
-	float gammaD = 0.1;
-	float gammaAntibody = 0.3;
-	float gammaT = 0.1;
+	float deltaT = 0.0002 * 100;
+	float gammaD = 0.0010;
+	float gammaAntibody = .0030;
+	float gammaT = 0.0010;
 	float V_LN = 160;
 	int V_BV = 0;
 	int V_PV = 0;
@@ -303,7 +307,6 @@ int main(int argc, char *argv[])
     V_PV = V_PV * 0.5 * 0.5 * 0.5;
 
 	float integralTecido[3] = {0, 0, 0};
-	float tecidoIntegraisPontoAPonto[xMalhaLength*yMalhaLength*zMalhaLength];
 	float tecidoInteiro[xMalhaLength*yMalhaLength*zMalhaLength*MALHA_TOTAL_CELULAS];
 
 	float populacoesLinfonodo[2][6];
@@ -317,6 +320,8 @@ int main(int argc, char *argv[])
 	int *parametrosMalha[todosDispositivos];
 	float *malhaSwapBuffer[2];
 	long int tempos[todosDispositivos];
+	double ticks[todosDispositivos];
+	double ticksBorder[todosDispositivos];
 	float cargasNovas[todosDispositivos];
 	float cargasAntigas[todosDispositivos];
 
@@ -324,15 +329,13 @@ int main(int argc, char *argv[])
 	int malhaSwapBufferDispositivo[todosDispositivos][2];
 
 	int parametrosPopulacoesLinfonodo[todosDispositivos];
-	int parametrosDendriticaIntegralTecidoPontoAPonto[todosDispositivos];
-	int parametrosCytotoxicaIntegralTecidoPontoAPonto[todosDispositivos];
-	int parametrosAnticorpoIntegralTecidoPontoAPonto[todosDispositivos];
 	int parametrosPosicaoBVTecido[todosDispositivos];
 	int parametrosPosicaoPVTecido[todosDispositivos];
 
 	int kernelDispositivo[todosDispositivos];
 	int dataEventoDispositivo[todosDispositivos];
 	int kernelEventoDispositivo[todosDispositivos];
+	int kernelEventoDispositivo2[todosDispositivos];
 
 	int offsetComputacao = 0;
 	int lengthComputacao = (xMalhaLength*yMalhaLength*zMalhaLength)/todosDispositivos;
@@ -356,22 +359,15 @@ int main(int argc, char *argv[])
 			parametrosPosicaoBVTecido[count] = CreateMemoryObject(count-meusDispositivosOffset, sizeof(int)*(xMalhaLength*yMalhaLength*zMalhaLength), CL_MEM_READ_WRITE, NULL);
 			parametrosPosicaoPVTecido[count] = CreateMemoryObject(count-meusDispositivosOffset, sizeof(int)*(xMalhaLength*yMalhaLength*zMalhaLength), CL_MEM_READ_WRITE, NULL);
 			parametrosPopulacoesLinfonodo[count] = CreateMemoryObject(count-meusDispositivosOffset, sizeof(float)*(6), CL_MEM_READ_WRITE, NULL);
-			parametrosDendriticaIntegralTecidoPontoAPonto[count] = CreateMemoryObject(count-meusDispositivosOffset, sizeof(float)*(xMalhaLength*yMalhaLength*zMalhaLength), CL_MEM_READ_WRITE, NULL);
-			parametrosCytotoxicaIntegralTecidoPontoAPonto[count] = CreateMemoryObject(count-meusDispositivosOffset, sizeof(float)*(xMalhaLength*yMalhaLength*zMalhaLength), CL_MEM_READ_WRITE, NULL);
-			parametrosAnticorpoIntegralTecidoPontoAPonto[count] = CreateMemoryObject(count-meusDispositivosOffset, sizeof(float)*(xMalhaLength*yMalhaLength*zMalhaLength), CL_MEM_READ_WRITE, NULL);
-
-
+			
 			WriteToMemoryObject(count-meusDispositivosOffset, parametrosMalhaDispositivo[count], (char *)parametrosMalha[count], 0, sizeof(int)*NUMERO_PARAMETROS_MALHA);
 			WriteToMemoryObject(count-meusDispositivosOffset, malhaSwapBufferDispositivo[count][0], (char *)malhaSwapBuffer[0], 0, sizeof(float)*(xMalhaLength*yMalhaLength*zMalhaLength*MALHA_TOTAL_CELULAS));
 			WriteToMemoryObject(count-meusDispositivosOffset, malhaSwapBufferDispositivo[count][1], (char *)malhaSwapBuffer[1], 0, sizeof(float)*(xMalhaLength*yMalhaLength*zMalhaLength*MALHA_TOTAL_CELULAS));
 			WriteToMemoryObject(count-meusDispositivosOffset, parametrosPosicaoBVTecido[count], (char *)vetBV, 0, sizeof(int)*(xMalhaLength*yMalhaLength*zMalhaLength));
 			WriteToMemoryObject(count-meusDispositivosOffset, parametrosPosicaoPVTecido[count], (char *)vetPV, 0, sizeof(int)*(xMalhaLength*yMalhaLength*zMalhaLength));
 			WriteToMemoryObject(count-meusDispositivosOffset, parametrosPopulacoesLinfonodo[count], (char *)populacoesLinfonodo[0], 0, sizeof(float)*(6));
-			WriteToMemoryObject(count-meusDispositivosOffset, parametrosDendriticaIntegralTecidoPontoAPonto[count], (char *)tecidoIntegraisPontoAPonto, 0, sizeof(float)*(xMalhaLength*yMalhaLength*zMalhaLength));
-			WriteToMemoryObject(count-meusDispositivosOffset, parametrosCytotoxicaIntegralTecidoPontoAPonto[count], (char *)tecidoIntegraisPontoAPonto, 0, sizeof(float)*(xMalhaLength*yMalhaLength*zMalhaLength));
-			WriteToMemoryObject(count-meusDispositivosOffset, parametrosAnticorpoIntegralTecidoPontoAPonto[count], (char *)tecidoIntegraisPontoAPonto, 0, sizeof(float)*(xMalhaLength*yMalhaLength*zMalhaLength));
-
-			SynchronizeCommandQueue(count-meusDispositivosOffset);
+			
+			SynchronizeCommandQueue(count-meusDispositivosOffset, 1);
 
 			kernelDispositivo[count] = CreateKernel(count-meusDispositivosOffset, "kernels.cl", "ProcessarPontos");
 			SetKernelAttribute(count-meusDispositivosOffset, kernelDispositivo[count], 0, malhaSwapBufferDispositivo[count][0]);
@@ -380,9 +376,6 @@ int main(int argc, char *argv[])
 			SetKernelAttribute(count-meusDispositivosOffset, kernelDispositivo[count], 3, parametrosPosicaoBVTecido[count]);
 			SetKernelAttribute(count-meusDispositivosOffset, kernelDispositivo[count], 4, parametrosPosicaoPVTecido[count]);
 			SetKernelAttribute(count-meusDispositivosOffset, kernelDispositivo[count], 5, parametrosPopulacoesLinfonodo[count]);
-			SetKernelAttribute(count-meusDispositivosOffset, kernelDispositivo[count], 6, parametrosDendriticaIntegralTecidoPontoAPonto[count]);
-			SetKernelAttribute(count-meusDispositivosOffset, kernelDispositivo[count], 7, parametrosCytotoxicaIntegralTecidoPontoAPonto[count]);
-			SetKernelAttribute(count-meusDispositivosOffset, kernelDispositivo[count], 8, parametrosAnticorpoIntegralTecidoPontoAPonto[count]);
 
 		}
 		offsetComputacao += lengthComputacao;
@@ -393,6 +386,8 @@ int main(int argc, char *argv[])
 		cargasNovas[count] = ((float)(count+1))*(1.0f/((float)todosDispositivos));
 		cargasAntigas[count] = cargasNovas[count];
 		tempos[count] = 1;
+		ticks[count] = 0;
+		ticksBorder[count] = 0;
 	}
 
 	//*******
@@ -443,93 +438,107 @@ int main(int argc, char *argv[])
 	float resultadoParcialEdo[6];
 	
 	int intervalPoints = (int)(SIMULACOES/NUM_POINTSLN);
-	int stepKPlus, stepKMinus;
+	int stepKPlus = 0, stepKMinus = 1;
 
-	tempoInicio = MPI_Wtime();
 
 	for(int simulacao = 0; simulacao < SIMULACOES; simulacao++)
 	{	
 		/*********************SOLUCAO DO LINFONODO ***********************/
-		stepKPlus = simulacao%2;
-		stepKMinus = !(stepKPlus && 1);
+		if(simulacao%100 == 0){
+			tempoInicio = MPI_Wtime();
+			
+			stepKPlus = stepKMinus;
+			stepKMinus = !stepKMinus;
 
-		dcLN = populacoesLinfonodo[stepKMinus][0];		
-		tCytoLN = populacoesLinfonodo[stepKMinus][1];
-		tHelperLN = populacoesLinfonodo[stepKMinus][2];
-		bCellLN = populacoesLinfonodo[stepKMinus][3];
-		plasmaCellLN = populacoesLinfonodo[stepKMinus][4];
-		antibodyLN = populacoesLinfonodo[stepKMinus][5];
+			dcLN = populacoesLinfonodo[stepKMinus][0];		
+			tCytoLN = populacoesLinfonodo[stepKMinus][1];
+			tHelperLN = populacoesLinfonodo[stepKMinus][2];
+			bCellLN = populacoesLinfonodo[stepKMinus][3];
+			plasmaCellLN = populacoesLinfonodo[stepKMinus][4];
+			antibodyLN = populacoesLinfonodo[stepKMinus][5];
 
-		//Dendritic cell
-		activatedDcMigration = gammaD * (integralTecido[0] - dcLN) * (float)(V_PV/V_LN);
-		activatedDcClearance = cDl * dcLN;
-		resultadoParcialEdo[0] = activatedDcMigration - activatedDcClearance;
+			//Dendritic cell
+			activatedDcMigration = gammaD * (integralTecido[0] - dcLN) * (float)(V_PV/V_LN);
+			activatedDcClearance = cDl * dcLN;
+			resultadoParcialEdo[0] = activatedDcMigration - activatedDcClearance;
 
-		//T Cytotoxic
-		tCytoActivation = bTCytotoxic * (rhoTCytotoxic*tCytoLN*dcLN - tCytoLN*dcLN);
-		tCytoHomeostasis = alphaTCytotoxic * (stableTCytotoxic - tCytoLN);
-		tCytoMigration = gammaT * (tCytoLN - integralTecido[1]) * (float)(V_BV/V_LN);
-		resultadoParcialEdo[1] = tCytoActivation + tCytoHomeostasis - tCytoMigration;
+			//T Cytotoxic
+			tCytoActivation = bTCytotoxic * (rhoTCytotoxic*tCytoLN*dcLN - tCytoLN*dcLN);
+			tCytoHomeostasis = alphaTCytotoxic * (stableTCytotoxic - tCytoLN);
+			tCytoMigration = gammaT * (tCytoLN - integralTecido[1]) * (float)(V_BV/V_LN);
+			resultadoParcialEdo[1] = tCytoActivation + tCytoHomeostasis - tCytoMigration;
 
-		//T Helper
-		tHelperActivation = bTHelper * (rhoTHelper * tHelperLN * dcLN - tHelperLN * dcLN);
-		tHelperHomeostasis = alphaTHelper * (stableTHelper - tHelperLN);
-		tHelperDispendure = bRho * dcLN * tHelperLN * bCellLN;
-		resultadoParcialEdo[2] = tHelperActivation + tHelperHomeostasis - tHelperDispendure;
+			//T Helper
+			tHelperActivation = bTHelper * (rhoTHelper * tHelperLN * dcLN - tHelperLN * dcLN);
+			tHelperHomeostasis = alphaTHelper * (stableTHelper - tHelperLN);
+			tHelperDispendure = bRho * dcLN * tHelperLN * bCellLN;
+			resultadoParcialEdo[2] = tHelperActivation + tHelperHomeostasis - tHelperDispendure;
 
-		//B Cell
-		bCellActivation = bRhoB * (rhoB * tHelperLN * dcLN - tHelperLN * dcLN * bCellLN);
-		bcellHomeostasis = alphaB * (stableB - bCellLN);
-		resultadoParcialEdo[3] = bcellHomeostasis + bCellActivation;
+			//B Cell
+			bCellActivation = bRhoB * (rhoB * tHelperLN * dcLN - tHelperLN * dcLN * bCellLN);
+			bcellHomeostasis = alphaB * (stableB - bCellLN);
+			resultadoParcialEdo[3] = bcellHomeostasis + bCellActivation;
 
-		//Plasma Cells
-		plasmaActivation = bRhoP * (rhoP * tHelperLN * dcLN * bCellLN);
-		plasmaHomeostasis = alphaP * (stableP - plasmaCellLN);
-		resultadoParcialEdo[4] = plasmaHomeostasis + plasmaActivation;
+			//Plasma Cells
+			plasmaActivation = bRhoP * (rhoP * tHelperLN * dcLN * bCellLN);
+			plasmaHomeostasis = alphaP * (stableP - plasmaCellLN);
+			resultadoParcialEdo[4] = plasmaHomeostasis + plasmaActivation;
 
-		//Antibody
-		antibodyProduction = rhoAntibody * plasmaCellLN;
-		antibodyDecayment = cF * antibodyLN;
-		antibodyMigration = gammaAntibody * (antibodyLN - integralTecido[2]) * (float)(V_BV/V_LN);
-		resultadoParcialEdo[5] = antibodyProduction - antibodyMigration - antibodyDecayment;
+			//Antibody
+			antibodyProduction = rhoAntibody * plasmaCellLN;
+			antibodyDecayment = cF * antibodyLN;
+			antibodyMigration = gammaAntibody * (antibodyLN - integralTecido[2]) * (float)(V_BV/V_LN);
+			resultadoParcialEdo[5] = antibodyProduction - antibodyMigration - antibodyDecayment;
 
-		populacoesLinfonodo[stepKPlus][0] = populacoesLinfonodo[stepKMinus][0] + deltaT * resultadoParcialEdo[0];
-		populacoesLinfonodo[stepKPlus][1] = populacoesLinfonodo[stepKMinus][1] + deltaT * resultadoParcialEdo[1];
-		populacoesLinfonodo[stepKPlus][2] = populacoesLinfonodo[stepKMinus][2] + deltaT * resultadoParcialEdo[2];
-		populacoesLinfonodo[stepKPlus][3] = populacoesLinfonodo[stepKMinus][3] + deltaT * resultadoParcialEdo[3];
-		populacoesLinfonodo[stepKPlus][4] = populacoesLinfonodo[stepKMinus][4] + deltaT * resultadoParcialEdo[4];
-		populacoesLinfonodo[stepKPlus][5] = populacoesLinfonodo[stepKMinus][5] + deltaT * resultadoParcialEdo[5];
+			populacoesLinfonodo[stepKPlus][0] = populacoesLinfonodo[stepKMinus][0] + deltaT * resultadoParcialEdo[0];
+			populacoesLinfonodo[stepKPlus][1] = populacoesLinfonodo[stepKMinus][1] + deltaT * resultadoParcialEdo[1];
+			populacoesLinfonodo[stepKPlus][2] = populacoesLinfonodo[stepKMinus][2] + deltaT * resultadoParcialEdo[2];
+			populacoesLinfonodo[stepKPlus][3] = populacoesLinfonodo[stepKMinus][3] + deltaT * resultadoParcialEdo[3];
+			populacoesLinfonodo[stepKPlus][4] = populacoesLinfonodo[stepKMinus][4] + deltaT * resultadoParcialEdo[4];
+			populacoesLinfonodo[stepKPlus][5] = populacoesLinfonodo[stepKMinus][5] + deltaT * resultadoParcialEdo[5];
 
-		if(simulacao%intervalPoints){
-			int posSave = simulacao/intervalPoints;
-			dendriticLymphNodeSavedPoints[posSave] = populacoesLinfonodo[stepKPlus][0];
-			tCytotoxicLymphNodeSavedPoints[posSave] = populacoesLinfonodo[stepKPlus][1];
-			tHelperLymphNodeSavedPoints[posSave] = populacoesLinfonodo[stepKPlus][2];
-			bCellLymphNodeSavedPoints[posSave] = populacoesLinfonodo[stepKPlus][3];
-			plasmaCellLymphNodeSavedPoints[posSave] = populacoesLinfonodo[stepKPlus][4];
-			antibodyLymphNodeSavedPoints[posSave] = populacoesLinfonodo[stepKPlus][5];
-		}
-
-		// /*ENVIAR POPULACAO LN PARA KERNELS*/
-		for(int count2 = 0; count2 < world_size; count2++)
-		{
-			if(count2 == world_rank)
+			if(simulacao%intervalPoints){
+				int posSave = simulacao/intervalPoints;
+				dendriticLymphNodeSavedPoints[posSave] = populacoesLinfonodo[stepKPlus][0];
+				tCytotoxicLymphNodeSavedPoints[posSave] = populacoesLinfonodo[stepKPlus][1];
+				tHelperLymphNodeSavedPoints[posSave] = populacoesLinfonodo[stepKPlus][2];
+				bCellLymphNodeSavedPoints[posSave] = populacoesLinfonodo[stepKPlus][3];
+				plasmaCellLymphNodeSavedPoints[posSave] = populacoesLinfonodo[stepKPlus][4];
+				antibodyLymphNodeSavedPoints[posSave] = populacoesLinfonodo[stepKPlus][5];
+			}
+			#ifdef HABILITAR_BENCHMARK
+			MPI_Barrier(MPI_COMM_WORLD);
+			tempoFim = MPI_Wtime();
+			tempoEDO += tempoFim-tempoInicio;
+			tempoInicio = MPI_Wtime();
+			#endif
+			// /*ENVIAR POPULACAO LN PARA DEVICES*/
+			for(int count2 = 0; count2 < world_size; count2++)
 			{
-				for(int count = 0; count < todosDispositivos; count++)
+				if(count2 == world_rank)
 				{
-					if(count >= meusDispositivosOffset && count < meusDispositivosOffset+meusDispositivosLength)
-					{	
-						WriteToMemoryObject(count-meusDispositivosOffset, parametrosPopulacoesLinfonodo[count], (char *)populacoesLinfonodo[stepKPlus], 0, sizeof(float)*(6));
-						
-						SynchronizeCommandQueue(count-meusDispositivosOffset);
+					for(int count = 0; count < todosDispositivos; count++)
+					{
+						if(count >= meusDispositivosOffset && count < meusDispositivosOffset+meusDispositivosLength)
+						{	
+							WriteToMemoryObject(count-meusDispositivosOffset, parametrosPopulacoesLinfonodo[count], (char *)populacoesLinfonodo[stepKPlus], 0, sizeof(float)*(6));
+							SetKernelAttribute(count-meusDispositivosOffset, kernelDispositivo[count], 5, parametrosPopulacoesLinfonodo[count]);
+							SynchronizeCommandQueue(count-meusDispositivosOffset, 1);
+						}
 					}
 				}
+				MPI_Barrier(MPI_COMM_WORLD);
 			}
+
+			#ifdef HABILITAR_BENCHMARK
 			MPI_Barrier(MPI_COMM_WORLD);
+			tempoFim = MPI_Wtime();
+			tempoCpyCPUtoDev += tempoFim-tempoInicio;
+			#endif		
 		}
 		#ifdef SAVEFIGURES
 		if(simulacao == 0){
-			SaveFigure(malhaSwapBufferDispositivo, malhaSwapBuffer, parametrosMalha, xMalhaLength, yMalhaLength, zMalhaLength, meusDispositivosOffset, meusDispositivosLength, simulacao*0.0002, world_size, world_rank, todosDispositivos);
+			SaveFigure(malhaSwapBufferDispositivo, malhaSwapBuffer, parametrosMalha, xMalhaLength, yMalhaLength, zMalhaLength, meusDispositivosOffset, meusDispositivosLength, (float) simulacao*0.0002, world_size, world_rank, todosDispositivos);
 		}
 		#endif
 		//Balanceamento de carga.
@@ -566,7 +575,7 @@ int main(int argc, char *argv[])
 							SetKernelAttribute(count-meusDispositivosOffset, kernelDispositivo[count], 1, malhaSwapBufferDispositivo[count][0]);
 						}
 	
-						kernelEventoDispositivo[count] = RunKernel(count-meusDispositivosOffset, kernelDispositivo[count], parametrosMalha[count][OFFSET_COMPUTACAO], parametrosMalha[count][LENGTH_COMPUTACAO], isDeviceCPU(count-meusDispositivosOffset) ? CPU_WORK_GROUP_SIZE :  GPU_WORK_GROUP_SIZE);
+						kernelEventoDispositivo[count] = RunKernel(count-meusDispositivosOffset, kernelDispositivo[count], parametrosMalha[count][OFFSET_COMPUTACAO], parametrosMalha[count][LENGTH_COMPUTACAO], isDeviceCPU(count-meusDispositivosOffset) ? CPU_WORK_GROUP_SIZE :  GPU_WORK_GROUP_SIZE, 2);
 					}
 				}
 
@@ -575,7 +584,7 @@ int main(int argc, char *argv[])
 				{
 					if(count >= meusDispositivosOffset && count < meusDispositivosOffset+meusDispositivosLength)
 					{
-						SynchronizeCommandQueue(count-meusDispositivosOffset);
+						SynchronizeCommandQueue(count-meusDispositivosOffset, 0);
 						tempos[count] += GetEventTaskTicks(count-meusDispositivosOffset, kernelEventoDispositivo[count]);
 					}
 				}
@@ -621,7 +630,7 @@ int main(int argc, char *argv[])
 									if(overlap[1] > 0)
 									{
 										ReadFromMemoryObject(count-meusDispositivosOffset, malhaDevice, (char *)(malha+(overlap[0]*MALHA_TOTAL_CELULAS)), overlap[0]*MALHA_TOTAL_CELULAS*sizeof(float), overlap[1]*MALHA_TOTAL_CELULAS*sizeof(float));
-										SynchronizeCommandQueue(count-meusDispositivosOffset);
+										SynchronizeCommandQueue(count-meusDispositivosOffset, 1);
 										MPI_Send(malha+(overlap[0]*MALHA_TOTAL_CELULAS), overlap[1]*MALHA_TOTAL_CELULAS, MPI_FLOAT, alvo, 0, MPI_COMM_WORLD);
 									}
 								}
@@ -646,10 +655,10 @@ int main(int argc, char *argv[])
 													((simulacao%2)==0) ? malhaSwapBufferDispositivo[count2][0] : malhaSwapBufferDispositivo[count2][1]};
 
 										ReadFromMemoryObject(count2-meusDispositivosOffset, malhaDevice[1], (char *)(malha+(intersecaoOffset*MALHA_TOTAL_CELULAS)), intersecaoOffset*MALHA_TOTAL_CELULAS*sizeof(float), intersecaoLength*MALHA_TOTAL_CELULAS*sizeof(float));
-										SynchronizeCommandQueue(count2-meusDispositivosOffset);
+										SynchronizeCommandQueue(count2-meusDispositivosOffset,1);
 										
 										WriteToMemoryObject(count-meusDispositivosOffset, malhaDevice[0], (char *)(malha+(intersecaoOffset*MALHA_TOTAL_CELULAS)), intersecaoOffset*MALHA_TOTAL_CELULAS*sizeof(float), intersecaoLength*MALHA_TOTAL_CELULAS*sizeof(float));
-										SynchronizeCommandQueue(count-meusDispositivosOffset);
+										SynchronizeCommandQueue(count-meusDispositivosOffset, 1);
 									}
 									else
 									{
@@ -664,7 +673,7 @@ int main(int argc, char *argv[])
 											MPI_Recv(malha+(overlap[0]*MALHA_TOTAL_CELULAS), overlap[1]*MALHA_TOTAL_CELULAS, MPI_FLOAT, alvo, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 											
 											WriteToMemoryObject(count-meusDispositivosOffset, malhaDevice, (char *)(malha+(overlap[0]*MALHA_TOTAL_CELULAS)), overlap[0]*MALHA_TOTAL_CELULAS*sizeof(float), overlap[1]*MALHA_TOTAL_CELULAS*sizeof(float));
-											SynchronizeCommandQueue(count-meusDispositivosOffset);
+											SynchronizeCommandQueue(count-meusDispositivosOffset, 1);
 										}
 									}
 								}
@@ -685,7 +694,7 @@ int main(int argc, char *argv[])
 						parametrosMalha[count][LENGTH_COMPUTACAO] = overlapNovoLength;
 
 						WriteToMemoryObject(count-meusDispositivosOffset, parametrosMalhaDispositivo[count], (char *)parametrosMalha[count], 0, sizeof(int)*NUMERO_PARAMETROS_MALHA);
-						SynchronizeCommandQueue(count-meusDispositivosOffset);
+						SynchronizeCommandQueue(count-meusDispositivosOffset, 1);
 					}
 				}
 				memcpy(cargasAntigas, cargasNovas, sizeof(float)*todosDispositivos);
@@ -708,25 +717,21 @@ int main(int argc, char *argv[])
 			{
 				if(count >= meusDispositivosOffset && count < meusDispositivosOffset+meusDispositivosLength)
 				{
-					RunKernel(count-meusDispositivosOffset, kernelDispositivo[count], parametrosMalha[count][OFFSET_COMPUTACAO]+(xMalhaLength*yMalhaLength), parametrosMalha[count][LENGTH_COMPUTACAO]-(xMalhaLength*yMalhaLength), isDeviceCPU(count-meusDispositivosOffset) ? CPU_WORK_GROUP_SIZE :  GPU_WORK_GROUP_SIZE);
-				}
-			}
-
-			//Sincronizacao da computação interna.
-			for(int count = 0; count < todosDispositivos; count++)
-			{
-				if(count >= meusDispositivosOffset && count < meusDispositivosOffset+meusDispositivosLength)
-				{
-					SynchronizeCommandQueue(count-meusDispositivosOffset);
+					kernelEventoDispositivo[count] = RunKernel(count-meusDispositivosOffset, kernelDispositivo[count], parametrosMalha[count][OFFSET_COMPUTACAO]+(xMalhaLength*yMalhaLength), parametrosMalha[count][LENGTH_COMPUTACAO]-(xMalhaLength*yMalhaLength), isDeviceCPU(count-meusDispositivosOffset) ? CPU_WORK_GROUP_SIZE :  GPU_WORK_GROUP_SIZE, 1);
+					// printf("count %d evento %d \n",count, kernelEventoDispositivo[count]);
 				}
 			}
 
 			#ifdef HABILITAR_BENCHMARK
-			MPI_Barrier(MPI_COMM_WORLD);
-			tempoFim = MPI_Wtime();
-			tempoComputacaoInterna += tempoFim-tempoInicio;
-			tempoInicio = MPI_Wtime();
+			tempoBordaComuInicio = MPI_Wtime();
 			#endif
+
+			// #ifdef HABILITAR_BENCHMARK
+			// MPI_Barrier(MPI_COMM_WORLD);
+			// tempoFim = MPI_Wtime();
+			// tempoComputacaoInterna += tempoFim-tempoInicio;
+			// tempoInicio = MPI_Wtime();
+			// #endif
 
 			//Transferencia de bordas, feita em quatro passos.
 			for(int passo = 0; passo < 4; passo++)
@@ -758,13 +763,13 @@ int main(int argc, char *argv[])
 									MPI_Irecv(malha+(borda[0]*MALHA_TOTAL_CELULAS), tamanhoBorda*MALHA_TOTAL_CELULAS, MPI_FLOAT, alvo, 0, MPI_COMM_WORLD, &receiveRequest);
 
 									dataEventoDispositivo[count] = ReadFromMemoryObject(count-meusDispositivosOffset, malhaDevice[0], (char *)(malha+(borda[1]*MALHA_TOTAL_CELULAS)), borda[1]*MALHA_TOTAL_CELULAS*sizeof(float), tamanhoBorda*MALHA_TOTAL_CELULAS*sizeof(float));
-									SynchronizeCommandQueue(count-meusDispositivosOffset);
+									SynchronizeCommandQueue(count-meusDispositivosOffset, 1);
 									MPI_Isend(malha+(borda[1]*MALHA_TOTAL_CELULAS), tamanhoBorda*MALHA_TOTAL_CELULAS, MPI_FLOAT, alvo, 0, MPI_COMM_WORLD, &sendRequest);
 									MPI_Wait(&sendRequest, MPI_STATUS_IGNORE);
 									MPI_Wait(&receiveRequest, MPI_STATUS_IGNORE);
 									
 									WriteToMemoryObject(count-meusDispositivosOffset, malhaDevice[0], (char *)(malha+(borda[0]*MALHA_TOTAL_CELULAS)), borda[0]*MALHA_TOTAL_CELULAS*sizeof(float), tamanhoBorda*MALHA_TOTAL_CELULAS*sizeof(float));
-									SynchronizeCommandQueue(count-meusDispositivosOffset);
+									SynchronizeCommandQueue(count-meusDispositivosOffset, 1);
 
 								}
 							}
@@ -780,13 +785,13 @@ int main(int argc, char *argv[])
 								if(alvo%2 == 1)
 								{
 									dataEventoDispositivo[count] = ReadFromMemoryObject(count-meusDispositivosOffset, malhaDevice[0], (char *)(malha+(borda[1]*MALHA_TOTAL_CELULAS)), borda[1]*MALHA_TOTAL_CELULAS*sizeof(float), tamanhoBorda*MALHA_TOTAL_CELULAS*sizeof(float));
-									SynchronizeCommandQueue(count-meusDispositivosOffset);
+									SynchronizeCommandQueue(count-meusDispositivosOffset, 1);
 									MPI_Isend(malha+(borda[1]*MALHA_TOTAL_CELULAS), tamanhoBorda*MALHA_TOTAL_CELULAS, MPI_FLOAT, alvo, 0, MPI_COMM_WORLD, &sendRequest);
 									MPI_Irecv(malha+(borda[0]*MALHA_TOTAL_CELULAS), tamanhoBorda*MALHA_TOTAL_CELULAS, MPI_FLOAT, alvo, 0, MPI_COMM_WORLD, &receiveRequest);
 									MPI_Wait(&sendRequest, MPI_STATUS_IGNORE);
 									MPI_Wait(&receiveRequest, MPI_STATUS_IGNORE);
 									WriteToMemoryObject(count-meusDispositivosOffset, malhaDevice[0], (char *)(malha+(borda[0]*MALHA_TOTAL_CELULAS)), borda[0]*MALHA_TOTAL_CELULAS*sizeof(float), tamanhoBorda*MALHA_TOTAL_CELULAS*sizeof(float));
-									SynchronizeCommandQueue(count-meusDispositivosOffset);
+									SynchronizeCommandQueue(count-meusDispositivosOffset, 1);
 
 								}
 							}
@@ -809,13 +814,13 @@ int main(int argc, char *argv[])
 									MPI_Irecv(malha+(borda[0]*MALHA_TOTAL_CELULAS), tamanhoBorda*MALHA_TOTAL_CELULAS, MPI_FLOAT, alvo, 0, MPI_COMM_WORLD, &receiveRequest);
 
 									dataEventoDispositivo[count] = ReadFromMemoryObject(count-meusDispositivosOffset, malhaDevice[0], (char *)(malha+(borda[1]*MALHA_TOTAL_CELULAS)), borda[1]*MALHA_TOTAL_CELULAS*sizeof(float), tamanhoBorda*MALHA_TOTAL_CELULAS*sizeof(float));
-									SynchronizeCommandQueue(count-meusDispositivosOffset);
+									SynchronizeCommandQueue(count-meusDispositivosOffset, 1);
 									MPI_Isend(malha+(borda[1]*MALHA_TOTAL_CELULAS), tamanhoBorda*MALHA_TOTAL_CELULAS, MPI_FLOAT, alvo, 0, MPI_COMM_WORLD, &sendRequest);
 									MPI_Wait(&sendRequest, MPI_STATUS_IGNORE);
 									MPI_Wait(&receiveRequest, MPI_STATUS_IGNORE);
 
 									WriteToMemoryObject(count-meusDispositivosOffset, malhaDevice[0], (char *)(malha+(borda[0]*MALHA_TOTAL_CELULAS)), borda[0]*MALHA_TOTAL_CELULAS*sizeof(float), tamanhoBorda*MALHA_TOTAL_CELULAS*sizeof(float));
-									SynchronizeCommandQueue(count-meusDispositivosOffset);
+									SynchronizeCommandQueue(count-meusDispositivosOffset, 1);
 
 								}
 							}
@@ -831,14 +836,14 @@ int main(int argc, char *argv[])
 								if(alvo%2 == 0)
 								{
 									dataEventoDispositivo[count] = ReadFromMemoryObject(count-meusDispositivosOffset, malhaDevice[0], (char *)(malha+(borda[1]*MALHA_TOTAL_CELULAS)), borda[1]*MALHA_TOTAL_CELULAS*sizeof(float), tamanhoBorda*MALHA_TOTAL_CELULAS*sizeof(float));
-									SynchronizeCommandQueue(count-meusDispositivosOffset);
+									SynchronizeCommandQueue(count-meusDispositivosOffset, 1);
 									MPI_Isend(malha+(borda[1]*MALHA_TOTAL_CELULAS), tamanhoBorda*MALHA_TOTAL_CELULAS, MPI_FLOAT, alvo, 0, MPI_COMM_WORLD, &sendRequest);
 									MPI_Irecv(malha+(borda[0]*MALHA_TOTAL_CELULAS), tamanhoBorda*MALHA_TOTAL_CELULAS, MPI_FLOAT, alvo, 0, MPI_COMM_WORLD, &receiveRequest);
 									MPI_Wait(&sendRequest, MPI_STATUS_IGNORE);
 									MPI_Wait(&receiveRequest, MPI_STATUS_IGNORE);
 
 									WriteToMemoryObject(count-meusDispositivosOffset, malhaDevice[0], (char *)(malha+(borda[0]*MALHA_TOTAL_CELULAS)), borda[0]*MALHA_TOTAL_CELULAS*sizeof(float), tamanhoBorda*MALHA_TOTAL_CELULAS*sizeof(float));
-									SynchronizeCommandQueue(count-meusDispositivosOffset);
+									SynchronizeCommandQueue(count-meusDispositivosOffset, 1);
 
 								}
 							}
@@ -855,10 +860,10 @@ int main(int argc, char *argv[])
 							borda[1] = parametrosMalha[count+1][OFFSET_COMPUTACAO];
 
 							dataEventoDispositivo[count+0] = ReadFromMemoryObject(count+0-meusDispositivosOffset, malhaDevice[0], (char *)(malha+(borda[0]*MALHA_TOTAL_CELULAS)), borda[0]*MALHA_TOTAL_CELULAS*sizeof(float), tamanhoBorda*MALHA_TOTAL_CELULAS*sizeof(float));
-							SynchronizeCommandQueue(count+0-meusDispositivosOffset);
+							SynchronizeCommandQueue(count+0-meusDispositivosOffset, 1);
 
 							dataEventoDispositivo[count+1] = ReadFromMemoryObject(count+1-meusDispositivosOffset, malhaDevice[1], (char *)(malha+(borda[1]*MALHA_TOTAL_CELULAS)), borda[1]*MALHA_TOTAL_CELULAS*sizeof(float), tamanhoBorda*MALHA_TOTAL_CELULAS*sizeof(float));
-							SynchronizeCommandQueue(count+1-meusDispositivosOffset);
+							SynchronizeCommandQueue(count+1-meusDispositivosOffset, 1);
 
 						}
 
@@ -873,10 +878,10 @@ int main(int argc, char *argv[])
 							borda[1] = parametrosMalha[count+1][OFFSET_COMPUTACAO];
 
 							WriteToMemoryObject(count+0-meusDispositivosOffset, malhaDevice[0], (char *)(malha+(borda[1]*MALHA_TOTAL_CELULAS)), borda[1]*MALHA_TOTAL_CELULAS*sizeof(float), tamanhoBorda*MALHA_TOTAL_CELULAS*sizeof(float));
-							SynchronizeCommandQueue(count+0-meusDispositivosOffset);
+							SynchronizeCommandQueue(count+0-meusDispositivosOffset, 1);
 
 							WriteToMemoryObject(count+1-meusDispositivosOffset, malhaDevice[1], (char *)(malha+(borda[0]*MALHA_TOTAL_CELULAS)), borda[0]*MALHA_TOTAL_CELULAS*sizeof(float), tamanhoBorda*MALHA_TOTAL_CELULAS*sizeof(float));
-							SynchronizeCommandQueue(count+1-meusDispositivosOffset);
+							SynchronizeCommandQueue(count+1-meusDispositivosOffset, 1);
 						}
 					}
 				}
@@ -887,14 +892,31 @@ int main(int argc, char *argv[])
 			{
 				if(count >= meusDispositivosOffset && count < meusDispositivosOffset+meusDispositivosLength)
 				{
-					SynchronizeCommandQueue(count-meusDispositivosOffset);
+					SynchronizeCommandQueue(count-meusDispositivosOffset, 1);
 				}
 			}
 
+
+			#ifdef HABILITAR_BENCHMARK
+			MPI_Barrier(MPI_COMM_WORLD);
+			tempoBordaComuFim = MPI_Wtime();
+			tempoTrocaBorda += tempoBordaComuFim - tempoBordaComuInicio;
+			#endif
+
+			//Sincronizacao da computação interna.
+			for(int count = 0; count < todosDispositivos; count++)
+			{
+				if(count >= meusDispositivosOffset && count < meusDispositivosOffset+meusDispositivosLength)
+				{
+					SynchronizeCommandQueue(count-meusDispositivosOffset, 0);
+					// ticks[count] += GetEventTaskTicks(count - meusDispositivosOffset, kernelEventoDispositivo[count]);
+					// printf("count %d evento %d ticks %lf \n",count, kernelEventoDispositivo[count], ticks[count]);
+				}
+			}
 			#ifdef HABILITAR_BENCHMARK
 			MPI_Barrier(MPI_COMM_WORLD);
 			tempoFim = MPI_Wtime();
-			tempoTrocaBorda += tempoFim-tempoInicio;
+			tempoComputacaoInterna += tempoFim-tempoInicio;			
 			tempoInicio = MPI_Wtime();
 			#endif
 
@@ -914,8 +936,8 @@ int main(int argc, char *argv[])
 						SetKernelAttribute(count-meusDispositivosOffset, kernelDispositivo[count], 1, malhaSwapBufferDispositivo[count][0]);
 					}
 
-					RunKernel(count-meusDispositivosOffset, kernelDispositivo[count], parametrosMalha[count][OFFSET_COMPUTACAO], xMalhaLength*yMalhaLength, isDeviceCPU(count-meusDispositivosOffset) ? CPU_WORK_GROUP_SIZE :  GPU_WORK_GROUP_SIZE);
-					RunKernel(count-meusDispositivosOffset, kernelDispositivo[count], parametrosMalha[count][OFFSET_COMPUTACAO]+parametrosMalha[count][LENGTH_COMPUTACAO]-(xMalhaLength*yMalhaLength), xMalhaLength*yMalhaLength, isDeviceCPU(count-meusDispositivosOffset) ? CPU_WORK_GROUP_SIZE :  GPU_WORK_GROUP_SIZE);
+					kernelEventoDispositivo[count] = RunKernel(count-meusDispositivosOffset, kernelDispositivo[count], parametrosMalha[count][OFFSET_COMPUTACAO], xMalhaLength*yMalhaLength, isDeviceCPU(count-meusDispositivosOffset) ? CPU_WORK_GROUP_SIZE :  GPU_WORK_GROUP_SIZE, 0);
+					kernelEventoDispositivo2[count] = RunKernel(count-meusDispositivosOffset, kernelDispositivo[count], parametrosMalha[count][OFFSET_COMPUTACAO]+parametrosMalha[count][LENGTH_COMPUTACAO]-(xMalhaLength*yMalhaLength), xMalhaLength*yMalhaLength, isDeviceCPU(count-meusDispositivosOffset) ? CPU_WORK_GROUP_SIZE :  GPU_WORK_GROUP_SIZE, 0);
 				}
 			}
 
@@ -924,56 +946,75 @@ int main(int argc, char *argv[])
 			{
 				if(count >= meusDispositivosOffset && count < meusDispositivosOffset+meusDispositivosLength)
 				{
-					SynchronizeCommandQueue(count-meusDispositivosOffset);
+					SynchronizeCommandQueue(count-meusDispositivosOffset, 0, kernelEventoDispositivo[count]);
+					SynchronizeCommandQueue(count-meusDispositivosOffset, 0, kernelEventoDispositivo2[count]);
+					// ticksBorder[count] += GetEventTaskTicks(count - meusDispositivosOffset, kernelEventoDispositivo[count]);
+					// ticksBorder[count] += GetEventTaskTicks(count - meusDispositivosOffset, kernelEventoDispositivo2[count]);
 				}
 			}
 
 			#ifdef HABILITAR_BENCHMARK
 			MPI_Barrier(MPI_COMM_WORLD);
 			tempoFim = MPI_Wtime();
-			tempoComputacaoBorda += tempoFim-tempoInicio;
+			tempoComputacaoBorda += tempoFim-tempoInicio;			
 			#endif
 		}
+		if((simulacao + 1)%100 == 0){
+			
+			#ifdef HABILITAR_BENCHMARK
+			tempoInicio = MPI_Wtime();
+			#endif
+			integralTecido[0] = 0.0;
+			integralTecido[1] = 0.0;
+			integralTecido[2] = 0.0;
 
-		integralTecido[0] = 0.0;
-		integralTecido[1] = 0.0;
-		integralTecido[2] = 0.0;
-
-		for(int count2 = 0; count2 < world_size; count2++)
-		{
-			if(count2 == world_rank)
+			for(int count2 = 0; count2 < world_size; count2++)
 			{
-				for(int count = 0; count < todosDispositivos; count++)
+				if(count2 == world_rank)
 				{
-					if(count >= meusDispositivosOffset && count < meusDispositivosOffset+meusDispositivosLength)
+					for(int count = 0; count < todosDispositivos; count++)
 					{
-						ReadFromMemoryObject(count-meusDispositivosOffset, malhaSwapBufferDispositivo[count][0], (char *)(tecidoInteiro +(parametrosMalha[count][OFFSET_COMPUTACAO]*MALHA_TOTAL_CELULAS)), parametrosMalha[count][OFFSET_COMPUTACAO]*MALHA_TOTAL_CELULAS*sizeof(float), parametrosMalha[count][LENGTH_COMPUTACAO]*MALHA_TOTAL_CELULAS*sizeof(float));
-						SynchronizeCommandQueue(count-meusDispositivosOffset);
-						const float *malha = tecidoInteiro;
-						const int *param = parametrosMalha[count];
-						// printf("count %d: inicio %d -- length %d final: %d \n", count, param[OFFSET_COMPUTACAO], param[LENGTH_COMPUTACAO], param[OFFSET_COMPUTACAO] + param[LENGTH_COMPUTACAO]-1);
-						
-						for(unsigned int z = 0; z < param[COMPRIMENTO_GLOBAL_Z]; z++)
+						if(count >= meusDispositivosOffset && count < meusDispositivosOffset+meusDispositivosLength)
 						{
-							for(unsigned int y = 0; y < param[COMPRIMENTO_GLOBAL_Y]; y++)
-							{	
-								for(unsigned int x = 0; x < param[COMPRIMENTO_GLOBAL_X]; x++)
-								{
-									if((MICROGLIA * param[MALHA_DIMENSAO_CELULAS]) + (z * param[MALHA_DIMENSAO_POSICAO_Z]) + (y * param[MALHA_DIMENSAO_POSICAO_Y]) + (x *param[MALHA_DIMENSAO_POSICAO_X]) >= param[OFFSET_COMPUTACAO]*MALHA_TOTAL_CELULAS && (MICROGLIA * param[MALHA_DIMENSAO_CELULAS]) + (z * param[MALHA_DIMENSAO_POSICAO_Z]) + (y * param[MALHA_DIMENSAO_POSICAO_Y]) + (x *param[MALHA_DIMENSAO_POSICAO_X]) <  ((param[OFFSET_COMPUTACAO]+param[LENGTH_COMPUTACAO])*MALHA_TOTAL_CELULAS) )
-									{	
-										integralTecido[0] += malha[(CONVENTIONAL_DC * param[MALHA_DIMENSAO_CELULAS]) + (z * param[MALHA_DIMENSAO_POSICAO_Z]) + (y * param[MALHA_DIMENSAO_POSICAO_Y]) + (x *param[MALHA_DIMENSAO_POSICAO_X])] * vetPV[(z * param[MALHA_DIMENSAO_POSICAO_Z] / 6) + (y * param[MALHA_DIMENSAO_POSICAO_Y] / 6) + (x *param[MALHA_DIMENSAO_POSICAO_X] / 6)];
-										integralTecido[1] += malha[(T_CYTOTOXIC * param[MALHA_DIMENSAO_CELULAS]) + (z * param[MALHA_DIMENSAO_POSICAO_Z]) + (y * param[MALHA_DIMENSAO_POSICAO_Y]) + (x *param[MALHA_DIMENSAO_POSICAO_X])] * vetBV[(z * param[MALHA_DIMENSAO_POSICAO_Z] / 6) + (y * param[MALHA_DIMENSAO_POSICAO_Y] / 6) + (x *param[MALHA_DIMENSAO_POSICAO_X] / 6)];
-										integralTecido[2] += malha[(ANTIBODY * param[MALHA_DIMENSAO_CELULAS]) + (z * param[MALHA_DIMENSAO_POSICAO_Z]) + (y * param[MALHA_DIMENSAO_POSICAO_Y]) + (x *param[MALHA_DIMENSAO_POSICAO_X])] * vetBV[(z * param[MALHA_DIMENSAO_POSICAO_Z] / 6) + (y * param[MALHA_DIMENSAO_POSICAO_Y] / 6) + (x *param[MALHA_DIMENSAO_POSICAO_X] / 6)];
+							ReadFromMemoryObject(count-meusDispositivosOffset, malhaSwapBufferDispositivo[count][0], (char *)(malhaSwapBuffer[0]+(parametrosMalha[count][OFFSET_COMPUTACAO]*MALHA_TOTAL_CELULAS)), parametrosMalha[count][OFFSET_COMPUTACAO]*MALHA_TOTAL_CELULAS*sizeof(float), parametrosMalha[count][LENGTH_COMPUTACAO]*MALHA_TOTAL_CELULAS*sizeof(float));
+					
+							// ReadFromMemoryObject(count-meusDispositivosOffset, malhaSwapBufferDispositivo[count][0], (char *)(tecidoInteiro +(parametrosMalha[count][OFFSET_COMPUTACAO]*MALHA_TOTAL_CELULAS)), parametrosMalha[count][OFFSET_COMPUTACAO]*MALHA_TOTAL_CELULAS*sizeof(float), parametrosMalha[count][LENGTH_COMPUTACAO]*MALHA_TOTAL_CELULAS*sizeof(float));
+							SynchronizeCommandQueue(count-meusDispositivosOffset, 1);
+							const float *malha = malhaSwapBuffer[0];
+							const int *param = parametrosMalha[count];
+							// printf("count %d: inicio %d -- length %d final: %d \n", count, param[OFFSET_COMPUTACAO], param[LENGTH_COMPUTACAO], param[OFFSET_COMPUTACAO] + param[LENGTH_COMPUTACAO]-1);
+							for(unsigned int x = 0; x < param[COMPRIMENTO_GLOBAL_X]; x++)							
+							{
+								for(unsigned int y = 0; y < param[COMPRIMENTO_GLOBAL_Y]; y++)
+								{	
+									for(unsigned int z = 0; z < param[COMPRIMENTO_GLOBAL_Z]; z++)
+									{
+										if((ACTIVATED_DC * param[MALHA_DIMENSAO_CELULAS]) + (z * param[MALHA_DIMENSAO_POSICAO_Z]) + (y * param[MALHA_DIMENSAO_POSICAO_Y]) + (x *param[MALHA_DIMENSAO_POSICAO_X]) >= param[OFFSET_COMPUTACAO]*MALHA_TOTAL_CELULAS && (ACTIVATED_DC * param[MALHA_DIMENSAO_CELULAS]) + (z * param[MALHA_DIMENSAO_POSICAO_Z]) + (y * param[MALHA_DIMENSAO_POSICAO_Y]) + (x *param[MALHA_DIMENSAO_POSICAO_X]) <  ((param[OFFSET_COMPUTACAO]+param[LENGTH_COMPUTACAO])*MALHA_TOTAL_CELULAS))
+										{	
+											integralTecido[0] += malha[(ACTIVATED_DC * param[MALHA_DIMENSAO_CELULAS]) + (z * param[MALHA_DIMENSAO_POSICAO_Z]) + (y * param[MALHA_DIMENSAO_POSICAO_Y]) + (x *param[MALHA_DIMENSAO_POSICAO_X])] * vetPV[(z * param[MALHA_DIMENSAO_POSICAO_Z] / 6) + (y * param[MALHA_DIMENSAO_POSICAO_Y] / 6) + (x *param[MALHA_DIMENSAO_POSICAO_X] / 6)];
+											integralTecido[1] += malha[(T_CYTOTOXIC * param[MALHA_DIMENSAO_CELULAS]) + (z * param[MALHA_DIMENSAO_POSICAO_Z]) + (y * param[MALHA_DIMENSAO_POSICAO_Y]) + (x *param[MALHA_DIMENSAO_POSICAO_X])] * vetBV[(z * param[MALHA_DIMENSAO_POSICAO_Z] / 6) + (y * param[MALHA_DIMENSAO_POSICAO_Y] / 6) + (x *param[MALHA_DIMENSAO_POSICAO_X] / 6)];
+											integralTecido[2] += malha[(ANTIBODY * param[MALHA_DIMENSAO_CELULAS]) + (z * param[MALHA_DIMENSAO_POSICAO_Z]) + (y * param[MALHA_DIMENSAO_POSICAO_Y]) + (x *param[MALHA_DIMENSAO_POSICAO_X])] * vetBV[(z * param[MALHA_DIMENSAO_POSICAO_Z] / 6) + (y * param[MALHA_DIMENSAO_POSICAO_Y] / 6) + (x *param[MALHA_DIMENSAO_POSICAO_X] / 6)];
+										}
 									}
 								}
 							}
 						}
 					}
 				}
+				MPI_Barrier(MPI_COMM_WORLD);
+				integralTecido[0] /= V_BV;
+				integralTecido[1] /= V_PV;
+				integralTecido[2] /= V_PV;
+				
 			}
+
+			#ifdef HABILITAR_BENCHMARK
 			MPI_Barrier(MPI_COMM_WORLD);
+			tempoFim = MPI_Wtime();
+			tempoReducaoCpyDevtoCPU += tempoFim-tempoInicio;
+			#endif
 		}
-		//Percorrer tecidoInteiro e colocar o resultado nas variáveis de integral do tecido
+		
 		#ifdef SAVEFIGURES
 		if(simulacao != 0 && simulacao%((int)(1/0.0002)) == 0){
 			printf("simulacao %d ** total %d\n",simulacao, SIMULACOES);
@@ -994,34 +1035,7 @@ int main(int argc, char *argv[])
 	MPI_Barrier(MPI_COMM_WORLD);
 	tempoFim = MPI_Wtime();
 	
-	#if defined(ALL_DEVICES)
-	#ifdef HABILITAR_BALANCEAMENTO
-	#ifdef HABILITAR_ESTATICO
-	char filename[200];
-	char charThreshold[10];
-	sprintf(filename, "tempo/ALL_DEVICES-HABILITAR_ESTATICO-BALANCEAMENTO_THRESHOLD:");
-	snprintf(charThreshold, sizeof(charThreshold), "%f", BALANCEAMENTO_THRESHOLD);
-	strcat(filename, charThreshold);
-	strcat(filename, ".txt");
-	FILE *file;
-	file = fopen(filename, "a");
-	fprintf(file, "%lf\n",tempoFim-tempoInicio);
-	fclose(file);
-	#endif
-	#ifndef HABILITAR_ESTATICO
-	char filename[200];
-	char charThreshold[10];
-	sprintf(filename, "tempo/ALL_DEVICES-DINAMICO-BALANCEAMENTO_THRESHOLD:");
-	snprintf(charThreshold, sizeof(charThreshold), "%f", BALANCEAMENTO_THRESHOLD);
-	strcat(filename, charThreshold);
-	strcat(filename, ".txt");
-	FILE *file;
-	file = fopen(filename, "a");
-	fprintf(file, "%lf\n",tempoFim-tempoInicio);
-	fclose(file);
-	#endif
-	#endif
-	#elif defined(GPU_DEVICES)
+	#ifdef GPU_DEVICES
 	#ifdef HABILITAR_BALANCEAMENTO
 	#ifdef HABILITAR_ESTATICO
 	char filename[200];
@@ -1048,7 +1062,38 @@ int main(int argc, char *argv[])
 	fclose(file);
 	#endif
 	#endif
-	#elif defined(CPU_DEVICES)
+	#endif
+
+	#ifdef ALL_DEVICES
+	#ifdef HABILITAR_BALANCEAMENTO
+	#ifdef HABILITAR_ESTATICO
+	char filename[200];
+	char charThreshold[10];
+	sprintf(filename, "tempo/ALL_DEVICES-HABILITAR_ESTATICO-BALANCEAMENTO_THRESHOLD:");
+	snprintf(charThreshold, sizeof(charThreshold), "%f", BALANCEAMENTO_THRESHOLD);
+	strcat(filename, charThreshold);
+	strcat(filename, ".txt");
+	FILE *file;
+	file = fopen(filename, "a");
+	fprintf(file, "%lf\n",tempoFim-tempoInicio);
+	fclose(file);
+	#endif
+	#ifndef HABILITAR_ESTATICO
+	char filename[200];
+	char charThreshold[10];
+	sprintf(filename, "tempo/ALL_DEVICES-DINAMICO-BALANCEAMENTO_THRESHOLD:");
+	snprintf(charThreshold, sizeof(charThreshold), "%f", BALANCEAMENTO_THRESHOLD);
+	strcat(filename, charThreshold);
+	strcat(filename, ".txt");
+	FILE *file;
+	file = fopen(filename, "a");
+	fprintf(file, "%lf\n",tempoFim-tempoInicio);
+	fclose(file);
+	#endif
+	#endif
+	#endif
+
+	#ifdef CPU_DEVICES
 	#ifdef HABILITAR_BALANCEAMENTO
 	#ifdef HABILITAR_ESTATICO
 	char filename[200];
@@ -1077,21 +1122,39 @@ int main(int argc, char *argv[])
 	#endif
 	#endif
 
+
+
 	if(world_rank == 0)
 	{
 		gettimeofday(&timeEnd, NULL);
-		printf("Overall ticks (1tick->1ms): %lu\n", (timeEnd.tv_sec - timeStart.tv_sec)*1000000 + (timeEnd.tv_usec - timeStart.tv_usec));
+		printf("Overall ticks (segundos): %lu\n", (timeEnd.tv_sec - timeStart.tv_sec) + ((timeEnd.tv_usec - timeStart.tv_usec)/1000000));
 
 		#ifdef HABILITAR_BENCHMARK
-		printf("Internal computation (s): %f\n", tempoComputacaoInterna);
+		// for(int i = 0; i < todosDispositivos;i++){
+		// 	printf("Internal computation %d (s): %2.1lf\n", i, ticks[i]/1000000000);
+		// }
+		// double *resInt = getTimeInternal();
+		// for(int i = 0; i < todosDispositivos;i++){
+		// 	printf("Internal computation %d (s): %2.1lf\n", i, resInt[i]/1000000000);
+		// }
+		printf("tempoComputacaoInterna + comunicacaoBorda %f\n", tempoComputacaoInterna);
+		printf("tempoEDO %f\n", tempoEDO);
+		printf("tempoReducaoCpyDevtoCPU %f\n", tempoReducaoCpyDevtoCPU);
+		printf("tempoCpyCPUtoDev %f\n", tempoCpyCPUtoDev);
 		printf("Border swap time (s): %f\n", tempoTrocaBorda);
 		printf("Border computation time (s): %f\n", tempoComputacaoBorda);
+		// for(int i = 0; i < todosDispositivos;i++)
+		// 	printf("border computation %d (s): %2.1lf\n", i, ticksBorder[i]/1000000000);
+		// double *resBor = getTimeBorder();
+		// for(int i = 0; i < todosDispositivos;i++)
+		// 	printf("border computation %d (s): %2.1lf\n", i, resBor[i]/1000000000);
+		
 		printf("Balancing time (s): %f\n", tempoBalanceamento);
 		#endif
 
 		for(int count = 0; count < todosDispositivos; count++)
 		{
-			printf("Tempo dispositivo (1tick->1nanosegundo) %i: %li\n", count, tempos[count]);
+			printf("Tempo dispositivo (nanosegundo - 10-9 sec) %i: %li\n", count, tempos[count]);
 		}
 	}
 
@@ -1128,7 +1191,7 @@ int main(int argc, char *argv[])
 				{
 					printf("Malha do dispositivo %i\n", count);
 					ReadFromMemoryObject(count-meusDispositivosOffset, malhaSwapBufferDispositivo[count][0], (char *)(malhaSwapBuffer[0]+(parametrosMalha[count][OFFSET_COMPUTACAO]*MALHA_TOTAL_CELULAS)), parametrosMalha[count][OFFSET_COMPUTACAO]*MALHA_TOTAL_CELULAS*sizeof(float), parametrosMalha[count][LENGTH_COMPUTACAO]*MALHA_TOTAL_CELULAS*sizeof(float));
-					SynchronizeCommandQueue(count-meusDispositivosOffset);
+					SynchronizeCommandQueue(count-meusDispositivosOffset, 1);
 					LerPontosHIS(malhaSwapBuffer[0], parametrosMalha[count]);
 				}
 			}

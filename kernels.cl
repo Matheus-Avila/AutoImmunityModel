@@ -71,9 +71,9 @@ __constant float rT = 0.001;
 __constant float lambAntMic = 0.005702;
 __constant float bD = 0.001;
 
-__constant float gammaD = 0.1;
-__constant float gammaAntibody = 0.3;
-__constant float gammaT = 0.1;
+__constant float gammaD = .0010;
+__constant float gammaAntibody = 0.0030;
+__constant float gammaT = 0.0010;
 
 __constant float avgT = 37;
 __constant float avgDc = 33;
@@ -102,7 +102,7 @@ float Quimiotaxia(int celulaOffset, float *celulas, int xPosicaoGlobal, int yPos
 	return ((xPosicaoGlobal == 0 || (xPosicaoGlobal < parametrosMalhaGPU[MALHA_DIMENSAO_X] - 1)) ? 0 : ((celulas[OLIGODENDROCYTES_OFFSET + CELULAS_POSICAO_XP_OFFSET] - celulas[OLIGODENDROCYTES_OFFSET + CELULAS_POSICAO_XM_OFFSET]) > 0 ? (( PreventionOverCrowdingTerm(celulas[celulaOffset + CELULAS_POSICAO_OR_OFFSET], avgValue) - PreventionOverCrowdingTerm(celulas[celulaOffset + CELULAS_POSICAO_XM_OFFSET], avgValue)) / deltaX) * (celulas[OLIGODENDROCYTES_OFFSET + CELULAS_POSICAO_XP_OFFSET] - celulas[OLIGODENDROCYTES_OFFSET + CELULAS_POSICAO_XM_OFFSET])/2 : ((PreventionOverCrowdingTerm(celulas[celulaOffset + CELULAS_POSICAO_XP_OFFSET], avgValue) - PreventionOverCrowdingTerm(celulas[celulaOffset + CELULAS_POSICAO_OR_OFFSET], avgValue)) / deltaX) * (celulas[OLIGODENDROCYTES_OFFSET + CELULAS_POSICAO_XP_OFFSET] - celulas[OLIGODENDROCYTES_OFFSET + CELULAS_POSICAO_XM_OFFSET])/2)) + /*y*/ ((yPosicaoGlobal == 0 || (yPosicaoGlobal < parametrosMalhaGPU[MALHA_DIMENSAO_Y] - 1)) ? 0 : ((celulas[OLIGODENDROCYTES_OFFSET + CELULAS_POSICAO_YP_OFFSET] - celulas[OLIGODENDROCYTES_OFFSET + CELULAS_POSICAO_YM_OFFSET]) > 0 ? ((PreventionOverCrowdingTerm(celulas[celulaOffset + CELULAS_POSICAO_OR_OFFSET], avgValue) - PreventionOverCrowdingTerm(celulas[celulaOffset + CELULAS_POSICAO_YM_OFFSET], avgValue)) / deltaY) * (celulas[OLIGODENDROCYTES_OFFSET + CELULAS_POSICAO_YP_OFFSET] - celulas[OLIGODENDROCYTES_OFFSET + CELULAS_POSICAO_YM_OFFSET])/2 : ((PreventionOverCrowdingTerm(celulas[celulaOffset + CELULAS_POSICAO_YP_OFFSET], avgValue) - PreventionOverCrowdingTerm(celulas[celulaOffset + CELULAS_POSICAO_OR_OFFSET], avgValue)) / deltaY) * (celulas[OLIGODENDROCYTES_OFFSET + CELULAS_POSICAO_YP_OFFSET] - celulas[OLIGODENDROCYTES_OFFSET + CELULAS_POSICAO_YM_OFFSET])/2)) + /*z*/ ((zPosicaoGlobal == 0 || (zPosicaoGlobal < parametrosMalhaGPU[MALHA_DIMENSAO_Z] - 1)) ? 0 : ((celulas[OLIGODENDROCYTES_OFFSET + CELULAS_POSICAO_ZP_OFFSET] - celulas[OLIGODENDROCYTES_OFFSET + CELULAS_POSICAO_ZM_OFFSET]) > 0 ? ((PreventionOverCrowdingTerm(celulas[celulaOffset + CELULAS_POSICAO_OR_OFFSET], avgValue) - PreventionOverCrowdingTerm(celulas[celulaOffset + CELULAS_POSICAO_ZM_OFFSET],avgValue)) / deltaZ) * (celulas[OLIGODENDROCYTES_OFFSET + CELULAS_POSICAO_ZP_OFFSET] - celulas[OLIGODENDROCYTES_OFFSET + CELULAS_POSICAO_ZM_OFFSET])/2 : ((PreventionOverCrowdingTerm(celulas[celulaOffset + CELULAS_POSICAO_ZP_OFFSET], avgValue) - PreventionOverCrowdingTerm(celulas[celulaOffset + CELULAS_POSICAO_OR_OFFSET], avgValue)) / deltaZ) * (celulas[OLIGODENDROCYTES_OFFSET + CELULAS_POSICAO_ZP_OFFSET] - celulas[OLIGODENDROCYTES_OFFSET + CELULAS_POSICAO_ZM_OFFSET])/2));
 }
 
-void CalcularPontos(float *celulas, int xPosicaoGlobal, int yPosicaoGlobal, int zPosicaoGlobal, __constant int *parametrosMalhaGPU, __constant int *parametrosPosicaoBVTecido, __constant int *parametrosPosicaoPVTecido, __constant float *parametrosPopulacoesLinfonodo, float *parametrosDendriticaIntegralTecidoPontoAPonto, float *parametrosCytotoxicaIntegralTecidoPontoAPonto, float *parametrosAnticorpoIntegralTecidoPontoAPonto)
+void CalcularPontos(float *celulas, int xPosicaoGlobal, int yPosicaoGlobal, int zPosicaoGlobal, __constant int *parametrosMalhaGPU, __constant int *parametrosPosicaoBVTecido, __constant int *parametrosPosicaoPVTecido, __constant float *parametrosPopulacoesLinfonodo)
 {
 	//**************************************************Novo************************
 
@@ -152,15 +152,11 @@ void CalcularPontos(float *celulas, int xPosicaoGlobal, int yPosicaoGlobal, int 
 
 	celulas[OLIGODENDROCYTES_OFFSET + CELULAS_NOVO_VALOR_OFFSET] = (odcAntibodyMicrogliaFagocitosis + odcMicrogliaFagocitosis + odcTCytotoxicApoptosis) * deltaT + celulas[OLIGODENDROCYTES_OFFSET + CELULAS_POSICAO_OR_OFFSET];
 	
-	*parametrosDendriticaIntegralTecidoPontoAPonto = celulas[ACTIVATED_DC_OFFSET + CELULAS_NOVO_VALOR_OFFSET] * (parametrosPosicaoPVTecido[(zPosicaoGlobal * (parametrosMalhaGPU[MALHA_DIMENSAO_POSICAO_Z] / 6)) + (yPosicaoGlobal * (parametrosMalhaGPU[MALHA_DIMENSAO_POSICAO_Y] / 6)) + (xPosicaoGlobal * (parametrosMalhaGPU[MALHA_DIMENSAO_POSICAO_X] / 6))]);
-	*parametrosCytotoxicaIntegralTecidoPontoAPonto = celulas[T_CYTOTOXIC_OFFSET + CELULAS_NOVO_VALOR_OFFSET] * (parametrosPosicaoBVTecido[(zPosicaoGlobal * (parametrosMalhaGPU[MALHA_DIMENSAO_POSICAO_Z] / 6)) + (yPosicaoGlobal * (parametrosMalhaGPU[MALHA_DIMENSAO_POSICAO_Y] / 6)) + (xPosicaoGlobal * (parametrosMalhaGPU[MALHA_DIMENSAO_POSICAO_X] / 6))]);
-	*parametrosAnticorpoIntegralTecidoPontoAPonto = celulas[ANTIBODY_OFFSET + CELULAS_NOVO_VALOR_OFFSET] * (parametrosPosicaoBVTecido[(zPosicaoGlobal * (parametrosMalhaGPU[MALHA_DIMENSAO_POSICAO_Z] / 6)) + (yPosicaoGlobal * (parametrosMalhaGPU[MALHA_DIMENSAO_POSICAO_Y] / 6)) + (xPosicaoGlobal * (parametrosMalhaGPU[MALHA_DIMENSAO_POSICAO_X] / 6))]);
-
 }
 
 //Fazer outra funcao para reduzir as integrais parciais do tecido
 
-__kernel void ProcessarPontos(__global float *malhaPrincipalAtual, __global float *malhaPrincipalAnterior, __constant int *parametrosMalhaGPU, __constant int *parametrosPosicaoBVTecido, __constant int *parametrosPosicaoPVTecido, __constant float *parametrosPopulacoesLinfonodo, __global float *parametrosDendriticaIntegralTecidoPontoAPonto, __global float *parametrosCytotoxicaIntegralTecidoPontoAPonto, __global float *parametrosAnticorpoIntegralTecidoPontoAPonto)
+__kernel void ProcessarPontos(__global float *malhaPrincipalAtual, __global float *malhaPrincipalAnterior, __constant int *parametrosMalhaGPU, __constant int *parametrosPosicaoBVTecido, __constant int *parametrosPosicaoPVTecido, __constant float *parametrosPopulacoesLinfonodo)
 {
 	int globalThreadID = get_global_id(0);
 
@@ -201,19 +197,8 @@ __kernel void ProcessarPontos(__global float *malhaPrincipalAtual, __global floa
 	//**************************************
 	//Atualizar malha com pontos calculados.
 	//**************************************
-	float dc, t, ig;
-	CalcularPontos(celulas, posicaoGlobalX, posicaoGlobalY, posicaoGlobalZ, parametrosMalhaGPU, parametrosPosicaoBVTecido, parametrosPosicaoPVTecido, parametrosPopulacoesLinfonodo, &dc, &t, &ig);
+	CalcularPontos(celulas, posicaoGlobalX, posicaoGlobalY, posicaoGlobalZ, parametrosMalhaGPU, parametrosPosicaoBVTecido, parametrosPosicaoPVTecido, parametrosPopulacoesLinfonodo);
 	
-	// parametrosDendriticaIntegralTecidoPontoAPonto[BVPVIndex] = celulas[ACTIVATED_DC_OFFSET + CELULAS_NOVO_VALOR_OFFSET] * (parametrosPosicaoPVTecido[(posicaoGlobalZ * (parametrosMalhaGPU[MALHA_DIMENSAO_POSICAO_Z] / 6)) + (posicaoGlobalY * (parametrosMalhaGPU[MALHA_DIMENSAO_POSICAO_Y] / 6)) + (posicaoGlobalX * (parametrosMalhaGPU[MALHA_DIMENSAO_POSICAO_X] / 6))]);
-	// parametrosCytotoxicaIntegralTecidoPontoAPonto[BVPVIndex] = celulas[T_CYTOTOXIC_OFFSET + CELULAS_NOVO_VALOR_OFFSET] * (parametrosPosicaoBVTecido[(posicaoGlobalZ * (parametrosMalhaGPU[MALHA_DIMENSAO_POSICAO_Z] / 6)) + (posicaoGlobalY * (parametrosMalhaGPU[MALHA_DIMENSAO_POSICAO_Y] / 6)) + (posicaoGlobalX * (parametrosMalhaGPU[MALHA_DIMENSAO_POSICAO_X] / 6))]);
-	// parametrosAnticorpoIntegralTecidoPontoAPonto[BVPVIndex] = celulas[ANTIBODY_OFFSET + CELULAS_NOVO_VALOR_OFFSET] * (parametrosPosicaoBVTecido[(posicaoGlobalZ * (parametrosMalhaGPU[MALHA_DIMENSAO_POSICAO_Z] / 6)) + (posicaoGlobalY * (parametrosMalhaGPU[MALHA_DIMENSAO_POSICAO_Y] / 6)) + (posicaoGlobalX * (parametrosMalhaGPU[MALHA_DIMENSAO_POSICAO_X] / 6))]);
-	
-	// //Sincronizar todas as threads
-	// barrier(CLK_LOCAL_MEM_FENCE | CLK_GLOBAL_MEM_FENCE);
-	
-	// de reduzir 
-
-
 	//Loop por todas as celulas.
 	for(int count = 0; count < MALHA_TOTAL_CELULAS; count++)
 	{
