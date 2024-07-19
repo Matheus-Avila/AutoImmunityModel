@@ -39,6 +39,8 @@ struct Device
 	int numberOfMemoryObjects;
 	int numberOfKernels;
 	int numberOfEvents;
+	double* borderTime;
+	double* internalTime;
 };
 
 cl_uint numberOfDevices;
@@ -93,6 +95,8 @@ int InitParallelProcessor()
 	numberOfDevices = 0;
 	for(int platform = 0; platform < numberOfPlatforms; platform++)
 	{
+		if(platform==1)
+		continue;
 		//Get devices.
 		cl_uint numberOfDevicesOfPlatform;
 		#if defined(ALL_DEVICES)
@@ -115,6 +119,8 @@ int InitParallelProcessor()
 				numberOfDevicesOfPlatform = MAX_NUMBER_OF_DEVICES_PER_PLATFORM;
 			}
 			printf("%i device(s) found on platform %i.\n", numberOfDevicesOfPlatform, platform);
+		
+
 		
 		//Set devices.
 		for(int count = numberOfDevices; count < numberOfDevices+numberOfDevicesOfPlatform; count++)
@@ -182,6 +188,8 @@ int InitParallelProcessor()
 		numberOfDevices += numberOfDevicesOfPlatform;
 	}
 	}	
+	devices->internalTime = (double*)calloc(numberOfDevices, sizeof(double));
+	devices->borderTime = (double*)calloc(numberOfDevices, sizeof(double));
 	return numberOfDevices;
 }
 
@@ -333,6 +341,7 @@ int CreateMemoryObject(int devicePosition, int size, cl_mem_flags memoryType, vo
 		if(state != CL_SUCCESS)
 		{
 			printf("Error creating memory object!\n");
+			exit(1);
 			return -1;
 		}
 		else
@@ -382,6 +391,7 @@ int ReadFromMemoryObject(int devicePosition, int memoryObjectID, char *data, int
 		if(state != CL_SUCCESS)
 		{
 			printf("Error reading from memory object %i.\n", state);
+			exit(1);
 			return -1;
 		}
 		else
@@ -410,7 +420,7 @@ bool RemoveMemoryObject(int devicePosition, int memoryObjectID)
 	return false;
 }
 
-int RunKernel(int devicePosition, int kernelID, int parallelDataOffset, int parallelData, int workGroupSize)
+int RunKernel(int devicePosition, int kernelID, int parallelDataOffset, int parallelData, int workGroupSize, int type)
 {
 	//----------------------------------------------------------------------------
 	//Obs: OpenGL data used in this kernel must be synchronized before proceeding.
@@ -425,10 +435,23 @@ int RunKernel(int devicePosition, int kernelID, int parallelDataOffset, int para
 		size_t mask = 0;
 		globalItems = Maximum(workGroupSize, parallelData + workGroupSize - (parallelData%workGroupSize));
 		
+		cl_event prof_event;
+		cl_ulong ev_start_time = (cl_ulong)0;
+		cl_ulong ev_end_time = (cl_ulong)0;
+		size_t return_bytes;
+
 		cl_int state;
 		size_t localItems = workGroupSize;
 
 		state = clEnqueueNDRangeKernel(devices[devicePosition].kernelCommandQueue, devices[devicePosition].kernels[kernelPosition], 1, &globalItemsOffset, &globalItems, &localItems, 0, NULL, &devices[devicePosition].events[devices[devicePosition].numberOfEvents]);
+		
+		// clGetEventProfilingInfo(devices[devicePosition].events[devices[devicePosition].numberOfEvents], CL_PROFILING_COMMAND_QUEUED, sizeof(cl_ulong), &ev_start_time, &return_bytes);
+		// clGetEventProfilingInfo(devices[devicePosition].events[devices[devicePosition].numberOfEvents], CL_PROFILING_COMMAND_END, sizeof(cl_ulong), &ev_end_time, &return_bytes);
+		// if(type == 1)
+		// devices->internalTime[devicePosition] += (double) (ev_end_time - ev_start_time);
+		// else if(type == 0)
+		// devices->borderTime[devicePosition] += (double) (ev_end_time - ev_start_time);
+		
 		if(state != CL_SUCCESS)
 		{
 			printf("Error queueing task! %i\n", state);
@@ -447,11 +470,15 @@ int RunKernel(int devicePosition, int kernelID, int parallelDataOffset, int para
 	return -1;
 }
 
-void SynchronizeCommandQueue(int devicePosition)
-{
-	clFinish(devices[devicePosition].kernelCommandQueue);
-	clFinish(devices[devicePosition].dataCommandQueue);
-	devices[devicePosition].numberOfEvents = 0;
+void SynchronizeCommandQueue(int devicePosition, int queueData, int numberKernels)
+{       
+	if(queueData)
+		clFinish(devices[devicePosition].dataCommandQueue);
+	else
+		clFinish(devices[devicePosition].kernelCommandQueue);
+	clWaitForEvents(1, &devices[devicePosition].events[numberKernels]);
+		
+	devices[devicePosition].numberOfEvents=0;
 }
 
 void SynchronizeEvent(int devicePosition, int eventPosition)
@@ -459,23 +486,23 @@ void SynchronizeEvent(int devicePosition, int eventPosition)
 	clWaitForEvents(1, &devices[devicePosition].events[eventPosition]);
 }
 
-long int GetEventTaskOverheadTicks(int devicePosition, int eventPosition)
+double GetEventTaskOverheadTicks(int devicePosition, int eventPosition)
 {
-	long int ticksStart;
-	long int ticksEnd;
+	cl_ulong ticksStart;
+	cl_ulong ticksEnd;
 
-	clGetEventProfilingInfo(devices[devicePosition].events[eventPosition], CL_PROFILING_COMMAND_QUEUED, sizeof(long int), &ticksStart, NULL);
-	clGetEventProfilingInfo(devices[devicePosition].events[eventPosition], CL_PROFILING_COMMAND_START, sizeof(long int), &ticksEnd, NULL);
+	clGetEventProfilingInfo(devices[devicePosition].events[eventPosition], CL_PROFILING_COMMAND_QUEUED, sizeof(ticksStart), &ticksStart, NULL);
+	clGetEventProfilingInfo(devices[devicePosition].events[eventPosition], CL_PROFILING_COMMAND_START, sizeof(ticksEnd), &ticksEnd, NULL);
 	return (ticksEnd - ticksStart);
 }
 
-long int GetEventTaskTicks(int devicePosition, int eventPosition)
+double GetEventTaskTicks(int devicePosition, int eventPosition)
 {
-	long int ticksStart;
-	long int ticksEnd;
+	cl_ulong ticksStart;
+	cl_ulong ticksEnd;
 
-	clGetEventProfilingInfo(devices[devicePosition].events[eventPosition], CL_PROFILING_COMMAND_START, sizeof(long int), &ticksStart, NULL);
-	clGetEventProfilingInfo(devices[devicePosition].events[eventPosition], CL_PROFILING_COMMAND_END, sizeof(long int), &ticksEnd, NULL);
+	clGetEventProfilingInfo(devices[devicePosition].events[eventPosition], CL_PROFILING_COMMAND_SUBMIT, sizeof(ticksStart), &ticksStart, NULL);
+	clGetEventProfilingInfo(devices[devicePosition].events[eventPosition], CL_PROFILING_COMMAND_END, sizeof(ticksEnd), &ticksEnd, NULL);
 	return (ticksEnd - ticksStart);
 }
 
@@ -499,3 +526,10 @@ bool isDeviceCPU(int devicePosition)
 	return devices[devicePosition].deviceType == CL_DEVICE_TYPE_CPU ? true : false;
 }
 
+double* getTimeInternal(){
+	return devices->internalTime;
+}
+
+double* getTimeBorder(){
+	return devices->borderTime;
+}

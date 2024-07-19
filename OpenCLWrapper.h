@@ -20,17 +20,19 @@ int WriteToMemoryObject(int devicePosition, int memoryObjectID, const char *data
 int ReadFromMemoryObject(int devicePosition, int memoryObjectID, char *data, int offset, int size);		//Return position of the event generated.
 bool RemoveMemoryObject(int devicePosition, int memoryObjectID);
 
-int RunKernel(int devicePosition, int kernelID, int parallelDataOffset, int parallelData, int workGroupSize);	//Return position of the event generated.
-void SynchronizeCommandQueue(int devicePosition);
+int RunKernel(int devicePosition, int kernelID, int parallelDataOffset, int parallelData, int workGroupSize, int type);	//Return position of the event generated.
+void SynchronizeCommandQueue(int devicePosition, int queueData, int numberKernels = 1);
 
 void SynchronizeEvent(int devicePosition, int eventPosition);
-long int GetEventTaskOverheadTicks(int devicePosition, int eventPosition);
-long int GetEventTaskTicks(int devicePosition, int eventPosition);
+double GetEventTaskOverheadTicks(int devicePosition, int eventPosition);
+double GetEventTaskTicks(int devicePosition, int eventPosition);
 
 cl_device_type GetDeviceType(int devicePosition);
 size_t GetDeviceMaxWorkItemsPerWorkGroup(int devicePosition);
 cl_uint GetDeviceComputeUnits(int devicePosition);
 
 bool isDeviceCPU(int devicePosition);
+double* getTimeInternal();
+double* getTimeBorder();
 
 #endif
