@@ -20,17 +20,19 @@ double Max(double a, double b){
 void InitialConditionTissueMicroglia(structModel* model){
 
     for(int k = 0; k < model->xSize*model->xSize; k++){
+        
         int i = (int)k/model->xSize;
         int j = k%model->xSize;
+
         if(pow((i-(int)(model->xSize/2)),2) + pow((j-(int)(model->xSize/2)),2) < 5 / (model->hx * model->hx)){
             model->microglia[0][k] = (double)model->parametersModel.avgMic/3;
         }
         
         //inicializar apenas com vaso sanguineo
-        //model->tCytotoxic[0][k] = model->thetaBV[i] * 28.4;   
-        
-       
+        //model->tCytotoxic[0][k] = model->thetaBV[i] * 28.4;  
+      
     }
+   
     
 }
 
@@ -334,11 +336,13 @@ void SavingData(structModel model, int Ktime){
     FILE *file;
     structParameters parameters = ParametersInitialize();
     if(parameters.epslon_x  == 0){
-        file = fopen("dataExecution0.txt", "a");
+        file = fopen("treatment/dataExecution0.txt", "a");
     }else if(parameters.epslon_x  == 0.55){
-        file = fopen("dataExecution055.txt", "a");
+        file = fopen("treatment/dataExecution055.txt", "a");
     }else if(parameters.epslon_x  == 0.99){
-        file = fopen("dataExecution099.txt", "a");
+        file = fopen("treatment/dataExecution099.txt", "a");
+    }else if(parameters.epslon_x  == 0.593797){
+        file = fopen("treatment/dataExecution059.txt", "a");
     }
     
     
@@ -490,7 +494,7 @@ double* EquationsLymphNode(structModel* model, int stepPos){
     //printf("%.2lf\n",model->parametersModel.eps_new);
     double tCytoActivation = model->parametersModel.bTCytotoxic * (model->parametersModel.rhoTCytotoxic*tCytoLN*dcLN - tCytoLN*dcLN);
     double tCytoHomeostasis = model->parametersModel.alphaTCytotoxic * (model->parametersModel.stableTCytotoxic - tCytoLN);
-    double tCytoMigration = model->parametersModel.gammaT * (tCytoLN - model->tCytotoxicTissueVessels) * (double)(model->parametersModel.V_BV/model->parametersModel.V_LN)* (1 - model->parametersModel.eps_new);
+    double tCytoMigration = model->parametersModel.gammaT * (tCytoLN - model->tCytotoxicTissueVessels) * (double)(model->parametersModel.V_BV/model->parametersModel.V_LN)* (1 - model->parametersModel.epslon_x);
     slopes[1] = tCytoActivation + tCytoHomeostasis - tCytoMigration;
 
     //T Helper
@@ -689,7 +693,7 @@ derivatives* SlopePDEs(int stepKPlus, double ht, structModel* model){
 
         //CD8 T update
         
-        tCytotoxicMigration = model->thetaBV[kPos]*model->parametersModel.gammaT*(model->tCytotoxicLymphNode[stepKPlus] - tCytotoxicKMinus) * (1 - model->parametersModel.eps_new) ;
+        tCytotoxicMigration = model->thetaBV[kPos]*model->parametersModel.gammaT*(model->tCytotoxicLymphNode[stepKPlus] - tCytotoxicKMinus) * (1 - model->parametersModel.epslon_x) ;
         
         slopes->derivativesTissue[3][kPos] = tCytotoxicDiffusion - tCytotoxicChemotaxis + tCytotoxicMigration - (model->parametersModel.ct * tCytotoxicKMinus);
         
@@ -949,7 +953,7 @@ int isIn(int ktime, int vec[], int size) {
  * Central Nervous System - PDEs - Finite Differences
  */
 
-float RunModel(structModel *model, int* save_times, int size, float* points_values, int* targetDays,int targetSize){
+float RunModel(structModel *model, float* points_values, int* targetDays,int targetSize){
 
     int stepKPlus = 1, stepKMinus = 0;
     int posSave = 1;

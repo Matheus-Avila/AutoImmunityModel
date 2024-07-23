@@ -79,7 +79,7 @@ h_t = float(sys.argv[2])
 t = np.linspace(t_start, T_final, int((T_final-t_start)/h_t))
 
 # Lista dos nomes dos arquivos de dados
-arquivos = ["dataExecution0.txt", "dataExecution0fixo.txt", "dataExecution055.txt", "dataExecution099.txt"]
+arquivos = ["treatment/dataExecution0.txt", "treatment/dataExecution0fixo.txt", "treatment/dataExecution055.txt", "treatment/dataExecution099.txt", "treatment/dataExecution059.txt"]
 
 resultados = []
 
@@ -132,22 +132,24 @@ for i in range(1):
 
 # Plota as linhas para dataExecution055fixo e dataExecution099fixo
 valores_055 = [float(line.strip()) for line in resultados[2]]
-valores_099 = [float(line.strip()) for line in resultados[3]]
+valores_099 = [float(line.strip()) for line in resultados[4]]
 
 linha_055, = plt.plot(t, valores_055, label='Varying efficacy, eps = 0 - 0,55', color='purple', linestyle='--')
 linha_099, = plt.plot(t, valores_099, label='Varying efficacy, eps= 0 - 0.99', color='black', linestyle='--')
 
-linhas_plot.append(linha_055)
-labels_plot.append('Varying efficacy, eps = 0 - 0,55')
-linhas_plot.append(linha_099)
-labels_plot.append('Varying efficacy, eps= 0 - 0.99')
+# linhas_plot.append(linha_055)
+# labels_plot.append('Varying efficacy, eps = 0 - 0,55')
+# linhas_plot.append(linha_099)
+# labels_plot.append('Varying efficacy, eps= 0 - 0.99')
 
 # Adicionando pontos experimentais
 experimentais = {
     #0: [(30, 43.137254901960785)],
-    0: [(30, 27.647058823529403)],
-    1: [(45, 5.49019607843137)],
-    2: [(80, 8.27450980392166)],
+    0: [(0, 27.647058823529403)],
+    1: [(14, 5.49019607843137)],
+    2: [(30, 8.627450980392166)],
+    3: [(60, 7.843137254901956)],
+    4: [(90, 8.23529411764705)],
     
 }
 
@@ -171,7 +173,7 @@ plt.title("Total T $CD8^+$")
 plt.xlabel("Time (days)")
 plt.ylabel("Concentration (Cells/$mm^2$)")
 plt.grid(True)
-plt.savefig('result/totalTCD8.png', dpi=300)
+plt.savefig('result/Treatment.png', dpi=300)
 plt.clf()
 plt.show()
 # resultados = []
@@ -233,41 +235,41 @@ plt.show()
 # plt.show()
 
 # Lista para armazenar os valores lidos do arquivo
-mediaCD8_values = []
+# mediaCD8_values = []
 
-# Lendo os valores do arquivo
-with open("dataExecution2.txt", "r") as file:
-    for line in file:
-        mediaCD8_values.append(float(line.strip()))  
+# # Lendo os valores do arquivo
+# with open("dataExecution2.txt", "r") as file:
+#     for line in file:
+#         mediaCD8_values.append(float(line.strip()))  
 
-# Pontos experimentais
-experimentais = {
-    0: [(0, 27.647058823529403)],  
-    1: [(14, 5.49019607843137), (30, 8.627450980392166)],
-    2: [(60, 7.843137254901956)],
-}
+# # Pontos experimentais
+# experimentais = {
+#     0: [(0, 27.647058823529403)],  
+#     1: [(14, 5.49019607843137), (30, 8.627450980392166)],
+#     2: [(60, 7.843137254901956)],
+# }
 
-# Criando o gráfico
-plt.figure(figsize=(10, 6))
-plt.plot(mediaCD8_values, label='Media T CD8')
+# # Criando o gráfico
+# plt.figure(figsize=(10, 6))
+# plt.plot(mediaCD8_values, label='Media T CD8')
 
-first = True  # Variável para verificar o primeiro conjunto de dados experimentais
-for key, values in experimentais.items():
-    t_exp, valores_exp = zip(*values)
-    if first:
-        plt.scatter(t_exp, valores_exp, label=f'Experimental Data', color='red')
-        first = False
-    else:
-        plt.scatter(t_exp, valores_exp, color='red')
+# first = True  # Variável para verificar o primeiro conjunto de dados experimentais
+# for key, values in experimentais.items():
+#     t_exp, valores_exp = zip(*values)
+#     if first:
+#         plt.scatter(t_exp, valores_exp, label=f'Experimental Data', color='red')
+#         first = False
+#     else:
+#         plt.scatter(t_exp, valores_exp, color='red')
     
 
-plt.title('Media T CD8 ao longo do tempo')
-plt.xlabel('Time (Days)')
-plt.ylabel("Concentration (Molecules/$mm^2$)")
-plt.legend()
-plt.grid(True)
-plt.savefig('result/mediaTCD8.png', dpi=300)
-plt.show()
+# plt.title('Media T CD8 ao longo do tempo')
+# plt.xlabel('Time (Days)')
+# plt.ylabel("Concentration (Molecules/$mm^2$)")
+# plt.legend()
+# plt.grid(True)
+# plt.savefig('result/mediaTCD8.png', dpi=300)
+# plt.show()
 # TL_c_vetor = np.zeros(len(t))
 # TL_h_vetor = np.zeros(len(t))
 # B_vetor = np.zeros(len(t))
