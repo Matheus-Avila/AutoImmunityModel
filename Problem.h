@@ -27,21 +27,21 @@ structParameters ParametersInitialize(){
     
     params.gammaD = 0.1;
     params.gammaAntibody = 0.3;
-    params.gammaT = 0.787852;//0.1;
+    params.gammaT = 0.947922;//0.8885;//;//0.787852;//0.1;
 
     params.avgT = 37;
     params.avgDc = 33;
     params.avgMic = 350;
     params.avgOdc = 400;
 
-    params.ct = 0.01;
+    params.ct = 0.078673;//0.01;
     params.cMic = 0.1;
     params.cCDc = 1;
     params.cADc = 1;
     params.cDl = 0.1;
     params.cF = 0.1;
     params.alphaTHelper = 0.1;
-    params.alphaTCytotoxic = 0.003970;//0.1;
+    params.alphaTCytotoxic = 0.565958;//0.6178;//0.003970;//0.1;
     params.alphaB = 0.1;
     params.alphaP = 1;
     params.bTHelper = 0.17;
@@ -54,15 +54,15 @@ structParameters ParametersInitialize(){
     params.rhoB = 11;
     params.rhoP = 3;
     params.rhoAntibody = 5.1*pow(10,-2);
-    params.stableTHelper = 58.9; //ponto inicial
-    params.stableTCytotoxic = 28.4;
-    params.stableB = 25;
+    params.stableTHelper = 0.44;//58.9; //ponto inicial
+    params.stableTCytotoxic = 27.6;//28.4;
+    params.stableB = 11.43;//25;
     params.stableP = 2.5;
     params.V_LN = 40;
     params.V_BV = 0;
     params.V_PV = 0;
     
-    params.epslon_x = 0.593797;//0.99; //0.1
+    params.epslon_x = 0.971843;//0.99;//0.55;//0.95;//0.9944;//0.593797;//0.99; //0.1
 
     return params;
 }
@@ -130,7 +130,7 @@ class MSProblemTCytoParams : public pagmo::problem {
         std::pair<vector_double, vector_double> get_bounds() const
         {
             // 
-            return {{0.0001, 0.55, 0.005}, {1.0, 0.99, 1.0}};
+            return {{0.0001, 0.55, 0.005,0.001}, {1.0, 0.99, 1.0, 0.1}};//0.001
             //return {{0.01}, {0.99}};
         }
 
@@ -139,13 +139,15 @@ class MSProblemTCytoParams : public pagmo::problem {
             double epslon = variables[0];
             double alpha = variables[1];
             double gammaT = variables[2];
+            double ct = variables[3];
             
             float ht = 0.0002, hx = 0.5;
             int numFigs = 7, numPointsLN = 1000, time = 90, space = 20, numStepsLN = 100, saveFigs = 1;
             structParameters parameters = ParametersInitialize();
-            //parameters.alphaTCytotoxic = alpha;
-            //parameters.eps_new = epslon;
-            //parameters.gammaT = gammaT;
+            // parameters.alphaTCytotoxic = alpha;
+            // parameters.epslon_x = epslon;
+            // parameters.gammaT = gammaT;
+            // parameters.ct = ct;
             structModel model = ModelInitialize(parameters, ht, hx, time, space, numFigs, numPointsLN, numStepsLN, saveFigs);
             // int size = 5;
             // int save_times[size] = {0,14,30,60,90}; //14 e 28
@@ -154,15 +156,15 @@ class MSProblemTCytoParams : public pagmo::problem {
             int targetDays[targetSize] = {0,14,30,60,90};
             //std::cout << " Epslon: " << parameters.eps_new << std::endl;
             std::cout << std::endl;
-            std::cout << "Gamma T " << parameters.gammaT << " Epslon: " << parameters.epslon_x << " Alpha: " << parameters.alphaTCytotoxic << std::endl;
+            std::cout << "Gamma T " << parameters.gammaT << " Epslon: " << parameters.epslon_x << " Alpha: " << parameters.alphaTCytotoxic << " Ct: " << parameters.ct << std::endl;
             //float points[size] = {6.7};
-            float points[targetSize] = {27.6, 5.4, 8.6, 7.8}; //8.6
+            float points[targetSize] = {27.6, 5.4, 8.6, 7.8, 8.2}; 
             float error = RunModel(&model, points, targetDays, targetSize);
             //std::cout << "Error: (voltou runmodel) " << error << std::endl;
             //vector_double _error = (vector_double) error;
             std::vector<double> v;
             v.resize(1);
-            //std::cout << "Error: " << error << std::endl;
+            std::cout << "Error: " << error << std::endl;
             v[0] = (double)error;
             //exit(0);
             return v;
