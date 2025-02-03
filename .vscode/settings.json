@@ -87,5 +87,6 @@
     "cinttypes": "cpp",
     "typeindex": "cpp",
     "*.ipp": "c"
-  }
+  },
+  "cmake.sourceDirectory": "/AutoImmunityModel/pagmo2"
 }

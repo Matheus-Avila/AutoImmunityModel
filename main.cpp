@@ -47,7 +47,7 @@ int main(){
     
     clearPhgTxt();
 
-    std::vector<double> epslon_values = {0, 0.55, 0.99};
+    std::vector<double> epslon_values = {0, 0.55, 0.99}; //Para cada valor de epslon, um problema MSProblemTCytoParams é criado e um objeto problem é inicializado.
     
     for (double epslon : epslon_values) {
         MSProblemTCytoParams pr; // modelo
@@ -57,17 +57,19 @@ int main(){
 
         //esse algoritmo eh da pagmo DE1220 = pDE
         // Self-adaptive Differential Evolution
-        algorithm algo{de1220(50)}; // numero de geracoes? 10
-        // eh para imprimir na tela???
-        algo.set_verbosity(1);
-        // cria arquipelago ... explicar ... 
-        archipelago archi{8u, algo, prob, 10u};
+        algorithm algo{de1220(10)}; // numero de geracoes -50-
+        
+        algo.set_verbosity(1); // 1 significa que ele imprimirá informações durante a execução.
+        
+        archipelago archi{8u, algo, prob, 10u}; //8 ilhas com 10 indivudos de populaçao
+        //O arquipélago é uma abordagem de otimização paralela, 
+        //onde diferentes populações evoluem em paralelo em diferentes "ilhas" e, ocasionalmente, trocam informaçõe
         /* Evolves the population for a maximum number of generations, 
         until one of tolerances set on the population flatness 
         (x_tol, f_tol) are met.*/ 
-        archi.evolve(20); // population 5
+        archi.evolve(20); // arquipelago evolui por 20 geraçoes
 
-        // espera por que?
+        // espera que todas as ilhas terminem
         archi.wait_check();
 
         // Print to screen the fitness of the
@@ -76,7 +78,7 @@ int main(){
         //           << new_pop.champion_f()[0] << '\n';
 
 
-        //comentar a funcao! 
+        //Para cada ilha, o código imprime a melhor solução encontrada (champion_f()[0]), que é o menor erro calculado
         for (const auto &isl : archi) {
             std::cout << isl.get_population().champion_f()[0] << '\n';
         }
